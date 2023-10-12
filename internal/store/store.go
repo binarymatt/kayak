@@ -12,6 +12,7 @@ type Store interface {
 	AddRecords(ctx context.Context, topic string, records ...*kayakv1.Record) error
 	GetRecords(ctx context.Context, topic string, start string, limit int) ([]*kayakv1.Record, error)
 	ListTopics(ctx context.Context) ([]string, error)
+	RegisterConsumerGroup(ctx context.Context) error
 	GetConsumerPosition(ctx context.Context, topic, group string) (string, error)
 	CommitConsumerPosition(ctx context.Context, topic, consumerGroup, position string) error
 	Stats() map[string]*kayakv1.TopicMetadata

@@ -415,9 +415,9 @@ func (m *FetchRecordRequest) validate(all bool) error {
 
 	// no validation rules for Topic
 
-	// no validation rules for ConsumerId
+	// no validation rules for ConsumerGroup
 
-	// no validation rules for Position
+	// no validation rules for ConsumerId
 
 	if len(errors) > 0 {
 		return FetchRecordRequestMultiError(errors)
@@ -2320,3 +2320,240 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = TopicMetadataValidationError{}
+
+// Validate checks the field values on ConsumerGroup with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *ConsumerGroup) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on ConsumerGroup with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in ConsumerGroupMultiError, or
+// nil if none found.
+func (m *ConsumerGroup) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *ConsumerGroup) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Name
+
+	// no validation rules for Topic
+
+	// no validation rules for PartitionCount
+
+	if len(errors) > 0 {
+		return ConsumerGroupMultiError(errors)
+	}
+
+	return nil
+}
+
+// ConsumerGroupMultiError is an error wrapping multiple validation errors
+// returned by ConsumerGroup.ValidateAll() if the designated constraints
+// aren't met.
+type ConsumerGroupMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m ConsumerGroupMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m ConsumerGroupMultiError) AllErrors() []error { return m }
+
+// ConsumerGroupValidationError is the validation error returned by
+// ConsumerGroup.Validate if the designated constraints aren't met.
+type ConsumerGroupValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e ConsumerGroupValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e ConsumerGroupValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e ConsumerGroupValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e ConsumerGroupValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e ConsumerGroupValidationError) ErrorName() string { return "ConsumerGroupValidationError" }
+
+// Error satisfies the builtin error interface
+func (e ConsumerGroupValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sConsumerGroup.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = ConsumerGroupValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = ConsumerGroupValidationError{}
+
+// Validate checks the field values on CreateConsumerGroupRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *CreateConsumerGroupRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on CreateConsumerGroupRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// CreateConsumerGroupRequestMultiError, or nil if none found.
+func (m *CreateConsumerGroupRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *CreateConsumerGroupRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetGroup()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CreateConsumerGroupRequestValidationError{
+					field:  "Group",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CreateConsumerGroupRequestValidationError{
+					field:  "Group",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetGroup()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CreateConsumerGroupRequestValidationError{
+				field:  "Group",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return CreateConsumerGroupRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// CreateConsumerGroupRequestMultiError is an error wrapping multiple
+// validation errors returned by CreateConsumerGroupRequest.ValidateAll() if
+// the designated constraints aren't met.
+type CreateConsumerGroupRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m CreateConsumerGroupRequestMultiError) Error() string {
+	var msgs []string
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m CreateConsumerGroupRequestMultiError) AllErrors() []error { return m }
+
+// CreateConsumerGroupRequestValidationError is the validation error returned
+// by CreateConsumerGroupRequest.Validate if the designated constraints aren't met.
+type CreateConsumerGroupRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e CreateConsumerGroupRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e CreateConsumerGroupRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e CreateConsumerGroupRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e CreateConsumerGroupRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e CreateConsumerGroupRequestValidationError) ErrorName() string {
+	return "CreateConsumerGroupRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e CreateConsumerGroupRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sCreateConsumerGroupRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = CreateConsumerGroupRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = CreateConsumerGroupRequestValidationError{}

@@ -17,9 +17,12 @@ service KayakService {
   rpc GetRecords(GetRecordsRequest) returns (GetRecordsResponse) {}
   rpc FetchRecord(FetchRecordRequest) returns (FetchRecordsResponse) {}
   rpc StreamRecords(StreamRecordsRequest) returns (stream Record) {}
+
   rpc CreateTopic(CreateTopicRequest) returns (google.protobuf.Empty) {}
   rpc DeleteTopic(DeleteTopicRequest) returns (google.protobuf.Empty) {}
   rpc ListTopics(ListTopicsRequest) returns (ListTopicsResponse) {}
+
+  rpc CreateConsumerGroup(CreateConsumerGroupRequest) returns (google.protobuf.Empty) {}
 
   rpc Stats(google.protobuf.Empty) returns (StatsResponse) {}
   rpc GetNodeDetails(google.protobuf.Empty) returns (GetNodeDetailsResponse) {}
@@ -48,11 +51,12 @@ message Record {
 
 message FetchRecordRequest {
   // topic is the topic to get records from
-  string topic = 1 [(buf.validate.field).string.min_len = 1];
-  // consumer_group, if passed, will tell kayak what position to start from
-  string consumer_id = 2;
-  // position is where in the stream to start consuming.
-  string position = 3;
+  string topic = 1 [(buf.validate.field).required = true];
+  // consumer_group, if passed, will indicate which group to consume from
+  string consumer_group = 2 [(buf.validate.field).required = true];
+
+  // consumer_id is needed to indicate positioning within consumer group.
+  string consumer_id = 3 [(buf.validate.field).required = true];
 }
 
 message FetchRecordsResponse {
@@ -125,4 +129,16 @@ message TopicMetadata {
   google.protobuf.Timestamp created_at = 3;
   bool archived = 4;
   map<string, string> consumers = 5;
+}
+
+enum Hash {
+  HASH_MURMUR3 = 0;
+}
+message ConsumerGroup {
+  string name = 1 [(buf.validate.field).required = true];
+  string topic = 2 [(buf.validate.field).required = true];
+  int32 partition_count = 3 [(buf.validate.field).required = true];
+}
+message CreateConsumerGroupRequest {
+  ConsumerGroup group = 1 [(buf.validate.field).required = true];
 }

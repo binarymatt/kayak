@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -14,19 +13,24 @@ import (
 	"github.com/oklog/ulid/v2"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"log/slog"
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
 )
 
+func validate(msg protoreflect.ProtoMessage) error {
+	validator, err := protovalidate.New()
+	if err != nil {
+		return err
+	}
+	return validator.Validate(msg)
+}
 func (s *service) PutRecords(ctx context.Context, req *connect.Request[kayakv1.PutRecordsRequest]) (*connect.Response[emptypb.Empty], error) {
 	slog.Info("put records request")
-	v, err := protovalidate.New()
-	if err != nil {
-		fmt.Println("failed to initialize validator:", err)
-	}
-	if err := v.Validate(req.Msg); err != nil {
+	if err := validate(req.Msg); err != nil {
 		slog.Error("invalid put request", "error", err)
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
@@ -45,6 +49,11 @@ func (s *service) PutRecords(ctx context.Context, req *connect.Request[kayakv1.P
 }
 
 func (s *service) GetRecords(ctx context.Context, req *connect.Request[kayakv1.GetRecordsRequest]) (*connect.Response[kayakv1.GetRecordsResponse], error) {
+	if err := validate(req.Msg); err != nil {
+		slog.Error("invalid put request", "error", err)
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
 	limit := int(req.Msg.Limit)
 	def := false
 	if limit == 0 {
@@ -63,20 +72,22 @@ func (s *service) GetRecords(ctx context.Context, req *connect.Request[kayakv1.G
 }
 
 func (s *service) FetchRecord(ctx context.Context, req *connect.Request[kayakv1.FetchRecordRequest]) (*connect.Response[kayakv1.FetchRecordsResponse], error) {
-	logger := slog.With("consumer", req.Msg.ConsumerId, "topic", req.Msg.Topic, "position", req.Msg.Position)
+	logger := slog.With("consumer", req.Msg.ConsumerId, "topic", req.Msg.Topic)
+	if err := validate(req.Msg); err != nil {
+		slog.Error("invalid request", "error", err)
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
 	logger.Info("fetching records via grpc")
 
-	position := req.Msg.Position
-	if req.Msg.ConsumerId != "" {
+	logger.Debug("checking consumer group details")
 
-		logger.Info("getting consumer group position")
-		p, err := s.store.GetConsumerPosition(ctx, req.Msg.Topic, req.Msg.ConsumerId)
-		if err != nil {
-			return nil, connect.NewError(connect.CodeInvalidArgument, err)
-		}
-		slog.Info("retrieved consumer group position from local store", "fetched_position", p)
-		position = p
+	logger.Info("getting consumer group position")
+	p, err := s.store.GetConsumerPosition(ctx, req.Msg.Topic, req.Msg.ConsumerId)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
+	slog.Info("retrieved consumer group position from local store", "fetched_position", p)
+	position := p
 	logger.Info("fetching record")
 
 	records, err := s.store.GetRecords(ctx, req.Msg.Topic, position, 1)

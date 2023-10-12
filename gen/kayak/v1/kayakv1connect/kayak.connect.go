@@ -57,6 +57,9 @@ const (
 	KayakServiceDeleteTopicProcedure = "/kayak.v1.KayakService/DeleteTopic"
 	// KayakServiceListTopicsProcedure is the fully-qualified name of the KayakService's ListTopics RPC.
 	KayakServiceListTopicsProcedure = "/kayak.v1.KayakService/ListTopics"
+	// KayakServiceCreateConsumerGroupProcedure is the fully-qualified name of the KayakService's
+	// CreateConsumerGroup RPC.
+	KayakServiceCreateConsumerGroupProcedure = "/kayak.v1.KayakService/CreateConsumerGroup"
 	// KayakServiceStatsProcedure is the fully-qualified name of the KayakService's Stats RPC.
 	KayakServiceStatsProcedure = "/kayak.v1.KayakService/Stats"
 	// KayakServiceGetNodeDetailsProcedure is the fully-qualified name of the KayakService's
@@ -75,6 +78,7 @@ type KayakServiceClient interface {
 	CreateTopic(context.Context, *connect.Request[v1.CreateTopicRequest]) (*connect.Response[emptypb.Empty], error)
 	DeleteTopic(context.Context, *connect.Request[v1.DeleteTopicRequest]) (*connect.Response[emptypb.Empty], error)
 	ListTopics(context.Context, *connect.Request[v1.ListTopicsRequest]) (*connect.Response[v1.ListTopicsResponse], error)
+	CreateConsumerGroup(context.Context, *connect.Request[v1.CreateConsumerGroupRequest]) (*connect.Response[emptypb.Empty], error)
 	Stats(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[v1.StatsResponse], error)
 	GetNodeDetails(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[v1.GetNodeDetailsResponse], error)
 }
@@ -134,6 +138,11 @@ func NewKayakServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			baseURL+KayakServiceListTopicsProcedure,
 			opts...,
 		),
+		createConsumerGroup: connect.NewClient[v1.CreateConsumerGroupRequest, emptypb.Empty](
+			httpClient,
+			baseURL+KayakServiceCreateConsumerGroupProcedure,
+			opts...,
+		),
 		stats: connect.NewClient[emptypb.Empty, v1.StatsResponse](
 			httpClient,
 			baseURL+KayakServiceStatsProcedure,
@@ -149,17 +158,18 @@ func NewKayakServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 
 // kayakServiceClient implements KayakServiceClient.
 type kayakServiceClient struct {
-	putRecords     *connect.Client[v1.PutRecordsRequest, emptypb.Empty]
-	commitRecord   *connect.Client[v1.CommitRecordRequest, emptypb.Empty]
-	apply          *connect.Client[v1.Command, emptypb.Empty]
-	getRecords     *connect.Client[v1.GetRecordsRequest, v1.GetRecordsResponse]
-	fetchRecord    *connect.Client[v1.FetchRecordRequest, v1.FetchRecordsResponse]
-	streamRecords  *connect.Client[v1.StreamRecordsRequest, v1.Record]
-	createTopic    *connect.Client[v1.CreateTopicRequest, emptypb.Empty]
-	deleteTopic    *connect.Client[v1.DeleteTopicRequest, emptypb.Empty]
-	listTopics     *connect.Client[v1.ListTopicsRequest, v1.ListTopicsResponse]
-	stats          *connect.Client[emptypb.Empty, v1.StatsResponse]
-	getNodeDetails *connect.Client[emptypb.Empty, v1.GetNodeDetailsResponse]
+	putRecords          *connect.Client[v1.PutRecordsRequest, emptypb.Empty]
+	commitRecord        *connect.Client[v1.CommitRecordRequest, emptypb.Empty]
+	apply               *connect.Client[v1.Command, emptypb.Empty]
+	getRecords          *connect.Client[v1.GetRecordsRequest, v1.GetRecordsResponse]
+	fetchRecord         *connect.Client[v1.FetchRecordRequest, v1.FetchRecordsResponse]
+	streamRecords       *connect.Client[v1.StreamRecordsRequest, v1.Record]
+	createTopic         *connect.Client[v1.CreateTopicRequest, emptypb.Empty]
+	deleteTopic         *connect.Client[v1.DeleteTopicRequest, emptypb.Empty]
+	listTopics          *connect.Client[v1.ListTopicsRequest, v1.ListTopicsResponse]
+	createConsumerGroup *connect.Client[v1.CreateConsumerGroupRequest, emptypb.Empty]
+	stats               *connect.Client[emptypb.Empty, v1.StatsResponse]
+	getNodeDetails      *connect.Client[emptypb.Empty, v1.GetNodeDetailsResponse]
 }
 
 // PutRecords calls kayak.v1.KayakService.PutRecords.
@@ -207,6 +217,11 @@ func (c *kayakServiceClient) ListTopics(ctx context.Context, req *connect.Reques
 	return c.listTopics.CallUnary(ctx, req)
 }
 
+// CreateConsumerGroup calls kayak.v1.KayakService.CreateConsumerGroup.
+func (c *kayakServiceClient) CreateConsumerGroup(ctx context.Context, req *connect.Request[v1.CreateConsumerGroupRequest]) (*connect.Response[emptypb.Empty], error) {
+	return c.createConsumerGroup.CallUnary(ctx, req)
+}
+
 // Stats calls kayak.v1.KayakService.Stats.
 func (c *kayakServiceClient) Stats(ctx context.Context, req *connect.Request[emptypb.Empty]) (*connect.Response[v1.StatsResponse], error) {
 	return c.stats.CallUnary(ctx, req)
@@ -228,6 +243,7 @@ type KayakServiceHandler interface {
 	CreateTopic(context.Context, *connect.Request[v1.CreateTopicRequest]) (*connect.Response[emptypb.Empty], error)
 	DeleteTopic(context.Context, *connect.Request[v1.DeleteTopicRequest]) (*connect.Response[emptypb.Empty], error)
 	ListTopics(context.Context, *connect.Request[v1.ListTopicsRequest]) (*connect.Response[v1.ListTopicsResponse], error)
+	CreateConsumerGroup(context.Context, *connect.Request[v1.CreateConsumerGroupRequest]) (*connect.Response[emptypb.Empty], error)
 	Stats(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[v1.StatsResponse], error)
 	GetNodeDetails(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[v1.GetNodeDetailsResponse], error)
 }
@@ -283,6 +299,11 @@ func NewKayakServiceHandler(svc KayakServiceHandler, opts ...connect.HandlerOpti
 		svc.ListTopics,
 		opts...,
 	)
+	kayakServiceCreateConsumerGroupHandler := connect.NewUnaryHandler(
+		KayakServiceCreateConsumerGroupProcedure,
+		svc.CreateConsumerGroup,
+		opts...,
+	)
 	kayakServiceStatsHandler := connect.NewUnaryHandler(
 		KayakServiceStatsProcedure,
 		svc.Stats,
@@ -313,6 +334,8 @@ func NewKayakServiceHandler(svc KayakServiceHandler, opts ...connect.HandlerOpti
 			kayakServiceDeleteTopicHandler.ServeHTTP(w, r)
 		case KayakServiceListTopicsProcedure:
 			kayakServiceListTopicsHandler.ServeHTTP(w, r)
+		case KayakServiceCreateConsumerGroupProcedure:
+			kayakServiceCreateConsumerGroupHandler.ServeHTTP(w, r)
 		case KayakServiceStatsProcedure:
 			kayakServiceStatsHandler.ServeHTTP(w, r)
 		case KayakServiceGetNodeDetailsProcedure:
@@ -360,6 +383,10 @@ func (UnimplementedKayakServiceHandler) DeleteTopic(context.Context, *connect.Re
 
 func (UnimplementedKayakServiceHandler) ListTopics(context.Context, *connect.Request[v1.ListTopicsRequest]) (*connect.Response[v1.ListTopicsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kayak.v1.KayakService.ListTopics is not implemented"))
+}
+
+func (UnimplementedKayakServiceHandler) CreateConsumerGroup(context.Context, *connect.Request[v1.CreateConsumerGroupRequest]) (*connect.Response[emptypb.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kayak.v1.KayakService.CreateConsumerGroup is not implemented"))
 }
 
 func (UnimplementedKayakServiceHandler) Stats(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[v1.StatsResponse], error) {

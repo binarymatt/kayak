@@ -32,6 +32,7 @@ type KayakServiceClient interface {
 	CreateTopic(ctx context.Context, in *CreateTopicRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	DeleteTopic(ctx context.Context, in *DeleteTopicRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ListTopics(ctx context.Context, in *ListTopicsRequest, opts ...grpc.CallOption) (*ListTopicsResponse, error)
+	CreateConsumerGroup(ctx context.Context, in *CreateConsumerGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Stats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*StatsResponse, error)
 	GetNodeDetails(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetNodeDetailsResponse, error)
 }
@@ -148,6 +149,15 @@ func (c *kayakServiceClient) ListTopics(ctx context.Context, in *ListTopicsReque
 	return out, nil
 }
 
+func (c *kayakServiceClient) CreateConsumerGroup(ctx context.Context, in *CreateConsumerGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/kayak.v1.KayakService/CreateConsumerGroup", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *kayakServiceClient) Stats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*StatsResponse, error) {
 	out := new(StatsResponse)
 	err := c.cc.Invoke(ctx, "/kayak.v1.KayakService/Stats", in, out, opts...)
@@ -179,6 +189,7 @@ type KayakServiceServer interface {
 	CreateTopic(context.Context, *CreateTopicRequest) (*emptypb.Empty, error)
 	DeleteTopic(context.Context, *DeleteTopicRequest) (*emptypb.Empty, error)
 	ListTopics(context.Context, *ListTopicsRequest) (*ListTopicsResponse, error)
+	CreateConsumerGroup(context.Context, *CreateConsumerGroupRequest) (*emptypb.Empty, error)
 	Stats(context.Context, *emptypb.Empty) (*StatsResponse, error)
 	GetNodeDetails(context.Context, *emptypb.Empty) (*GetNodeDetailsResponse, error)
 }
@@ -213,6 +224,9 @@ func (UnimplementedKayakServiceServer) DeleteTopic(context.Context, *DeleteTopic
 }
 func (UnimplementedKayakServiceServer) ListTopics(context.Context, *ListTopicsRequest) (*ListTopicsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListTopics not implemented")
+}
+func (UnimplementedKayakServiceServer) CreateConsumerGroup(context.Context, *CreateConsumerGroupRequest) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateConsumerGroup not implemented")
 }
 func (UnimplementedKayakServiceServer) Stats(context.Context, *emptypb.Empty) (*StatsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Stats not implemented")
@@ -397,6 +411,24 @@ func _KayakService_ListTopics_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KayakService_CreateConsumerGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateConsumerGroupRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KayakServiceServer).CreateConsumerGroup(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kayak.v1.KayakService/CreateConsumerGroup",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KayakServiceServer).CreateConsumerGroup(ctx, req.(*CreateConsumerGroupRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _KayakService_Stats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
@@ -471,6 +503,10 @@ var KayakService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListTopics",
 			Handler:    _KayakService_ListTopics_Handler,
+		},
+		{
+			MethodName: "CreateConsumerGroup",
+			Handler:    _KayakService_CreateConsumerGroup_Handler,
 		},
 		{
 			MethodName: "Stats",
