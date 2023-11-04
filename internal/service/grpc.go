@@ -10,15 +10,16 @@ import (
 	"connectrpc.com/connect"
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/hashicorp/raft"
-	"github.com/oklog/ulid/v2"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/structpb"
 	"log/slog"
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
+	"github.com/binarymatt/kayak/internal/fsm"
 )
 
 func validate(msg protoreflect.ProtoMessage) error {
@@ -29,6 +30,7 @@ func validate(msg protoreflect.ProtoMessage) error {
 	return validator.Validate(msg)
 }
 func (s *service) PutRecords(ctx context.Context, req *connect.Request[kayakv1.PutRecordsRequest]) (*connect.Response[emptypb.Empty], error) {
+	fmt.Println("putting records")
 	slog.Info("put records request")
 	if err := validate(req.Msg); err != nil {
 		slog.Error("invalid put request", "error", err)
@@ -36,7 +38,7 @@ func (s *service) PutRecords(ctx context.Context, req *connect.Request[kayakv1.P
 	}
 
 	for _, record := range req.Msg.Records {
-		id := ulid.Make()
+		id := s.idGenerator()
 		record.Id = id.String()
 		record.Topic = req.Msg.Topic
 	}
@@ -45,7 +47,8 @@ func (s *service) PutRecords(ctx context.Context, req *connect.Request[kayakv1.P
 			PutRecordsRequest: req.Msg,
 		},
 	}
-	return s.applyCommand(ctx, command)
+	_, err := s.applyCommand(ctx, command)
+	return connect.NewResponse(&emptypb.Empty{}), err
 }
 
 func (s *service) GetRecords(ctx context.Context, req *connect.Request[kayakv1.GetRecordsRequest]) (*connect.Response[kayakv1.GetRecordsResponse], error) {
@@ -82,7 +85,7 @@ func (s *service) FetchRecord(ctx context.Context, req *connect.Request[kayakv1.
 	logger.Debug("checking consumer group details")
 
 	logger.Info("getting consumer group position")
-	p, err := s.store.GetConsumerPosition(ctx, req.Msg.Topic, req.Msg.ConsumerId)
+	p, err := s.store.GetConsumerPosition(ctx, req.Msg.Topic, "", req.Msg.ConsumerId)
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
@@ -155,11 +158,13 @@ func (s *service) CommitRecord(ctx context.Context, req *connect.Request[kayakv1
 			CommitRecordRequest: req.Msg,
 		},
 	}
-	return s.applyCommand(ctx, command)
+	_, err := s.applyCommand(ctx, command)
+	return connect.NewResponse(&emptypb.Empty{}), err
 }
-func (s *service) applyCommand(ctx context.Context, command *kayakv1.Command) (*connect.Response[emptypb.Empty], error) {
 
+func (s *service) applyCommand(ctx context.Context, command *kayakv1.Command) (*connect.Response[kayakv1.ApplyResponse], error) {
 	if s.raft.State() != raft.Leader {
+		fmt.Println("not leader")
 		leader := fmt.Sprintf("http://%s", s.raft.Leader())
 		client := kayakv1connect.NewKayakServiceClient(http.DefaultClient, leader)
 		slog.InfoContext(ctx, "applying to leader", "leader", s.raft.Leader())
@@ -172,10 +177,24 @@ func (s *service) applyCommand(ctx context.Context, command *kayakv1.Command) (*
 	applyFuture := s.raft.Apply(data, 500*time.Millisecond)
 	if err := applyFuture.Error(); err != nil {
 		slog.ErrorContext(ctx, "could not apply command to raft", "error", err)
-		return nil, connect.NewError(connect.CodeInternal, err)
+		//	return nil, connect.NewError(connect.CodeInternal, err)
+		return nil, err
 	}
-
-	return connect.NewResponse(&emptypb.Empty{}), nil
+	fmt.Println("trying to create response")
+	var val *structpb.Value
+	if applyFuture.Response() != nil {
+		resp := applyFuture.Response().(*fsm.ApplyResponse)
+		fmt.Println(resp)
+		val, err = structpb.NewValue(resp.Data)
+		if err != nil {
+			fmt.Println("error getting struct value")
+			return nil, err
+		}
+	}
+	fmt.Println("sending apply response", val)
+	return connect.NewResponse(&kayakv1.ApplyResponse{
+		Data: val,
+	}), applyFuture.Error()
 }
 
 func (s *service) DeleteTopic(ctx context.Context, req *connect.Request[kayakv1.DeleteTopicRequest]) (*connect.Response[emptypb.Empty], error) {
@@ -191,7 +210,11 @@ func (s *service) DeleteTopic(ctx context.Context, req *connect.Request[kayakv1.
 			DeleteTopicRequest: req.Msg,
 		},
 	}
-	return s.applyCommand(ctx, command)
+	_, err = s.applyCommand(ctx, command)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(&emptypb.Empty{}), nil
 }
 func (s *service) CreateTopic(ctx context.Context, req *connect.Request[kayakv1.CreateTopicRequest]) (*connect.Response[emptypb.Empty], error) {
 	if err := req.Msg.Validate(); err != nil {
@@ -204,7 +227,11 @@ func (s *service) CreateTopic(ctx context.Context, req *connect.Request[kayakv1.
 			CreateTopicRequest: req.Msg,
 		},
 	}
-	return s.applyCommand(ctx, command)
+	_, err := s.applyCommand(ctx, command)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("could not apply to raft: %w", err))
+	}
+	return connect.NewResponse(&emptypb.Empty{}), nil
 }
 
 func (s *service) ListTopics(ctx context.Context, req *connect.Request[kayakv1.ListTopicsRequest]) (*connect.Response[kayakv1.ListTopicsResponse], error) {
@@ -236,21 +263,77 @@ func (s *service) GetNodeDetails(ctx context.Context, _ *connect.Request[emptypb
 	}), nil
 }
 
-func (s *service) Apply(ctx context.Context, req *connect.Request[kayakv1.Command]) (*connect.Response[emptypb.Empty], error) {
+func (s *service) Apply(ctx context.Context, req *connect.Request[kayakv1.Command]) (*connect.Response[kayakv1.ApplyResponse], error) {
 	_, span := otel.GetTracerProvider().Tracer("").Start(ctx, "apply-span")
 	defer span.End()
 	if req.Msg.GetCreateTopicRequest() != nil {
-		return s.CreateTopic(ctx, connect.NewRequest(req.Msg.GetCreateTopicRequest()))
+		_, err := s.CreateTopic(ctx, connect.NewRequest(req.Msg.GetCreateTopicRequest()))
+		return connect.NewResponse(&kayakv1.ApplyResponse{}), err
 	}
 	if req.Msg.GetPutRecordsRequest() != nil {
-		return s.PutRecords(ctx, connect.NewRequest(req.Msg.GetPutRecordsRequest()))
+		fmt.Println("apply grpc")
+		_, err := s.PutRecords(ctx, connect.NewRequest(req.Msg.GetPutRecordsRequest()))
+		return connect.NewResponse(&kayakv1.ApplyResponse{}), err
 	}
 	if req.Msg.GetCommitRecordRequest() != nil {
-		return s.CommitRecord(ctx, connect.NewRequest(req.Msg.GetCommitRecordRequest()))
+		_, err := s.CommitRecord(ctx, connect.NewRequest(req.Msg.GetCommitRecordRequest()))
+		return connect.NewResponse(&kayakv1.ApplyResponse{}), err
 	}
 	if req.Msg.GetDeleteTopicRequest() != nil {
-		return s.DeleteTopic(ctx, connect.NewRequest(req.Msg.GetDeleteTopicRequest()))
+		_, err := s.DeleteTopic(ctx, connect.NewRequest(req.Msg.GetDeleteTopicRequest()))
+		return connect.NewResponse(&kayakv1.ApplyResponse{}), err
+	}
+	// CreateConsumerGroup
+	if req.Msg.GetCreateConsumerGroupRequest() != nil {
+		_, err := s.CreateConsumerGroup(ctx, connect.NewRequest(req.Msg.GetCreateConsumerGroupRequest()))
+		return connect.NewResponse(&kayakv1.ApplyResponse{}), err
+	}
+
+	// RegisterConsumer
+	if req.Msg.GetRegisterConsumerRequest() != nil {
+		resp, err := s.RegisterConsumer(ctx, connect.NewRequest(req.Msg.GetRegisterConsumerRequest()))
+		if err != nil {
+			return connect.NewResponse(&kayakv1.ApplyResponse{}), err
+		}
+		data, err := structpb.NewValue(resp.Msg.GetPartitionId())
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInternal, err)
+		}
+		return connect.NewResponse(&kayakv1.ApplyResponse{
+			Data: data,
+		}), nil
 	}
 
 	return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("not valid"))
+}
+
+func (s *service) CreateConsumerGroup(ctx context.Context, req *connect.Request[kayakv1.CreateConsumerGroupRequest]) (*connect.Response[emptypb.Empty], error) {
+	if err := validate(req.Msg); err != nil {
+		slog.Error("invalid create consumer group request", "error", err)
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+	command := &kayakv1.Command{
+		Payload: &kayakv1.Command_CreateConsumerGroupRequest{
+			CreateConsumerGroupRequest: req.Msg,
+		},
+	}
+	_, err := s.applyCommand(ctx, command)
+	return connect.NewResponse(&emptypb.Empty{}), err
+
+}
+func (s *service) RegisterConsumer(ctx context.Context, req *connect.Request[kayakv1.RegisterConsumerRequest]) (*connect.Response[kayakv1.RegisterConsumerResponse], error) {
+	if err := validate(req.Msg); err != nil {
+		slog.Error("invalid create consumer group request", "error", err)
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+	command := &kayakv1.Command{
+		Payload: &kayakv1.Command_RegisterConsumerRequest{
+			RegisterConsumerRequest: req.Msg,
+		},
+	}
+	resp, err := s.applyCommand(ctx, command)
+	partition := int64(resp.Msg.Data.GetNumberValue())
+	return connect.NewResponse(&kayakv1.RegisterConsumerResponse{
+		PartitionId: partition,
+	}), err
 }

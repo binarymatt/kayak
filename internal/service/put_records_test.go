@@ -4,18 +4,20 @@ import (
 	"context"
 	"strconv"
 
-	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"connectrpc.com/connect"
+
+	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 )
 
 func (s *ServiceTestSuite) TestPutRecords() {
-
 	records := []*kayakv1.Record{
 		{
+			Id:      s.testID.String(),
 			Topic:   "test",
 			Payload: []byte(" "),
 		},
 	}
+	s.mockStore.EXPECT().AddRecords(context.TODO(), "test", records[0]).Return(nil).Once()
 	_, err := s.service.PutRecords(context.Background(), connect.NewRequest(&kayakv1.PutRecordsRequest{
 		Topic:   "test",
 		Records: records,

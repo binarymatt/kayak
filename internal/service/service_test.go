@@ -1,8 +1,8 @@
 package service
 
 import (
+	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,9 +10,12 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/raft"
+	"github.com/oklog/ulid/v2"
 	"github.com/stretchr/testify/suite"
+	"log/slog"
 
 	"github.com/binarymatt/kayak/internal/config"
+	"github.com/binarymatt/kayak/internal/fsm"
 	"github.com/binarymatt/kayak/mocks"
 )
 
@@ -21,12 +24,14 @@ type ServiceTestSuite struct {
 	mockStore *mocks.Store
 	service   *service
 	cluster   Cluster
+	testID    ulid.ULID
 }
 type Cluster interface {
 	Close()
 }
 
 func (s *ServiceTestSuite) SetupSuite() {
+	fmt.Println("setting up suite")
 	l := slog.New(slog.NewTextHandler(io.Discard, nil))
 	slog.SetDefault(l)
 }
@@ -35,6 +40,8 @@ func (s *ServiceTestSuite) TearDownTest() {
 	s.cluster.Close()
 }
 func (s *ServiceTestSuite) SetupTest() {
+	fmt.Println("setting up test")
+	store := mocks.NewStore(s.T())
 	hclog.SetDefault(hclog.NewNullLogger())
 	conf := raft.DefaultConfig()
 	conf.HeartbeatTimeout = 50 * time.Millisecond
@@ -46,12 +53,23 @@ func (s *ServiceTestSuite) SetupTest() {
 	conf.Logger = hclog.NewNullLogger()
 	conf.Logger.SetLevel(hclog.Off)
 
-	c := raft.MakeCluster(1, s.T(), conf)
+	// c := raft.MakeCluster(1, s.T(), conf)
+	finiteStateMachine := fsm.NewStore(store)
+	c := raft.MakeClusterCustom(s.T(), &raft.MakeClusterOpts{
+		Peers:     1,
+		Bootstrap: true,
+		Conf:      conf,
+		MakeFSMFunc: func() raft.FSM {
+			return finiteStateMachine
+		},
+	})
 	r := c.Leader()
 
 	//setup service
-	store := mocks.NewStore(s.T())
 	svc, err := New(store, &config.Config{})
+	svc.idGenerator = func() ulid.ULID {
+		return s.testID
+	}
 	s.NoError(err)
 	svc.raft = r
 	s.service = svc

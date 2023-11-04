@@ -23,6 +23,7 @@ import (
 	autopilot "github.com/hashicorp/raft-autopilot"
 	boltdb "github.com/hashicorp/raft-boltdb"
 	"github.com/hashicorp/serf/serf"
+	"github.com/oklog/ulid/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -48,31 +49,33 @@ func New(store store.Store, cfg *config.Config) (*service, error) {
 	signal.Notify(sigs, syscall.SIGUSR1)
 	slog.Info("creating service via New", "addr", cfg.RaftAddress())
 	s := &service{
-		cfg:        cfg,
-		store:      store,
-		reloadChan: sigs,
-		raftAddr:   raft.ServerAddress(cfg.RaftAddress()),
-		peers:      cfg.Peers,
-		eventChan:  eventChan,
+		cfg:         cfg,
+		store:       store,
+		reloadChan:  sigs,
+		raftAddr:    raft.ServerAddress(cfg.RaftAddress()),
+		peers:       cfg.Peers,
+		eventChan:   eventChan,
+		idGenerator: ulid.Make,
 	}
 
 	return s, nil
 }
 
 type service struct {
-	store      store.Store
-	raft       *raft.Raft
-	cfg        *config.Config
-	raftAddr   raft.ServerAddress
-	manager    *transport.Manager
-	reloadChan chan os.Signal
-	eventChan  chan Event
-	pilot      *autopilot.Autopilot
-	serfChan   chan serf.Event
-	serfPeers  []*serf.Member
-	peers      []string
-	sf         *serf.Serf
-	ready      atomic.Bool
+	store       store.Store
+	raft        *raft.Raft
+	cfg         *config.Config
+	raftAddr    raft.ServerAddress
+	manager     *transport.Manager
+	reloadChan  chan os.Signal
+	eventChan   chan Event
+	pilot       *autopilot.Autopilot
+	serfChan    chan serf.Event
+	serfPeers   []*serf.Member
+	peers       []string
+	sf          *serf.Serf
+	ready       atomic.Bool
+	idGenerator func() ulid.ULID
 }
 
 func (s *service) Raft() *raft.Raft {

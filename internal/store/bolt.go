@@ -4,28 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"strconv"
 
 	"github.com/boltdb/bolt"
 	"github.com/oklog/ulid/v2"
 	"go.opentelemetry.io/otel"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"log/slog"
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/internal"
-)
-
-var (
-	topicsKey             = []byte("topic")
-	ErrIterFinished       = errors.New("ERR iteration finished successfully")
-	ErrInvalidTopic       = errors.New("invalid topic.")
-	ErrTopicAlreadyExists = errors.New("topic already exists")
-	ErrTopicArchived      = errors.New("topic has been archived")
-	ErrTopicRecreate      = errors.New("cannot recreate archived topic")
-	ErrMissingBucket      = errors.New("missing topics bucket.")
 )
 
 type boltStore struct {
@@ -356,52 +345,9 @@ func (b *boltStore) processBucket(tx *bolt.Tx, bucket []byte, ch chan DataItem) 
 	slog.Info("done with bucket", "bucket", string(bucket), "key_count", keyCount)
 }
 
-func NewBoltStore(db *bolt.DB) Store {
+func NewBoltStore(db *bolt.DB) *boltStore {
 	return &boltStore{
 		db:       db,
 		timeFunc: timestamppb.Now,
 	}
-}
-
-func parseID(data []byte) (ulid.ULID, error) {
-	id := ulid.ULID{}
-	err := id.UnmarshalBinary(data)
-	return id, err
-}
-
-func encode(record *kayakv1.Record) ([]byte, error) {
-	return proto.Marshal(record)
-}
-
-func decode(key, value []byte) (*kayakv1.Record, error) {
-	var record kayakv1.Record
-	err := proto.Unmarshal(value, &record)
-	if err != nil {
-		return nil, err
-	}
-	if key == nil {
-		return &record, nil
-	}
-	id := ulid.ULID{}
-	err = id.UnmarshalBinary(key)
-	if err != nil {
-		return nil, err
-	}
-	record.Id = id.String()
-	return &record, nil
-}
-
-func key(key string) []byte {
-	return []byte(key)
-}
-
-type KVItem struct {
-	Bucket []byte
-	Key    []byte
-	Value  []byte
-	Err    error
-}
-
-func (i *KVItem) IsFinished() bool {
-	return i.Err == ErrIterFinished
 }

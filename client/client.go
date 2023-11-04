@@ -2,23 +2,23 @@ package client
 
 import (
 	"context"
-	"log/slog"
 	"net/http"
 
 	"connectrpc.com/connect"
-	"github.com/hashicorp/go-retryablehttp"
-	"github.com/oklog/ulid/v2"
-
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
+	"github.com/hashicorp/go-retryablehttp"
+	"github.com/oklog/ulid/v2"
+	"log/slog"
 )
 
 type Config struct {
-	Address    string
-	ConsumerID string
-	HTTPClient *http.Client
-	ID         string
-	Topic      string
+	Address       string
+	ConsumerID    string
+	ConsumerGroup string
+	HTTPClient    *http.Client
+	ID            string
+	Topic         string
 }
 type CfgOption func(*Config)
 
@@ -48,6 +48,12 @@ func WithTopic(topic string) CfgOption {
 func WithConsumerID(consumer string) CfgOption {
 	return func(c *Config) {
 		c.ConsumerID = consumer
+	}
+}
+
+func WithConsumerGroup(group string) CfgOption {
+	return func(c *Config) {
+		c.ConsumerGroup = group
 	}
 }
 
@@ -90,7 +96,7 @@ func (c *Client) CommitRecord(ctx context.Context, record *kayakv1.Record) error
 	return err
 }
 
-func (c *Client) GetRecords(ctx context.Context, topic string, start string, limit int32) ([]*kayakv1.Record, error) {
+func (c *Client) GetRecords(ctx context.Context, topic string, start string, limit int64) ([]*kayakv1.Record, error) {
 	req := connect.NewRequest(&kayakv1.GetRecordsRequest{
 		Topic: topic,
 		Start: start,
@@ -99,12 +105,14 @@ func (c *Client) GetRecords(ctx context.Context, topic string, start string, lim
 	resp, err := c.client.GetRecords(ctx, req)
 	return resp.Msg.GetRecords(), err
 }
+
 func (c *Client) CreateTopic(ctx context.Context, topic string) error {
 	_, err := c.client.CreateTopic(ctx, connect.NewRequest(&kayakv1.CreateTopicRequest{
 		Name: topic,
 	}))
 	return err
 }
+
 func (c *Client) DeleteTopic(ctx context.Context, topic string) error {
 	req := connect.NewRequest(&kayakv1.DeleteTopicRequest{
 		Topic: topic,

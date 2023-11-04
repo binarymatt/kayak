@@ -25,7 +25,7 @@ const _ = grpc.SupportPackageIsVersion7
 type KayakServiceClient interface {
 	PutRecords(ctx context.Context, in *PutRecordsRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	CommitRecord(ctx context.Context, in *CommitRecordRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	Apply(ctx context.Context, in *Command, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	Apply(ctx context.Context, in *Command, opts ...grpc.CallOption) (*ApplyResponse, error)
 	GetRecords(ctx context.Context, in *GetRecordsRequest, opts ...grpc.CallOption) (*GetRecordsResponse, error)
 	FetchRecord(ctx context.Context, in *FetchRecordRequest, opts ...grpc.CallOption) (*FetchRecordsResponse, error)
 	StreamRecords(ctx context.Context, in *StreamRecordsRequest, opts ...grpc.CallOption) (KayakService_StreamRecordsClient, error)
@@ -33,6 +33,7 @@ type KayakServiceClient interface {
 	DeleteTopic(ctx context.Context, in *DeleteTopicRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	ListTopics(ctx context.Context, in *ListTopicsRequest, opts ...grpc.CallOption) (*ListTopicsResponse, error)
 	CreateConsumerGroup(ctx context.Context, in *CreateConsumerGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	RegisterConsumer(ctx context.Context, in *RegisterConsumerRequest, opts ...grpc.CallOption) (*RegisterConsumerResponse, error)
 	Stats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*StatsResponse, error)
 	GetNodeDetails(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*GetNodeDetailsResponse, error)
 }
@@ -63,8 +64,8 @@ func (c *kayakServiceClient) CommitRecord(ctx context.Context, in *CommitRecordR
 	return out, nil
 }
 
-func (c *kayakServiceClient) Apply(ctx context.Context, in *Command, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
+func (c *kayakServiceClient) Apply(ctx context.Context, in *Command, opts ...grpc.CallOption) (*ApplyResponse, error) {
+	out := new(ApplyResponse)
 	err := c.cc.Invoke(ctx, "/kayak.v1.KayakService/Apply", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -158,6 +159,15 @@ func (c *kayakServiceClient) CreateConsumerGroup(ctx context.Context, in *Create
 	return out, nil
 }
 
+func (c *kayakServiceClient) RegisterConsumer(ctx context.Context, in *RegisterConsumerRequest, opts ...grpc.CallOption) (*RegisterConsumerResponse, error) {
+	out := new(RegisterConsumerResponse)
+	err := c.cc.Invoke(ctx, "/kayak.v1.KayakService/RegisterConsumer", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *kayakServiceClient) Stats(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*StatsResponse, error) {
 	out := new(StatsResponse)
 	err := c.cc.Invoke(ctx, "/kayak.v1.KayakService/Stats", in, out, opts...)
@@ -182,7 +192,7 @@ func (c *kayakServiceClient) GetNodeDetails(ctx context.Context, in *emptypb.Emp
 type KayakServiceServer interface {
 	PutRecords(context.Context, *PutRecordsRequest) (*emptypb.Empty, error)
 	CommitRecord(context.Context, *CommitRecordRequest) (*emptypb.Empty, error)
-	Apply(context.Context, *Command) (*emptypb.Empty, error)
+	Apply(context.Context, *Command) (*ApplyResponse, error)
 	GetRecords(context.Context, *GetRecordsRequest) (*GetRecordsResponse, error)
 	FetchRecord(context.Context, *FetchRecordRequest) (*FetchRecordsResponse, error)
 	StreamRecords(*StreamRecordsRequest, KayakService_StreamRecordsServer) error
@@ -190,6 +200,7 @@ type KayakServiceServer interface {
 	DeleteTopic(context.Context, *DeleteTopicRequest) (*emptypb.Empty, error)
 	ListTopics(context.Context, *ListTopicsRequest) (*ListTopicsResponse, error)
 	CreateConsumerGroup(context.Context, *CreateConsumerGroupRequest) (*emptypb.Empty, error)
+	RegisterConsumer(context.Context, *RegisterConsumerRequest) (*RegisterConsumerResponse, error)
 	Stats(context.Context, *emptypb.Empty) (*StatsResponse, error)
 	GetNodeDetails(context.Context, *emptypb.Empty) (*GetNodeDetailsResponse, error)
 }
@@ -204,7 +215,7 @@ func (UnimplementedKayakServiceServer) PutRecords(context.Context, *PutRecordsRe
 func (UnimplementedKayakServiceServer) CommitRecord(context.Context, *CommitRecordRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CommitRecord not implemented")
 }
-func (UnimplementedKayakServiceServer) Apply(context.Context, *Command) (*emptypb.Empty, error) {
+func (UnimplementedKayakServiceServer) Apply(context.Context, *Command) (*ApplyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Apply not implemented")
 }
 func (UnimplementedKayakServiceServer) GetRecords(context.Context, *GetRecordsRequest) (*GetRecordsResponse, error) {
@@ -227,6 +238,9 @@ func (UnimplementedKayakServiceServer) ListTopics(context.Context, *ListTopicsRe
 }
 func (UnimplementedKayakServiceServer) CreateConsumerGroup(context.Context, *CreateConsumerGroupRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateConsumerGroup not implemented")
+}
+func (UnimplementedKayakServiceServer) RegisterConsumer(context.Context, *RegisterConsumerRequest) (*RegisterConsumerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterConsumer not implemented")
 }
 func (UnimplementedKayakServiceServer) Stats(context.Context, *emptypb.Empty) (*StatsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Stats not implemented")
@@ -429,6 +443,24 @@ func _KayakService_CreateConsumerGroup_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _KayakService_RegisterConsumer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterConsumerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(KayakServiceServer).RegisterConsumer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/kayak.v1.KayakService/RegisterConsumer",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(KayakServiceServer).RegisterConsumer(ctx, req.(*RegisterConsumerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _KayakService_Stats_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(emptypb.Empty)
 	if err := dec(in); err != nil {
@@ -507,6 +539,10 @@ var KayakService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateConsumerGroup",
 			Handler:    _KayakService_CreateConsumerGroup_Handler,
+		},
+		{
+			MethodName: "RegisterConsumer",
+			Handler:    _KayakService_RegisterConsumer_Handler,
 		},
 		{
 			MethodName: "Stats",

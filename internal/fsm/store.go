@@ -4,16 +4,18 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
-	"log/slog"
 
-	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
-	"github.com/binarymatt/kayak/internal/store"
 	"github.com/boltdb/bolt"
 	"github.com/dgraph-io/badger/v4"
 	"github.com/hashicorp/raft"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"log/slog"
+
+	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
+	"github.com/binarymatt/kayak/internal/store"
 )
 
 type storeFSM struct {
@@ -47,12 +49,9 @@ func (s storeFSM) Apply(log *raft.Log) interface{} {
 				}
 			}
 			err := s.store.AddRecords(context.TODO(), topic, records...)
-			if err != nil {
-				slog.Error("could not save records", "error", err)
-			}
+			fmt.Println(err)
 			return &ApplyResponse{
-				Error: s.store.AddRecords(context.TODO(), topic, records...),
-				Data:  records,
+				Error: err,
 			}
 		}
 		if command.GetCreateTopicRequest() != nil {
@@ -100,6 +99,20 @@ func (s storeFSM) Apply(log *raft.Log) interface{} {
 			return &ApplyResponse{
 				Error: err,
 				Data:  topic,
+			}
+		}
+		if req := command.GetCreateConsumerGroupRequest(); req != nil {
+			group := req.GetGroup()
+			err := s.store.RegisterConsumerGroup(context.TODO(), group)
+			return &ApplyResponse{
+				Error: err,
+			}
+		}
+		if req := command.GetRegisterConsumerRequest(); req != nil {
+			partitionID, err := s.store.RegisterConsumer(context.TODO(), req.Topic, req.GroupName, req.ConsumerId)
+			return &ApplyResponse{
+				Error: err,
+				Data:  partitionID,
 			}
 		}
 
