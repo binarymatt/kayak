@@ -11,29 +11,31 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/binarymatt/kayak/gen/kayak/v1;kayakv1";
 
 service KayakService {
-  rpc PutRecords(PutRecordsRequest) returns (google.protobuf.Empty) {}
-  rpc CommitRecord(CommitRecordRequest) returns (google.protobuf.Empty) {}
-  rpc Apply(Command) returns (ApplyResponse) {}
+  // Mutating Procedures
 
+  // Apply applies a command on the primary node.
+  rpc Apply(Command) returns (ApplyResponse) {}
+  // PutRecords adds records to the stream
+  rpc PutRecords(PutRecordsRequest) returns (google.protobuf.Empty) {}
+  // Commits Consumer position for a topic/group
+  rpc CommitRecord(CommitRecordRequest) returns (google.protobuf.Empty) {}
+  // Creates new topic on server
+  rpc CreateTopic(CreateTopicRequest) returns (google.protobuf.Empty) {}
+  // Deletes Topic across server - permantly or via archive
+  rpc DeleteTopic(DeleteTopicRequest) returns (google.protobuf.Empty) {}
+  rpc CreateConsumerGroup(CreateConsumerGroupRequest) returns (google.protobuf.Empty) {}
+  rpc RegisterConsumer(RegisterConsumerRequest) returns (google.protobuf.Empty) {}
+
+  // Read Procedures
   rpc GetRecords(GetRecordsRequest) returns (GetRecordsResponse) {}
   rpc FetchRecord(FetchRecordRequest) returns (FetchRecordsResponse) {}
   rpc StreamRecords(StreamRecordsRequest) returns (stream Record) {}
-
-  rpc CreateTopic(CreateTopicRequest) returns (google.protobuf.Empty) {}
-  rpc DeleteTopic(DeleteTopicRequest) returns (google.protobuf.Empty) {}
   rpc ListTopics(ListTopicsRequest) returns (ListTopicsResponse) {}
-
-  rpc CreateConsumerGroup(CreateConsumerGroupRequest) returns (google.protobuf.Empty) {}
-  rpc RegisterConsumer(RegisterConsumerRequest) returns (RegisterConsumerResponse) {}
-
   rpc Stats(google.protobuf.Empty) returns (StatsResponse) {}
   rpc GetNodeDetails(google.protobuf.Empty) returns (GetNodeDetailsResponse) {}
 }
 message CommitRecordRequest {
-  string topic = 1;
-  string group = 2;
-  string consumer_id = 3;
-  string record_id = 4;
+  TopicConsumer consumer = 1;
 }
 
 message PutRecordsRequest {
@@ -134,7 +136,8 @@ message StreamRecordsRequest {
 
 message GroupPartitions {
   string name = 1;
-  repeated ConsumerGroupPartition consumer_group_partitions = 2;
+  int64 partitions = 2;
+  repeated TopicConsumer consumers = 3;
 }
 message TopicMetadata {
   string name = 1;
@@ -170,10 +173,5 @@ message CreateConsumerGroupRequest {
 }
 
 message RegisterConsumerRequest {
-  string topic = 1;
-  string group_name = 2;
-  string consumer_id = 3;
-}
-message RegisterConsumerResponse {
-  int64 partition_id = 1;
+  TopicConsumer consumer = 1;
 }

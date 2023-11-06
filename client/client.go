@@ -89,9 +89,12 @@ func (c *Client) FetchRecord(ctx context.Context) (*kayakv1.Record, error) {
 
 func (c *Client) CommitRecord(ctx context.Context, record *kayakv1.Record) error {
 	_, err := c.client.CommitRecord(ctx, connect.NewRequest(&kayakv1.CommitRecordRequest{
-		Topic:      c.cfg.Topic,
-		ConsumerId: c.cfg.ConsumerID,
-		Position:   record.GetId(),
+		Consumer: &kayakv1.TopicConsumer{
+			Group:    c.cfg.ConsumerGroup,
+			Topic:    c.cfg.Topic,
+			Id:       c.cfg.ConsumerID,
+			Position: record.GetId(),
+		},
 	}))
 	return err
 }

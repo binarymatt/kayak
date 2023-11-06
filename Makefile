@@ -8,7 +8,7 @@ mocks:
 
 .PHONY: test
 test:
-	go test -v ./...
+	go test -v -cover -coverprofile=coverage.out ./...
 
 .PHONY: local_cluster
 local_cluster:

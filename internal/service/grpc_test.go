@@ -30,14 +30,15 @@ func (s *ServiceTestSuite) TestCreateConsumerGroup() {
 
 func (s *ServiceTestSuite) TestRegisterConsumer() {
 	s.mockStore.EXPECT().
-		RegisterConsumer(context.TODO(), "topic", "group", "id1").
-		Return(1, nil).Once()
-	resp, err := s.service.RegisterConsumer(context.Background(),
+		RegisterConsumer(context.TODO(), &kayakv1.TopicConsumer{Topic: "topic", Group: "group", Id: "id1"}).
+		Return(&kayakv1.TopicConsumer{Topic: "topic", Group: "group", Id: "id1", Position: "", Partition: 1}, nil).Once()
+	_, err := s.service.RegisterConsumer(context.Background(),
 		connect.NewRequest(&kayakv1.RegisterConsumerRequest{
-			Topic:      "topic",
-			GroupName:  "group",
-			ConsumerId: "id1",
+			Consumer: &kayakv1.TopicConsumer{
+				Topic: "topic",
+				Group: "group",
+				Id:    "id1",
+			},
 		}))
 	s.NoError(err)
-	s.Equal(int64(1), resp.Msg.PartitionId)
 }

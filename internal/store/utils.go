@@ -56,6 +56,9 @@ func decode(key, value []byte) (*kayakv1.Record, error) {
 func key(key string) []byte {
 	return []byte(key)
 }
+func bytes(item string) []byte {
+	return []byte(item)
+}
 
 type KVItem struct {
 	Bucket []byte

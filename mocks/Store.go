@@ -245,19 +245,19 @@ func (_c *Store_DeleteTopic_Call) RunAndReturn(run func(context.Context, string,
 }
 
 // GetConsumerPartitions provides a mock function with given fields: ctx, topic, group
-func (_m *Store) GetConsumerPartitions(ctx context.Context, topic string, group string) ([]*kayakv1.ConsumerGroupPartition, error) {
+func (_m *Store) GetConsumerPartitions(ctx context.Context, topic string, group string) ([]*kayakv1.TopicConsumer, error) {
 	ret := _m.Called(ctx, topic, group)
 
-	var r0 []*kayakv1.ConsumerGroupPartition
+	var r0 []*kayakv1.TopicConsumer
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]*kayakv1.ConsumerGroupPartition, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]*kayakv1.TopicConsumer, error)); ok {
 		return rf(ctx, topic, group)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) []*kayakv1.ConsumerGroupPartition); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) []*kayakv1.TopicConsumer); ok {
 		r0 = rf(ctx, topic, group)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*kayakv1.ConsumerGroupPartition)
+			r0 = ret.Get(0).([]*kayakv1.TopicConsumer)
 		}
 	}
 
@@ -290,12 +290,12 @@ func (_c *Store_GetConsumerPartitions_Call) Run(run func(ctx context.Context, to
 	return _c
 }
 
-func (_c *Store_GetConsumerPartitions_Call) Return(_a0 []*kayakv1.ConsumerGroupPartition, _a1 error) *Store_GetConsumerPartitions_Call {
+func (_c *Store_GetConsumerPartitions_Call) Return(_a0 []*kayakv1.TopicConsumer, _a1 error) *Store_GetConsumerPartitions_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Store_GetConsumerPartitions_Call) RunAndReturn(run func(context.Context, string, string) ([]*kayakv1.ConsumerGroupPartition, error)) *Store_GetConsumerPartitions_Call {
+func (_c *Store_GetConsumerPartitions_Call) RunAndReturn(run func(context.Context, string, string) ([]*kayakv1.TopicConsumer, error)) *Store_GetConsumerPartitions_Call {
 	_c.Call.Return(run)
 	return _c
 }

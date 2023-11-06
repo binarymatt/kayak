@@ -72,10 +72,16 @@ func (s storeFSM) Apply(log *raft.Log) interface{} {
 			}
 		}
 		if command.GetCommitRecordRequest() != nil {
-			topic := command.GetCommitRecordRequest().GetTopic()
-			consumer := command.GetCommitRecordRequest().GetConsumerId()
-			position := command.GetCommitRecordRequest().GetPosition()
-			err := s.store.CommitConsumerPosition(context.TODO(), topic, consumer, position)
+			topic := command.GetCommitRecordRequest().GetConsumer().GetTopic()
+			consumer := command.GetCommitRecordRequest().GetConsumer().GetId()
+			position := command.GetCommitRecordRequest().GetConsumer().GetPosition()
+			group := command.GetCommitRecordRequest().GetConsumer().GetGroup()
+			err := s.store.CommitConsumerPosition(context.TODO(), &kayakv1.TopicConsumer{
+				Topic:    topic,
+				Group:    group,
+				Id:       consumer,
+				Position: position,
+			})
 			if err != nil {
 				slog.Error("error committing group position", "error", err)
 			}
@@ -109,7 +115,12 @@ func (s storeFSM) Apply(log *raft.Log) interface{} {
 			}
 		}
 		if req := command.GetRegisterConsumerRequest(); req != nil {
-			partitionID, err := s.store.RegisterConsumer(context.TODO(), req.Topic, req.GroupName, req.ConsumerId)
+			partitionID, err := s.store.RegisterConsumer(context.TODO(),
+				&kayakv1.TopicConsumer{
+					Topic: req.Consumer.Topic,
+					Group: req.Consumer.Group,
+					Id:    req.Consumer.Id,
+				})
 			return &ApplyResponse{
 				Error: err,
 				Data:  partitionID,

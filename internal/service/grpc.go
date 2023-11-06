@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -85,7 +86,11 @@ func (s *service) FetchRecord(ctx context.Context, req *connect.Request[kayakv1.
 	logger.Debug("checking consumer group details")
 
 	logger.Info("getting consumer group position")
-	p, err := s.store.GetConsumerPosition(ctx, req.Msg.Topic, "", req.Msg.ConsumerId)
+	p, err := s.store.GetConsumerPosition(ctx, &kayakv1.TopicConsumer{
+		Topic: req.Msg.Topic,
+		Group: req.Msg.ConsumerGroup,
+		Id:    req.Msg.ConsumerId,
+	})
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
@@ -161,7 +166,19 @@ func (s *service) CommitRecord(ctx context.Context, req *connect.Request[kayakv1
 	_, err := s.applyCommand(ctx, command)
 	return connect.NewResponse(&emptypb.Empty{}), err
 }
+func ToStructValue(item interface{}) (*structpb.Value, error) {
+	// to map[string]interface{}
+	raw, err := json.Marshal(item)
+	if err != nil {
+		return nil, err
+	}
+	var v map[string]interface{}
+	if err := json.Unmarshal(raw, &v); err != nil {
+		return nil, err
+	}
+	return structpb.NewValue(v)
 
+}
 func (s *service) applyCommand(ctx context.Context, command *kayakv1.Command) (*connect.Response[kayakv1.ApplyResponse], error) {
 	if s.raft.State() != raft.Leader {
 		fmt.Println("not leader")
@@ -184,14 +201,18 @@ func (s *service) applyCommand(ctx context.Context, command *kayakv1.Command) (*
 	var val *structpb.Value
 	if applyFuture.Response() != nil {
 		resp := applyFuture.Response().(*fsm.ApplyResponse)
-		fmt.Println(resp)
-		val, err = structpb.NewValue(resp.Data)
+		val, err = ToStructValue(resp.Data)
 		if err != nil {
-			fmt.Println("error getting struct value")
 			return nil, err
 		}
+		//val, err = structpb.NewValue(resp.Data)
+
+		//anypb.New(resp.Data)
+		//if err != nil {
+		//	fmt.Println("error getting struct value")
+		//	return nil, err
+		//}
 	}
-	fmt.Println("sending apply response", val)
 	return connect.NewResponse(&kayakv1.ApplyResponse{
 		Data: val,
 	}), applyFuture.Error()
@@ -291,17 +312,8 @@ func (s *service) Apply(ctx context.Context, req *connect.Request[kayakv1.Comman
 
 	// RegisterConsumer
 	if req.Msg.GetRegisterConsumerRequest() != nil {
-		resp, err := s.RegisterConsumer(ctx, connect.NewRequest(req.Msg.GetRegisterConsumerRequest()))
-		if err != nil {
-			return connect.NewResponse(&kayakv1.ApplyResponse{}), err
-		}
-		data, err := structpb.NewValue(resp.Msg.GetPartitionId())
-		if err != nil {
-			return nil, connect.NewError(connect.CodeInternal, err)
-		}
-		return connect.NewResponse(&kayakv1.ApplyResponse{
-			Data: data,
-		}), nil
+		_, err := s.RegisterConsumer(ctx, connect.NewRequest(req.Msg.GetRegisterConsumerRequest()))
+		return connect.NewResponse(&kayakv1.ApplyResponse{}), err
 	}
 
 	return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("not valid"))
@@ -321,7 +333,7 @@ func (s *service) CreateConsumerGroup(ctx context.Context, req *connect.Request[
 	return connect.NewResponse(&emptypb.Empty{}), err
 
 }
-func (s *service) RegisterConsumer(ctx context.Context, req *connect.Request[kayakv1.RegisterConsumerRequest]) (*connect.Response[kayakv1.RegisterConsumerResponse], error) {
+func (s *service) RegisterConsumer(ctx context.Context, req *connect.Request[kayakv1.RegisterConsumerRequest]) (*connect.Response[emptypb.Empty], error) {
 	if err := validate(req.Msg); err != nil {
 		slog.Error("invalid create consumer group request", "error", err)
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
@@ -332,8 +344,6 @@ func (s *service) RegisterConsumer(ctx context.Context, req *connect.Request[kay
 		},
 	}
 	resp, err := s.applyCommand(ctx, command)
-	partition := int64(resp.Msg.Data.GetNumberValue())
-	return connect.NewResponse(&kayakv1.RegisterConsumerResponse{
-		PartitionId: partition,
-	}), err
+	fmt.Println("apply response", resp)
+	return connect.NewResponse(&emptypb.Empty{}), err
 }

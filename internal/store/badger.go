@@ -10,7 +10,6 @@ import (
 	"time"
 
 	badger "github.com/dgraph-io/badger/v4"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"log/slog"
 
@@ -31,12 +30,10 @@ func NewBadger(db *badger.DB) *badgerStore {
 	}
 }
 
-func MetaKey(meta *kayakv1.TopicMetadata) []byte {
-	return key(fmt.Sprintf("topics#%s", meta.Name))
-}
 func intToBytes(i int64) []byte {
 	return strconv.AppendInt(nil, i, 10)
 }
+
 func (b *badgerStore) initTopicMeta(ctx context.Context, tx *badger.Txn, topic string) error {
 	prefix := fmt.Sprintf("%s#", topic)
 	recordCount := intToBytes(0)
@@ -57,12 +54,9 @@ func (b *badgerStore) initTopicMeta(ctx context.Context, tx *badger.Txn, topic s
 func (b *badgerStore) CreateTopic(ctx context.Context, name string) error {
 	return b.db.Update(func(tx *badger.Txn) error {
 
-		archived, err := b.isTopicArchived(tx, name)
+		err := b.isTopicArchived(tx, name)
 		if err != nil {
 			return err
-		}
-		if archived {
-			return ErrTopicArchived
 		}
 
 		// create metadata entry
@@ -71,19 +65,27 @@ func (b *badgerStore) CreateTopic(ctx context.Context, name string) error {
 	})
 }
 
-func (b *badgerStore) isTopicArchived(tx *badger.Txn, topic string) (bool, error) {
+func (b *badgerStore) topicExists(tx *badger.Txn, topic string) error {
+	_, err := tx.Get(key("topics#" + topic))
+	if err != nil {
+		return ErrInvalidTopic
+	}
+	return err
+}
+
+func (b *badgerStore) isTopicArchived(tx *badger.Txn, topic string) error {
 	k := fmt.Sprintf("%s#archived", topic)
 	item, err := tx.Get(key(k))
 	if errors.Is(err, badger.ErrKeyNotFound) {
-		return false, nil
+		return nil
 	}
 	if err != nil {
-		return false, err
+		return err
 	}
 	if item.ValueSize() > 0 {
-		return true, nil
+		return ErrTopicArchived
 	}
-	return false, nil
+	return nil
 }
 
 func (b *badgerStore) topicRecordCount(tx *badger.Txn, topic string) (int64, error) {
@@ -156,13 +158,11 @@ func (b *badgerStore) AddRecords(ctx context.Context, topic string, records ...*
 	return b.db.Update(func(tx *badger.Txn) error {
 		b.metaMutex.Lock()
 		defer b.metaMutex.Unlock()
-		archived, err := b.isTopicArchived(tx, topic)
+		err := b.isTopicArchived(tx, topic)
 		if err != nil {
 			return err
 		}
-		if archived {
-			return ErrTopicArchived
-		}
+
 		current, err := b.topicRecordCount(tx, topic)
 		if err != nil {
 			return err
@@ -181,7 +181,6 @@ func (b *badgerStore) AddRecords(ctx context.Context, topic string, records ...*
 				return err
 			}
 		}
-		fmt.Println("record count", recordCount)
 		cnt := fmt.Sprintf("%d", recordCount)
 		return tx.Set(key(topic+"#record_count"), []byte(cnt))
 	})
@@ -248,10 +247,10 @@ func (b *badgerStore) ListTopics(ctx context.Context) (topics []string, err erro
 	return
 }
 
-func (b *badgerStore) GetConsumerPosition(ctx context.Context, topic, group, consumer string) (position string, err error) {
+func (b *badgerStore) GetConsumerPosition(ctx context.Context, consumer *kayakv1.TopicConsumer) (position string, err error) {
 
 	err = b.db.View(func(tx *badger.Txn) error {
-		position, err = b.getConsumerPosition(ctx, tx, topic, group, consumer)
+		position, err = b.getConsumerPosition(ctx, tx, consumer)
 		return nil
 	})
 	return
@@ -261,27 +260,18 @@ func (b *badgerStore) CommitConsumerPosition(ctx context.Context, consumer *kaya
 	err = b.db.Update(func(tx *badger.Txn) error {
 		b.metaMutex.Lock()
 		defer b.metaMutex.Unlock()
-		item, err := b.retrieveTopicMeta(tx, consumer.Topic)
-		if errors.Is(err, badger.ErrKeyNotFound) {
-			return ErrInvalidTopic
-		}
+		err := b.topicExists(tx, consumer.Topic)
 		if err != nil {
 			return err
 		}
-		if item.Archived {
-			return ErrTopicArchived
-		}
-		fmt.Println(item)
 
-		fmt.Println("about to marsal item", item)
-		val, err := proto.Marshal(item)
+		err = b.isTopicArchived(tx, consumer.Topic)
 		if err != nil {
 			return err
 		}
-		if err := tx.Set(MetaKey(item), val); err != nil {
-			return err
-		}
-		return nil
+
+		positionKey := fmt.Sprintf("%s#groups#%s#consumer_position#%s", consumer.Topic, consumer.Group, consumer.Id)
+		return tx.Set(key(positionKey), bytes(consumer.Position))
 	})
 	return
 }
@@ -434,7 +424,7 @@ func (b *badgerStore) getConsumerGroupNames(tx *badger.Txn, topic string) (names
 }
 
 // GetConsumerPartitions returns the current partition assignments for a consumer group
-func (b *badgerStore) GetConsumerPartitions(ctx context.Context, topic, group string) (items []*kayakv1.ConsumerGroupPartition, err error) {
+func (b *badgerStore) GetConsumerPartitions(ctx context.Context, topic, group string) (items []*kayakv1.TopicConsumer, err error) {
 	err = b.db.View(func(tx *badger.Txn) error {
 		var e error
 		items, e = b.getConsumerPartitions(ctx, tx, group, topic)
@@ -442,9 +432,9 @@ func (b *badgerStore) GetConsumerPartitions(ctx context.Context, topic, group st
 	})
 	return items, err
 }
-func (b *badgerStore) getConsumerPartitions(ctx context.Context, tx *badger.Txn, group, topic string) ([]*kayakv1.ConsumerGroupPartition, error) {
+func (b *badgerStore) getConsumerPartitions(ctx context.Context, tx *badger.Txn, group, topic string) ([]*kayakv1.TopicConsumer, error) {
 	prefix := fmt.Sprintf("%s#groups#%s", topic, group)
-	items := []*kayakv1.ConsumerGroupPartition{}
+	items := []*kayakv1.TopicConsumer{}
 	// partitionCountKey := key(fmt.Sprintf("%s#partition_count", prefix))
 
 	consumersKeyPrefix := key(fmt.Sprintf("%s#consumers", prefix))
@@ -462,21 +452,23 @@ func (b *badgerStore) getConsumerPartitions(ctx context.Context, tx *badger.Txn,
 		if err != nil {
 			return nil, err
 		}
-		position, err := b.getConsumerPosition(ctx, tx, topic, group, consumerID)
+		position, err := b.getConsumerPosition(ctx, tx, &kayakv1.TopicConsumer{Topic: topic, Group: group, Id: consumerID})
 		if err != nil {
 			return nil, err
 		}
-		items = append(items, &kayakv1.ConsumerGroupPartition{
-			ConsumerId:      consumerID,
-			PartitionNumber: partition,
-			Position:        position,
+		items = append(items, &kayakv1.TopicConsumer{
+			Id:        consumerID,
+			Topic:     topic,
+			Group:     group,
+			Partition: partition,
+			Position:  position,
 		})
 	}
 	return items, nil
 }
 
-func (b *badgerStore) getConsumerPosition(ctx context.Context, tx *badger.Txn, topic, group, consumer string) (string, error) {
-	positionKey := fmt.Sprintf("%s#groups#%s#consumer_position#%s", topic, group, consumer)
+func (b *badgerStore) getConsumerPosition(ctx context.Context, tx *badger.Txn, consumer *kayakv1.TopicConsumer) (string, error) {
+	positionKey := fmt.Sprintf("%s#groups#%s#consumer_position#%s", consumer.Topic, consumer.Group, consumer.Id)
 	item, err := tx.Get(key(positionKey))
 	if errors.Is(err, badger.ErrKeyNotFound) {
 		return "", ErrInvalidConsumer
@@ -502,9 +494,24 @@ func (b *badgerStore) loadMeta(ctx context.Context, tx *badger.Txn, topic string
 		if err != nil {
 			return nil, err
 		}
+		partitionCountKey := fmt.Sprintf("%s#groups#%s#partition_count", topic, name)
+
+		data, err := tx.Get(key(partitionCountKey))
+		if err != nil {
+			return nil, err
+		}
+		raw, err := data.ValueCopy(nil)
+		if err != nil {
+			return nil, err
+		}
+		cnt, err := strconv.ParseInt(string(raw), 10, 64)
+		if err != nil {
+			return nil, err
+		}
 		groupMeta[name] = &kayakv1.GroupPartitions{
-			Name:                    name,
-			ConsumerGroupPartitions: partitions,
+			Name:       name,
+			Partitions: cnt,
+			Consumers:  partitions,
 		}
 	}
 	// get record count
@@ -518,8 +525,8 @@ func (b *badgerStore) loadMeta(ctx context.Context, tx *badger.Txn, topic string
 		return nil, err
 	}
 	// get archived
-	isArchived, err := b.isTopicArchived(tx, topic)
-	if err != nil {
+	err = b.isTopicArchived(tx, topic)
+	if err != nil && !errors.Is(err, ErrTopicArchived) {
 		return nil, err
 	}
 
@@ -527,7 +534,7 @@ func (b *badgerStore) loadMeta(ctx context.Context, tx *badger.Txn, topic string
 		Name:          topic,
 		RecordCount:   recordCount,
 		CreatedAt:     timestamppb.New(ts),
-		Archived:      isArchived,
+		Archived:      errors.Is(err, ErrTopicArchived),
 		GroupMetadata: groupMeta,
 	}
 	return meta, nil

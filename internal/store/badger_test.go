@@ -101,7 +101,6 @@ func (b *BadgerTestSuite) TestAddRecords_HappyPath() {
 				return err
 			}
 
-			fmt.Println("testing decode")
 			r, err := decode(nil, data)
 			b.NoError(err)
 			if err != nil {
@@ -109,7 +108,6 @@ func (b *BadgerTestSuite) TestAddRecords_HappyPath() {
 			}
 			b.NotNil(r)
 
-			fmt.Println("checking id", r)
 			b.NotEmpty(r.Id)
 			b.Equal(records[i].Topic, r.Topic)
 			b.Equal(records[i].Payload, r.Payload)
@@ -180,22 +178,26 @@ func (b *BadgerTestSuite) TestGetRecords_WithStart() {
 }
 
 func (b *BadgerTestSuite) TestCommitConsumerPosition() {
-	ctx := context.Background()
-	err := b.store.CreateTopic(ctx, testTopicName)
+	consumer := &kayakv1.TopicConsumer{
+		Topic: "testTopic",
+		Group: "testGroup",
+		Id:    "1",
+	}
+	err := b.store.CreateTopic(b.ctx, "testTopic")
+	b.NoError(err)
+	_, err = b.store.RegisterConsumer(b.ctx, consumer)
 	b.NoError(err)
 
-	err = b.store.CommitConsumerPosition(ctx, &kayakv1.TopicConsumer{Topic: testTopicName, Group: "testGroup", Id: "1", Position: "recordID"})
+	consumer.Position = "recordID"
+	err = b.store.CommitConsumerPosition(b.ctx, consumer)
 	b.NoError(err)
 	err = b.db.View(func(tx *badger.Txn) error {
-		item, err := tx.Get(key("topics#test"))
-		b.NoError(err)
-
-		data, err := item.ValueCopy(nil)
-		b.NoError(err)
-		var meta kayakv1.TopicMetadata
-		err = proto.Unmarshal(data, &meta)
-		b.NoError(err)
-
+		item, err := tx.Get(key("testTopic#groups#testGroup#consumer_position#1"))
+		if err != nil {
+			return err
+		}
+		data, _ := item.ValueCopy(nil)
+		b.Equal(consumer.Position, string(data))
 		return nil
 	})
 	b.NoError(err)
@@ -290,27 +292,30 @@ func (b *BadgerTestSuite) TestRegisterConsumerGroup_ExistingGroup() {
 	b.ErrorIs(err, ErrConsumerGroupExists)
 }
 func (b *BadgerTestSuite) TestRegisterConsumer_EmptyGroup() {
+	topic := "testTopic"
+	group := "testGroup"
+	consumerID := "consumerID"
 	err := b.store.RegisterConsumerGroup(
 		context.Background(),
 		&kayakv1.ConsumerGroup{
-			Name:           "group",
-			Topic:          "topic",
+			Name:           group,
+			Topic:          topic,
 			PartitionCount: 10,
 		},
 	)
 	b.NoError(err)
 
 	consumer, err := b.store.RegisterConsumer(context.Background(), &kayakv1.TopicConsumer{
-		Topic: "topic",
-		Group: "group",
-		Id:    "id",
+		Topic: topic,
+		Group: group,
+		Id:    consumerID,
 	})
 	b.NoError(err)
 	b.Equal(int64(0), consumer.Partition)
 
 	err = b.db.Update(func(tx *badger.Txn) error {
 		// validate parition
-		partitionKey, err := tx.Get(key("topic#groups#group#consumers#id"))
+		partitionKey, err := tx.Get(key("testTopic#groups#testGroup#consumers#consumerID"))
 		b.NoError(err)
 		data, err := partitionKey.ValueCopy(nil)
 		if err != nil {
@@ -318,7 +323,7 @@ func (b *BadgerTestSuite) TestRegisterConsumer_EmptyGroup() {
 		}
 		b.Equal("0", string(data))
 		// validate position
-		positionKey, err := tx.Get(key("topic#groups#group#consumer_position#id"))
+		positionKey, err := tx.Get(key("testTopic#groups#testGroup#consumer_position#consumerID"))
 		b.NoError(err)
 		if err != nil {
 			return err
@@ -496,10 +501,12 @@ func (b *BadgerTestSuite) TestLoadMeta() {
 			Archived:    false,
 			GroupMetadata: map[string]*kayakv1.GroupPartitions{
 				"consumerOne": &kayakv1.GroupPartitions{
-					Name: "consumerOne",
+					Name:       "consumerOne",
+					Partitions: 2,
 				},
 				"consumerTwo": &kayakv1.GroupPartitions{
-					Name: "consumerTwo",
+					Name:       "consumerTwo",
+					Partitions: 3,
 				},
 			},
 		}, meta)
@@ -512,23 +519,26 @@ func (s *BadgerTestSuite) protoEqual(expected, actual proto.Message) {
 	s.Empty(cmp.Diff(expected, actual, protocmp.Transform()))
 }
 func (b *BadgerTestSuite) TestGetConsumerPartitions() {
-	err := b.db.Update(func(tx *badger.Txn) error {
-		if err := tx.Set(key("test#groups#groupOne#consumers#one"), key("1")); err != nil {
-			return err
-		}
-		return tx.Set(key("test#groups#groupOne#consumers#two"), key("0"))
+	_ = b.store.CreateTopic(b.ctx, "test")
+	_ = b.store.RegisterConsumerGroup(b.ctx, &kayakv1.ConsumerGroup{Name: "group", Topic: "test", PartitionCount: 5})
+	_, _ = b.store.RegisterConsumer(b.ctx, &kayakv1.TopicConsumer{
+		Id:    "consumerOne",
+		Topic: "test",
+		Group: "group",
 	})
+	consumers, err := b.store.GetConsumerPartitions(context.Background(), "test", "group")
 	b.NoError(err)
-	positions, err := b.store.GetConsumerPartitions(context.Background(), "test", "groupOne")
-	b.NoError(err)
-	expected := []*kayakv1.ConsumerGroupPartition{
+	expected := []*kayakv1.TopicConsumer{
 		{
-			Position:        "",
-			PartitionNumber: 1,
-			ConsumerId:      "one",
+			Position:  "",
+			Partition: 0,
+			Id:        "consumerOne",
+			Topic:     "test",
+			Group:     "group",
 		},
 	}
-	b.Equal(expected, positions)
+	b.Require().Len(consumers, 1)
+	b.protoEqual(expected[0], consumers[0])
 }
 func TestBadgerTestSuite(t *testing.T) {
 	suite.Run(t, new(BadgerTestSuite))
