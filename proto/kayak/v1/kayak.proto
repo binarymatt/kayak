@@ -148,7 +148,8 @@ message TopicMetadata {
 }
 
 enum Hash {
-  HASH_MURMUR3 = 0;
+  HASH_UNSPECIFIED = 0;
+  HASH_MURMUR3 = 1;
 }
 message TopicConsumer {
   string id = 1;
@@ -161,6 +162,7 @@ message ConsumerGroup {
   string name = 1 [(buf.validate.field).required = true];
   string topic = 2 [(buf.validate.field).required = true];
   int64 partition_count = 3 [(buf.validate.field).required = true];
+  Hash hash = 4 [(buf.validate.field).required = true];
 }
 
 message ConsumerGroupPartition {

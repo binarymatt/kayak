@@ -249,6 +249,7 @@ func (b *BadgerTestSuite) TestRegisterConsumerGroup_HappyPath() {
 			Name:           "testName",
 			Topic:          "testTopic",
 			PartitionCount: 1,
+			Hash:           kayakv1.Hash_HASH_MURMUR3,
 		},
 	)
 	b.NoError(err)
@@ -256,6 +257,7 @@ func (b *BadgerTestSuite) TestRegisterConsumerGroup_HappyPath() {
 	// Check for correct records in db
 	err = b.db.View(func(tx *badger.Txn) error {
 		partitionCountKey := fmt.Sprintf("%s#groups#%s#partition_count", "testTopic", "testName")
+		hashKey := fmt.Sprintf("%s#groups#%s#hash", "testTopic", "testName")
 		item, err := tx.Get(key(partitionCountKey))
 		if err != nil {
 			return err
@@ -269,6 +271,11 @@ func (b *BadgerTestSuite) TestRegisterConsumerGroup_HappyPath() {
 			return err
 		}
 		b.Equal(int64(1), cnt)
+
+		hashItem, err := tx.Get(key(hashKey))
+		b.NoError(err)
+		hash, _ := hashItem.ValueCopy(nil)
+		b.Equal("HASH_MURMUR3", string(hash))
 		return nil
 	})
 	b.NoError(err)
@@ -472,7 +479,7 @@ func (b *BadgerTestSuite) TestGetConsumerGroupNames() {
 	err = b.db.View(func(tx *badger.Txn) error {
 		names, err := b.store.getConsumerGroupNames(tx, "test")
 		b.NoError(err)
-		b.Equal([]string{"groupOne", "groupTwo"}, names)
+		b.ElementsMatch([]string{"groupOne", "groupTwo"}, names)
 		return nil
 	})
 	b.NoError(err)

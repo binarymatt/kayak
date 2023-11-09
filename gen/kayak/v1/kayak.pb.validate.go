@@ -2875,6 +2875,8 @@ func (m *ConsumerGroup) validate(all bool) error {
 
 	// no validation rules for PartitionCount
 
+	// no validation rules for Hash
+
 	if len(errors) > 0 {
 		return ConsumerGroupMultiError(errors)
 	}

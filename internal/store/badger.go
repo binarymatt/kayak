@@ -298,9 +298,13 @@ func (b *badgerStore) RegisterConsumerGroup(ctx context.Context, group *kayakv1.
 	return
 }
 
+func (b *badgerStore) GetConsumerGroupInformation(ctx context.Context, group *kayakv1.ConsumerGroup) (*kayakv1.ConsumerGroup, error) {
+	return nil, nil
+}
 func (b *badgerStore) registerConsumerGroup(ctx context.Context, tx *badger.Txn, group *kayakv1.ConsumerGroup) (err error) {
 	cnt := intToBytes(group.PartitionCount)
 	partitionCountKey := fmt.Sprintf("%s#groups#%s#partition_count", group.Topic, group.Name)
+	hashKey := fmt.Sprintf("%s#groups#%s#hash", group.Topic, group.Name)
 	exists, err := b.consumerGoupExists(ctx, tx, group.Topic, group.Name)
 	if err != nil {
 		return err
@@ -309,6 +313,9 @@ func (b *badgerStore) registerConsumerGroup(ctx context.Context, tx *badger.Txn,
 		return ErrConsumerGroupExists
 	}
 	if err := tx.Set(key(partitionCountKey), cnt); err != nil {
+		return err
+	}
+	if err := tx.Set(key(hashKey), []byte(group.Hash.String())); err != nil {
 		return err
 	}
 	return nil
@@ -483,6 +490,14 @@ func (b *badgerStore) getConsumerPosition(ctx context.Context, tx *badger.Txn, c
 	return string(data), nil
 }
 
+func (b *badgerStore) LoadMeta(ctx context.Context, topic string) (meta *kayakv1.TopicMetadata, err error) {
+	err = b.db.Update(func(tx *badger.Txn) error {
+		meta, err = b.loadMeta(ctx, tx, topic)
+		return nil
+	})
+	return
+
+}
 func (b *badgerStore) loadMeta(ctx context.Context, tx *badger.Txn, topic string) (*kayakv1.TopicMetadata, error) {
 	groupMeta := map[string]*kayakv1.GroupPartitions{}
 	groups, err := b.getConsumerGroupNames(tx, topic)
