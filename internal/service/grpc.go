@@ -11,6 +11,7 @@ import (
 	"connectrpc.com/connect"
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/hashicorp/raft"
+	"github.com/spaolacci/murmur3"
 	"go.opentelemetry.io/otel"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -21,6 +22,10 @@ import (
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
 	"github.com/binarymatt/kayak/internal/fsm"
+)
+
+var (
+	ErrInvalidConsumer = errors.New("invalid consumer")
 )
 
 func validate(msg protoreflect.ProtoMessage) error {
@@ -74,12 +79,35 @@ func (s *service) GetRecords(ctx context.Context, req *connect.Request[kayakv1.G
 		Records: records,
 	}), nil
 }
+func findConsumer(consumers []*kayakv1.TopicConsumer, id string) *kayakv1.TopicConsumer {
+	for _, consumer := range consumers {
+		if consumer.Id == id {
+			return consumer
+		}
+	}
+	return nil
+}
 
+// return partition index that this message should live in
+func balancer(key string, partitionCount int64) int64 {
+	partition := murmur3.Sum64([]byte(key)) % uint64(partitionCount)
+	return int64(partition)
+}
 func (s *service) FetchRecord(ctx context.Context, req *connect.Request[kayakv1.FetchRecordRequest]) (*connect.Response[kayakv1.FetchRecordsResponse], error) {
 	logger := slog.With("consumer", req.Msg.ConsumerId, "topic", req.Msg.Topic)
 	if err := validate(req.Msg); err != nil {
 		slog.Error("invalid request", "error", err)
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+	meta, err := s.store.LoadMeta(ctx, req.Msg.Topic)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	group := meta.GroupMetadata[req.Msg.ConsumerGroup]
+	consumers := group.Consumers
+	c := findConsumer(consumers, req.Msg.ConsumerId)
+	if c == nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidConsumer)
 	}
 	logger.Info("fetching records via grpc")
 
@@ -98,14 +126,20 @@ func (s *service) FetchRecord(ctx context.Context, req *connect.Request[kayakv1.
 	position := p
 	logger.Info("fetching record")
 
-	records, err := s.store.GetRecords(ctx, req.Msg.Topic, position, 1)
+	records, err := s.store.GetRecords(ctx, req.Msg.Topic, position, 10)
 	if err != nil {
 		logger.Error("error getting records from store", "error", err)
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 	var record *kayakv1.Record
-	if len(records) > 0 {
-		record = records[0]
+	for _, record := range records {
+		fmt.Println(record)
+		partition := balancer(record.Id, group.Partitions)
+		if partition == c.Partition {
+			return connect.NewResponse(&kayakv1.FetchRecordsResponse{
+				Record: record,
+			}), nil
+		}
 	}
 
 	return connect.NewResponse(&kayakv1.FetchRecordsResponse{
@@ -197,7 +231,6 @@ func (s *service) applyCommand(ctx context.Context, command *kayakv1.Command) (*
 		//	return nil, connect.NewError(connect.CodeInternal, err)
 		return nil, err
 	}
-	fmt.Println("trying to create response")
 	var val *structpb.Value
 	if applyFuture.Response() != nil {
 		resp := applyFuture.Response().(*fsm.ApplyResponse)
@@ -344,6 +377,6 @@ func (s *service) RegisterConsumer(ctx context.Context, req *connect.Request[kay
 		},
 	}
 	resp, err := s.applyCommand(ctx, command)
-	fmt.Println("apply response", resp)
+	slog.Debug("apply response", "response", resp)
 	return connect.NewResponse(&emptypb.Empty{}), err
 }

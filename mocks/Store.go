@@ -244,6 +244,61 @@ func (_c *Store_DeleteTopic_Call) RunAndReturn(run func(context.Context, string,
 	return _c
 }
 
+// GetConsumerGroupInformation provides a mock function with given fields: ctx, group
+func (_m *Store) GetConsumerGroupInformation(ctx context.Context, group *kayakv1.ConsumerGroup) (*kayakv1.ConsumerGroup, error) {
+	ret := _m.Called(ctx, group)
+
+	var r0 *kayakv1.ConsumerGroup
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *kayakv1.ConsumerGroup) (*kayakv1.ConsumerGroup, error)); ok {
+		return rf(ctx, group)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *kayakv1.ConsumerGroup) *kayakv1.ConsumerGroup); ok {
+		r0 = rf(ctx, group)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*kayakv1.ConsumerGroup)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *kayakv1.ConsumerGroup) error); ok {
+		r1 = rf(ctx, group)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Store_GetConsumerGroupInformation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetConsumerGroupInformation'
+type Store_GetConsumerGroupInformation_Call struct {
+	*mock.Call
+}
+
+// GetConsumerGroupInformation is a helper method to define mock.On call
+//   - ctx context.Context
+//   - group *kayakv1.ConsumerGroup
+func (_e *Store_Expecter) GetConsumerGroupInformation(ctx interface{}, group interface{}) *Store_GetConsumerGroupInformation_Call {
+	return &Store_GetConsumerGroupInformation_Call{Call: _e.mock.On("GetConsumerGroupInformation", ctx, group)}
+}
+
+func (_c *Store_GetConsumerGroupInformation_Call) Run(run func(ctx context.Context, group *kayakv1.ConsumerGroup)) *Store_GetConsumerGroupInformation_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*kayakv1.ConsumerGroup))
+	})
+	return _c
+}
+
+func (_c *Store_GetConsumerGroupInformation_Call) Return(_a0 *kayakv1.ConsumerGroup, _a1 error) *Store_GetConsumerGroupInformation_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Store_GetConsumerGroupInformation_Call) RunAndReturn(run func(context.Context, *kayakv1.ConsumerGroup) (*kayakv1.ConsumerGroup, error)) *Store_GetConsumerGroupInformation_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetConsumerPartitions provides a mock function with given fields: ctx, topic, group
 func (_m *Store) GetConsumerPartitions(ctx context.Context, topic string, group string) ([]*kayakv1.TopicConsumer, error) {
 	ret := _m.Called(ctx, topic, group)
@@ -503,6 +558,61 @@ func (_c *Store_ListTopics_Call) Return(_a0 []string, _a1 error) *Store_ListTopi
 }
 
 func (_c *Store_ListTopics_Call) RunAndReturn(run func(context.Context) ([]string, error)) *Store_ListTopics_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// LoadMeta provides a mock function with given fields: ctx, topic
+func (_m *Store) LoadMeta(ctx context.Context, topic string) (*kayakv1.TopicMetadata, error) {
+	ret := _m.Called(ctx, topic)
+
+	var r0 *kayakv1.TopicMetadata
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*kayakv1.TopicMetadata, error)); ok {
+		return rf(ctx, topic)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *kayakv1.TopicMetadata); ok {
+		r0 = rf(ctx, topic)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*kayakv1.TopicMetadata)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, topic)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Store_LoadMeta_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'LoadMeta'
+type Store_LoadMeta_Call struct {
+	*mock.Call
+}
+
+// LoadMeta is a helper method to define mock.On call
+//   - ctx context.Context
+//   - topic string
+func (_e *Store_Expecter) LoadMeta(ctx interface{}, topic interface{}) *Store_LoadMeta_Call {
+	return &Store_LoadMeta_Call{Call: _e.mock.On("LoadMeta", ctx, topic)}
+}
+
+func (_c *Store_LoadMeta_Call) Run(run func(ctx context.Context, topic string)) *Store_LoadMeta_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *Store_LoadMeta_Call) Return(_a0 *kayakv1.TopicMetadata, _a1 error) *Store_LoadMeta_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Store_LoadMeta_Call) RunAndReturn(run func(context.Context, string) (*kayakv1.TopicMetadata, error)) *Store_LoadMeta_Call {
 	_c.Call.Return(run)
 	return _c
 }
