@@ -48,10 +48,10 @@ message PutRecordsRequest {
 }
 message Record {
   string topic = 1;
-  string partition = 2;
+  int64 partition = 2;
   string id = 3;
   map<string, string> headers = 4;
-  bytes payload = 5 [(buf.validate.field).bytes.min_len = 1];
+  bytes payload = 5 [(buf.validate.field).required = true];
 }
 
 message FetchRecordRequest {

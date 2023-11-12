@@ -103,7 +103,10 @@ func (s *service) FetchRecord(ctx context.Context, req *connect.Request[kayakv1.
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	group := meta.GroupMetadata[req.Msg.ConsumerGroup]
+	group, ok := meta.GroupMetadata[req.Msg.ConsumerGroup]
+	if !ok {
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidConsumer)
+	}
 	consumers := group.Consumers
 	c := findConsumer(consumers, req.Msg.ConsumerId)
 	if c == nil {
@@ -113,17 +116,8 @@ func (s *service) FetchRecord(ctx context.Context, req *connect.Request[kayakv1.
 
 	logger.Debug("checking consumer group details")
 
-	logger.Info("getting consumer group position")
-	p, err := s.store.GetConsumerPosition(ctx, &kayakv1.TopicConsumer{
-		Topic: req.Msg.Topic,
-		Group: req.Msg.ConsumerGroup,
-		Id:    req.Msg.ConsumerId,
-	})
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
-	}
-	slog.Info("retrieved consumer group position from local store", "fetched_position", p)
-	position := p
+	slog.Info("retrieved consumer group position from local store", "fetched_position", c.Position)
+	position := c.Position
 	logger.Info("fetching record")
 
 	records, err := s.store.GetRecords(ctx, req.Msg.Topic, position, 10)

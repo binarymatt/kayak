@@ -12,12 +12,12 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/oklog/ulid/v2"
 	"github.com/stretchr/testify/suite"
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"log/slog"
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
+	"github.com/binarymatt/kayak/internal/test"
 )
 
 const (
@@ -464,6 +464,16 @@ func (b *BadgerTestSuite) TestRegisterConsumer_NoSlotsLeft() {
 	b.ErrorIs(err, ErrGroupFull)
 
 }
+func (b *BadgerTestSuite) TestRegisterConsumer_SinglePartition() {
+	consumer, err := b.store.RegisterConsumer(b.ctx, &kayakv1.TopicConsumer{
+		Topic: "topic",
+		Group: "testGroup",
+		Id:    "consumerID",
+	})
+	b.NoError(err)
+	b.Equal(int64(0), consumer.Partition)
+}
+
 func (b *BadgerTestSuite) TestRegisterConsumer_MultiplePartitions() {
 
 }
@@ -501,7 +511,7 @@ func (b *BadgerTestSuite) TestLoadMeta() {
 		b.NoError(err)
 		ts := time.Unix(b.ts.UTC().Unix(), 0)
 
-		b.protoEqual(&kayakv1.TopicMetadata{
+		test.ProtoEqual(b.T(), &kayakv1.TopicMetadata{
 			Name:        "test",
 			RecordCount: 0,
 			CreatedAt:   timestamppb.New(ts),
@@ -522,9 +532,6 @@ func (b *BadgerTestSuite) TestLoadMeta() {
 	b.NoError(err)
 }
 
-func (s *BadgerTestSuite) protoEqual(expected, actual proto.Message) {
-	s.Empty(cmp.Diff(expected, actual, protocmp.Transform()))
-}
 func (b *BadgerTestSuite) TestGetConsumerPartitions() {
 	_ = b.store.CreateTopic(b.ctx, "test")
 	_ = b.store.RegisterConsumerGroup(b.ctx, &kayakv1.ConsumerGroup{Name: "group", Topic: "test", PartitionCount: 5})
@@ -545,7 +552,7 @@ func (b *BadgerTestSuite) TestGetConsumerPartitions() {
 		},
 	}
 	b.Require().Len(consumers, 1)
-	b.protoEqual(expected[0], consumers[0])
+	test.ProtoEqual(b.T(), expected[0], consumers[0])
 }
 func TestBadgerTestSuite(t *testing.T) {
 	suite.Run(t, new(BadgerTestSuite))

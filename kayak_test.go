@@ -6,12 +6,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/suite"
+
 	"github.com/binarymatt/kayak/client"
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
-	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/suite"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/testing/protocmp"
+	"github.com/binarymatt/kayak/internal/test"
 )
 
 var (
@@ -43,10 +42,6 @@ func (s *KayakIntegrationTestSuite) checkRecord(index int, record *kayakv1.Recor
 	r.Equal(records[index].Headers, record.Headers)
 	r.NotEmpty(record.Id)
 
-}
-
-func (s *KayakIntegrationTestSuite) protoEqual(expected, actual proto.Message) {
-	s.Empty(cmp.Diff(expected, actual, protocmp.Transform()))
 }
 
 func (s *KayakIntegrationTestSuite) SetupSuite() {
@@ -105,7 +100,7 @@ func (s *KayakIntegrationTestSuite) TestFetchRecordNoCommit() {
 
 	record2, err := s.client.FetchRecord(ctx)
 	r.NoError(err)
-	s.protoEqual(record, record2)
+	test.ProtoEqual(s.T(), record, record2)
 }
 
 func (s *KayakIntegrationTestSuite) TestFetchRecords() {
