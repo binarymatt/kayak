@@ -22,3 +22,6 @@ integration_test:
 	env KAYAK_INTEGRATION_TESTS=true go test -v ./kayak_test.go
 	docker compose down
 
+.PHONY: docker
+docker:
+	docker build . -t kayak:latest
