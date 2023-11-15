@@ -2,11 +2,13 @@ package client
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"connectrpc.com/connect"
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
+	"github.com/binarymatt/kayak/internal/store"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/oklog/ulid/v2"
 	"log/slog"
@@ -26,10 +28,12 @@ func NewConfig(id string) *Config {
 	if id == "" {
 		id = ulid.Make().String()
 	}
+	client := retryablehttp.NewClient()
+	client.RetryMax = 3
 
 	return &Config{
 		ID:         id,
-		HTTPClient: retryablehttp.NewClient().StandardClient(),
+		HTTPClient: client.StandardClient(),
 	}
 }
 
@@ -77,13 +81,45 @@ func (c *Client) PutRecords(ctx context.Context, records []*kayakv1.Record) erro
 	return err
 }
 
+func (c *Client) RegisterConsumer(ctx context.Context) error {
+	_, err := c.client.RegisterConsumer(ctx, connect.NewRequest(&kayakv1.RegisterConsumerRequest{
+		Consumer: &kayakv1.TopicConsumer{
+			Id:    c.cfg.ConsumerID,
+			Topic: c.cfg.Topic,
+			Group: c.cfg.ConsumerGroup,
+		},
+	}))
+	return err
+}
+func (c *Client) CreateConsumerGroup(ctx context.Context, partitionCount int64) error {
+	if c.cfg.ConsumerGroup == "" {
+		return errors.New("missing group config")
+	}
+	_, err := c.client.CreateConsumerGroup(ctx, connect.NewRequest(&kayakv1.CreateConsumerGroupRequest{
+		Group: &kayakv1.ConsumerGroup{
+			Name:           c.cfg.ConsumerGroup,
+			Topic:          c.cfg.Topic,
+			PartitionCount: partitionCount,
+			Hash:           kayakv1.Hash_HASH_MURMUR3,
+		},
+	}))
+	return err
+}
+
 func (c *Client) FetchRecord(ctx context.Context) (*kayakv1.Record, error) {
+	if err := c.RegisterConsumer(ctx); err != nil && !errors.Is(err, store.ErrConsumerAlreadyRegistered) {
+		return nil, err
+	}
 	req := connect.NewRequest(&kayakv1.FetchRecordRequest{
-		Topic:      c.cfg.Topic,
-		ConsumerId: c.cfg.ConsumerID,
+		Topic:         c.cfg.Topic,
+		ConsumerGroup: c.cfg.ConsumerGroup,
+		ConsumerId:    c.cfg.ConsumerID,
 	})
 	slog.Info("kayak client fetch", "topic", c.cfg.Topic, "consumer", c.cfg.ConsumerID)
 	resp, err := c.client.FetchRecord(ctx, req)
+	if err != nil {
+		return nil, err
+	}
 	return resp.Msg.GetRecord(), err
 }
 
