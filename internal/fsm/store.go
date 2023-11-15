@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"io"
 
 	"github.com/boltdb/bolt"
@@ -49,7 +48,9 @@ func (s storeFSM) Apply(log *raft.Log) interface{} {
 				}
 			}
 			err := s.store.AddRecords(context.TODO(), topic, records...)
-			fmt.Println(err)
+			if err != nil {
+				slog.Error("error while adding records in fsm", "error", err)
+			}
 			return &ApplyResponse{
 				Error: err,
 			}
@@ -68,7 +69,6 @@ func (s storeFSM) Apply(log *raft.Log) interface{} {
 
 			return &ApplyResponse{
 				Error: err,
-				Data:  name,
 			}
 		}
 		if command.GetCommitRecordRequest() != nil {
