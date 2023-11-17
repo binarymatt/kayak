@@ -30,6 +30,7 @@ func NewConfig(id string) *Config {
 	}
 	client := retryablehttp.NewClient()
 	client.RetryMax = 3
+	client.Logger = slog.With("client", "")
 
 	return &Config{
 		ID:         id,
@@ -72,7 +73,7 @@ type Client struct {
 	client kayakv1connect.KayakServiceClient
 }
 
-func (c *Client) PutRecords(ctx context.Context, records []*kayakv1.Record) error {
+func (c *Client) PutRecords(ctx context.Context, records ...*kayakv1.Record) error {
 	topic := c.cfg.Topic
 	_, err := c.client.PutRecords(ctx, connect.NewRequest(&kayakv1.PutRecordsRequest{
 		Topic:   topic,
@@ -154,7 +155,8 @@ func (c *Client) CreateTopic(ctx context.Context, topic string) error {
 
 func (c *Client) DeleteTopic(ctx context.Context, topic string) error {
 	req := connect.NewRequest(&kayakv1.DeleteTopicRequest{
-		Topic: topic,
+		Topic:   topic,
+		Archive: false,
 	})
 	_, err := c.client.DeleteTopic(ctx, req)
 	return err

@@ -25,6 +25,7 @@ import (
 	"github.com/hashicorp/serf/serf"
 	"github.com/oklog/ulid/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"golang.org/x/sync/errgroup"
@@ -333,6 +334,7 @@ func (s *service) serve(ctx context.Context) error {
 		connect.WithInterceptors(
 			otelconnect.NewInterceptor(),
 			NewLogInterceptor(),
+			// LatencyInterceptor(),
 		),
 	)
 	raftPath, raftHandler := transportv1connect.NewRaftTransportHandler(s.manager.Service())
@@ -344,10 +346,11 @@ func (s *service) serve(ctx context.Context) error {
 	mux.Handle(adminPath, adminHandler)
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/ready", s.Ready)
+	router := otelhttp.NewHandler(mux, "")
 	slog.Info("setting up api service", "advertise", s.cfg.ServiceAddress(), "listen", s.cfg.ListenAddress())
 	server := http.Server{
 		Addr:    s.cfg.ListenAddress(),
-		Handler: h2c.NewHandler(mux, &http2.Server{}),
+		Handler: h2c.NewHandler(router, &http2.Server{}),
 	}
 
 	go func() {

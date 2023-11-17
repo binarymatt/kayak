@@ -54,6 +54,7 @@ func (s *ServiceTestSuite) TestFetchRecord_SinglePartition() {
 	r.NoError(err)
 	test.ProtoEqual(s.T(), records[0], resp.Msg.Record)
 }
+
 func (s *ServiceTestSuite) TestFetchRecord_MultiplePartitions() {
 	r := s.Require()
 	request := connect.NewRequest(&kayakv1.FetchRecordRequest{
@@ -63,16 +64,14 @@ func (s *ServiceTestSuite) TestFetchRecord_MultiplePartitions() {
 	})
 	records := []*kayakv1.Record{
 		{
-			Id:        "2Y5Pw5vJP4ATrUdjNENthrlucjb",
-			Topic:     "testTopic",
-			Partition: 1,
-			Payload:   []byte("first"),
+			Id:      "2Y5Pw5vJP4ATrUdjNENthrlucjb",
+			Topic:   "testTopic",
+			Payload: []byte("first"),
 		},
 		{
-			Id:        "2Y5PvAX8aY98M5u2oQMrobCahtL",
-			Topic:     "testTopic",
-			Partition: 0,
-			Payload:   []byte("second"),
+			Id:      "2Y5PvAX8aY98M5u2oQMrobCahtL",
+			Topic:   "testTopic",
+			Payload: []byte("second"),
 		},
 	}
 	ctx := context.Background()

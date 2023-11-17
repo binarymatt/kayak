@@ -1025,6 +1025,8 @@ func (m *DeleteTopicRequest) validate(all bool) error {
 
 	// no validation rules for Topic
 
+	// no validation rules for Archive
+
 	if len(errors) > 0 {
 		return DeleteTopicRequestMultiError(errors)
 	}

@@ -122,7 +122,8 @@ func (b *badgerStore) retrieveTopicMeta(tx *badger.Txn, topic string) (*kayakv1.
 	return &meta, nil
 }
 func (b *badgerStore) ArchiveTopic(ctx context.Context, topic string) (err error) {
-	err = b.db.DropPrefix(key(fmt.Sprintf("%s#", topic)))
+	slog.Warn("archiving topic", "topic", topic)
+	err = b.db.DropPrefix(key(fmt.Sprintf("%s#records", topic)))
 	if err != nil {
 		return
 	}
@@ -144,6 +145,7 @@ func (b *badgerStore) PurgeTopic(ctx context.Context, topic string) (err error) 
 	if err != nil {
 		return
 	}
+
 	return b.db.DropPrefix(key(fmt.Sprintf("topics#%s", topic)))
 }
 
@@ -160,11 +162,13 @@ func (b *badgerStore) AddRecords(ctx context.Context, topic string, records ...*
 		defer b.metaMutex.Unlock()
 		err := b.isTopicArchived(tx, topic)
 		if err != nil {
+			slog.Error("topic is archived", "error", err)
 			return err
 		}
 
 		current, err := b.topicRecordCount(tx, topic)
 		if err != nil {
+			slog.Error("error getting record count", "error", err)
 			return err
 		}
 
@@ -191,11 +195,16 @@ func (b *badgerStore) GetRecords(ctx context.Context, topic string, start string
 		it := tx.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
 
-		prefix := []byte(fmt.Sprintf("%s#", topic))
+		prefix := []byte(fmt.Sprintf("%s#records#", topic))
 		startKey := []byte(fmt.Sprintf("%s#records#%s", topic, start))
 
 		counter := 0
 		for it.Seek(startKey); it.ValidForPrefix(prefix); it.Next() {
+			if !it.Valid() {
+				slog.Warn("iterator is done")
+				break
+			}
+			slog.Info("retrieved key", "key", string(it.Item().Key()))
 			if counter >= limit {
 				slog.Debug("past limit, exit")
 				break
@@ -415,6 +424,7 @@ func (b *badgerStore) RegisterConsumer(ctx context.Context, consumer *kayakv1.To
 	return registeredConsumer, err
 }
 func (b *badgerStore) getConsumerGroupNames(tx *badger.Txn, topic string) (names []string, err error) {
+	slog.Info("loading consumer group names", "topic", topic)
 	s := map[string]bool{}
 	it := tx.NewIterator(badger.DefaultIteratorOptions)
 	defer it.Close()
@@ -427,6 +437,7 @@ func (b *badgerStore) getConsumerGroupNames(tx *badger.Txn, topic string) (names
 	for k := range s {
 		names = append(names, k)
 	}
+	slog.Info("loaded names", "names", names)
 	return
 }
 
@@ -493,12 +504,13 @@ func (b *badgerStore) getConsumerPosition(ctx context.Context, tx *badger.Txn, c
 func (b *badgerStore) LoadMeta(ctx context.Context, topic string) (meta *kayakv1.TopicMetadata, err error) {
 	err = b.db.Update(func(tx *badger.Txn) error {
 		meta, err = b.loadMeta(ctx, tx, topic)
-		return nil
+		return err
 	})
 	return
 
 }
 func (b *badgerStore) loadMeta(ctx context.Context, tx *badger.Txn, topic string) (*kayakv1.TopicMetadata, error) {
+	slog.Info("loading topic meta from store", "topic", topic)
 	groupMeta := map[string]*kayakv1.GroupPartitions{}
 	groups, err := b.getConsumerGroupNames(tx, topic)
 	if err != nil {
@@ -509,6 +521,7 @@ func (b *badgerStore) loadMeta(ctx context.Context, tx *badger.Txn, topic string
 		if err != nil {
 			return nil, err
 		}
+		slog.Info("grabbed partitions", "partitions", partitions)
 		partitionCountKey := fmt.Sprintf("%s#groups#%s#partition_count", topic, name)
 
 		data, err := tx.Get(key(partitionCountKey))
@@ -529,21 +542,26 @@ func (b *badgerStore) loadMeta(ctx context.Context, tx *badger.Txn, topic string
 			Consumers:  partitions,
 		}
 	}
+	slog.Info("group meta built", "group", groupMeta)
 	// get record count
 	recordCount, err := b.topicRecordCount(tx, topic)
 	if err != nil {
+		slog.Error("error getting record count", "error", err)
 		return nil, err
 	}
+	slog.Info("record count retrieved")
 	// get created at
 	ts, err := b.topicCreatedAt(tx, topic)
 	if err != nil {
 		return nil, err
 	}
+	slog.Info("topic created at")
 	// get archived
 	err = b.isTopicArchived(tx, topic)
 	if err != nil && !errors.Is(err, ErrTopicArchived) {
 		return nil, err
 	}
+	slog.Info("topic archived")
 
 	meta := &kayakv1.TopicMetadata{
 		Name:          topic,
@@ -552,5 +570,6 @@ func (b *badgerStore) loadMeta(ctx context.Context, tx *badger.Txn, topic string
 		Archived:      errors.Is(err, ErrTopicArchived),
 		GroupMetadata: groupMeta,
 	}
+	slog.Info("returning meta info", "meta", meta)
 	return meta, nil
 }

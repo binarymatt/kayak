@@ -170,11 +170,24 @@ func (b *BadgerTestSuite) TestGetRecords_WithStart() {
 	records := createRecords()
 	err := b.store.AddRecords(ctx, "test", records...)
 	b.NoError(err)
+
+	// check after first
 	items, err := b.store.GetRecords(ctx, "test", records[0].Id, 100)
 	b.NoError(err)
 	b.Len(items, 2)
 	b.Empty(cmp.Diff(records[1], items[0], protocmp.Transform()))
 	b.Empty(cmp.Diff(records[2], items[1], protocmp.Transform()))
+
+	// check after second
+	items, err = b.store.GetRecords(ctx, "test", records[1].Id, 100)
+	b.NoError(err)
+	b.Len(items, 1)
+	b.Empty(cmp.Diff(records[2], items[0], protocmp.Transform()))
+
+	// check after third
+	items, err = b.store.GetRecords(ctx, "test", records[2].Id, 10)
+	b.NoError(err)
+	b.Empty(items)
 }
 
 func (b *BadgerTestSuite) TestCommitConsumerPosition() {

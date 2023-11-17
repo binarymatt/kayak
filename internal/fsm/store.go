@@ -93,8 +93,9 @@ func (s storeFSM) Apply(log *raft.Log) interface{} {
 		}
 		if command.GetDeleteTopicRequest() != nil {
 			req := command.GetDeleteTopicRequest()
+			slog.Info("deleting topic from state machine", "topic", req.Topic, "archived", req.Archive)
 			topic := req.Topic
-			err := s.store.DeleteTopic(context.TODO(), topic, true)
+			err := s.store.DeleteTopic(context.TODO(), topic, req.Archive)
 			if err != nil {
 				slog.Error("Error deleting topic in state machine", "topic", topic, "error", err)
 			}
@@ -104,7 +105,6 @@ func (s storeFSM) Apply(log *raft.Log) interface{} {
 			}
 			return &ApplyResponse{
 				Error: err,
-				Data:  topic,
 			}
 		}
 		if req := command.GetCreateConsumerGroupRequest(); req != nil {

@@ -101,8 +101,10 @@ func (s *service) FetchRecord(ctx context.Context, req *connect.Request[kayakv1.
 	}
 	meta, err := s.store.LoadMeta(ctx, req.Msg.Topic)
 	if err != nil {
+		slog.Error("could not load metadata", "error", err)
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
+	slog.Info("meta retrieved", "meta", meta, "error", err)
 	group, ok := meta.GroupMetadata[req.Msg.ConsumerGroup]
 	if !ok {
 		return nil, connect.NewError(connect.CodeInvalidArgument, ErrInvalidConsumer)
@@ -227,6 +229,7 @@ func (s *service) applyCommand(ctx context.Context, command *kayakv1.Command) (*
 	}
 	var val *structpb.Value
 	if applyFuture.Response() != nil {
+		slog.Info("response fromm apply", "response", applyFuture.Response())
 		resp := applyFuture.Response().(*fsm.ApplyResponse)
 		val, err = ToStructValue(resp.Data)
 		if err != nil {
@@ -260,6 +263,7 @@ func (s *service) DeleteTopic(ctx context.Context, req *connect.Request[kayakv1.
 	}
 	_, err = s.applyCommand(ctx, command)
 	if err != nil {
+		slog.Error("error applying delete command", "error", err)
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(&emptypb.Empty{}), nil
@@ -277,6 +281,7 @@ func (s *service) CreateTopic(ctx context.Context, req *connect.Request[kayakv1.
 	}
 	_, err := s.applyCommand(ctx, command)
 	if err != nil {
+		slog.Error("could not apply CreateTiouc command", "error", err, "command", command)
 		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("could not apply to raft: %w", err))
 	}
 	return connect.NewResponse(&emptypb.Empty{}), nil

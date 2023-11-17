@@ -83,6 +83,7 @@ message CreateTopicRequest {
 }
 message DeleteTopicRequest {
   string topic = 1 [(buf.validate.field).required = true];
+  bool archive = 2;
 }
 message Topic {
   string name = 1;

@@ -2,6 +2,7 @@ package kayak_test
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -50,25 +51,29 @@ func (s *KayakIntegrationTestSuite) SetupSuite() {
 		client.WithAddress(nodes[0]),
 		client.WithTopic(primaryTopic),
 		client.WithConsumerID("test"),
+		client.WithConsumerGroup("groupOne"),
 	)
 	s.secondaryClient = client.New(
 		client.NewConfig(""),
 		client.WithAddress(nodes[1]),
 		client.WithTopic(primaryTopic),
 		client.WithConsumerID("test"),
+		client.WithConsumerGroup("groupTwo"),
 	)
 }
 func (s *KayakIntegrationTestSuite) SetupTest() {
-	_ = s.client.CreateTopic(context.Background(), primaryTopic)
+	err := s.client.CreateTopic(context.Background(), primaryTopic)
+	s.Require().NoError(err)
 }
 func (s *KayakIntegrationTestSuite) AfterTest() {
-	_ = s.client.DeleteTopic(context.Background(), primaryTopic)
+	err := s.client.DeleteTopic(context.Background(), primaryTopic)
+	s.Require().NoError(err)
 	// s.resetTopic()
 }
 func (s *KayakIntegrationTestSuite) TestPutRecords() {
 	r := s.Require()
 	ctx := context.Background()
-	err := s.client.PutRecords(ctx, records)
+	err := s.client.PutRecords(ctx, records...)
 	r.NoError(err)
 	items, err := s.client.GetRecords(ctx, primaryTopic, "", 4)
 	r.NoError(err)
@@ -90,11 +95,12 @@ func (s *KayakIntegrationTestSuite) TestFetchNoRecords() {
 func (s *KayakIntegrationTestSuite) TestFetchRecordNoCommit() {
 	r := s.Require()
 	ctx := context.Background()
-	err := s.client.PutRecords(ctx, records)
+	err := s.client.PutRecords(ctx, records...)
 	r.NoError(err)
 
 	record, err := s.client.FetchRecord(ctx)
 	r.NoError(err)
+	fmt.Println(record)
 	r.Equal(records[0].Headers, record.Headers)
 	r.Equal(records[0].Payload, record.Payload)
 
@@ -107,7 +113,7 @@ func (s *KayakIntegrationTestSuite) TestFetchRecords() {
 
 	r := s.Require()
 	ctx := context.Background()
-	err := s.client.PutRecords(ctx, records)
+	err := s.client.PutRecords(ctx, records...)
 	r.NoError(err)
 
 	// CASE: ordering
