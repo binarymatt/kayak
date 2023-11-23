@@ -291,7 +291,7 @@ func (s *SqlTestSuite) TestGetRecords_ArchivedTopic() {
 	r.Len(items, 0)
 }
 
-func (s *SqlTestSuite) ListTopics() {
+func (s *SqlTestSuite) TestListTopics() {
 	r := s.Require()
 
 	topics, err := s.store.ListTopics(s.ctx)
@@ -303,4 +303,80 @@ func (s *SqlTestSuite) ListTopics() {
 	topics, err = s.store.ListTopics(s.ctx)
 	r.NoError(err)
 	r.ElementsMatch([]string{"test"}, topics)
+}
+
+func (s *SqlTestSuite) TestRegisterConsumerGroup() {
+	r := s.Require()
+
+	err := s.store.CreateTopic(s.ctx, "test")
+	r.NoError(err)
+
+	err = s.store.RegisterConsumerGroup(s.ctx, &kayakv1.ConsumerGroup{
+		Name:           "testGroup",
+		Topic:          "test",
+		PartitionCount: 1,
+		Hash:           kayakv1.Hash_HASH_MURMUR3,
+	})
+	r.NoError(err)
+
+	var cg models.ConsumerGroup
+	result := s.db.First(&cg)
+	r.NoError(result.Error)
+	r.Equal(int64(1), result.RowsAffected)
+	r.Equal(models.ConsumerGroup{
+		ID:             1,
+		Name:           "testGroup",
+		TopicID:        s.id.String(),
+		PartitionCount: 1,
+		Hash:           "HASH_MURMUR3",
+	}, cg)
+}
+func (s *SqlTestSuite) TestRegisterConsumerGroup_InvalidTopic() {
+	err := s.store.RegisterConsumerGroup(s.ctx, &kayakv1.ConsumerGroup{
+		Name:           "testGroup",
+		Topic:          "test",
+		PartitionCount: 1,
+		Hash:           kayakv1.Hash_HASH_MURMUR3,
+	})
+	s.Require().ErrorIs(err, ErrInvalidTopic)
+}
+
+func (s *SqlTestSuite) TestRegisterConsumerGroup_ArchivedTopic() {
+	r := s.Require()
+	result := s.db.Create(&models.Topic{
+		ID:       s.id.String(),
+		Name:     "test",
+		Archived: true,
+	})
+	r.NoError(result.Error)
+	err := s.store.RegisterConsumerGroup(s.ctx, &kayakv1.ConsumerGroup{
+		Name:           "testGroup",
+		Topic:          "test",
+		PartitionCount: 1,
+		Hash:           kayakv1.Hash_HASH_MURMUR3,
+	})
+	r.ErrorIs(err, ErrTopicArchived)
+}
+func (s *SqlTestSuite) TestRegisterConsumerGroup_ExistingGroup() {
+	r := s.Require()
+	result := s.db.Create(&models.Topic{
+		ID:       s.id.String(),
+		Name:     "test",
+		Archived: false,
+	})
+	r.NoError(result.Error)
+	result = s.db.Create(&models.ConsumerGroup{
+		Name:           "testGroup",
+		TopicID:        s.id.String(),
+		PartitionCount: 1,
+		Hash:           kayakv1.Hash_HASH_MURMUR3.String(),
+	})
+	r.NoError(result.Error)
+
+	err := s.store.RegisterConsumerGroup(s.ctx, &kayakv1.ConsumerGroup{
+		Name:           "testGroup",
+		Topic:          "test",
+		PartitionCount: 2,
+	})
+	r.ErrorIs(err, ErrConsumerGroupExists)
 }

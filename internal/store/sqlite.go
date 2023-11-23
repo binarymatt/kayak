@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/oklog/ulid/v2"
 	"gorm.io/gorm"
@@ -23,7 +25,7 @@ func NewSqlStore(db *gorm.DB) *sqlStore {
 	}
 }
 func (s *sqlStore) RunMigrations() error {
-	return s.db.AutoMigrate(&models.Topic{}, &models.Record{})
+	return s.db.AutoMigrate(&models.Topic{}, &models.Record{}, &models.ConsumerGroup{})
 }
 
 func (s *sqlStore) CreateTopic(ctx context.Context, name string) error {
@@ -121,15 +123,37 @@ func (s *sqlStore) ListTopics(ctx context.Context) ([]string, error) {
 	return names, nil
 }
 
-func (s *sqlStore) GetConsumerPartitions(ctx context.Context, topic, group string) ([]*kayakv1.TopicConsumer, error) {
-	return nil, nil
-}
-
 func (s *sqlStore) RegisterConsumerGroup(ctx context.Context, group *kayakv1.ConsumerGroup) error {
-	return nil
+	var topic models.Topic
+	result := s.db.First(&topic, "name = ?", group.Topic)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return ErrInvalidTopic
+		}
+		return result.Error
+	}
+	if topic.Archived {
+		return ErrTopicArchived
+	}
+	cg := &models.ConsumerGroup{
+		Name:           group.Name,
+		TopicID:        topic.ID,
+		PartitionCount: group.PartitionCount,
+		Hash:           group.Hash.String(),
+	}
+	result = s.db.Create(cg)
+	fmt.Println(result.Error.Error())
+	if strings.Contains(result.Error.Error(), "UNIQUE constraint failed: consumer_groups.name") {
+		return ErrConsumerGroupExists
+	}
+	return result.Error
 }
 
 func (s *sqlStore) RegisterConsumer(ctx context.Context, consumer *kayakv1.TopicConsumer) (*kayakv1.TopicConsumer, error) {
+	return nil, nil
+}
+
+func (s *sqlStore) GetConsumerPartitions(ctx context.Context, topic, group string) ([]*kayakv1.TopicConsumer, error) {
 	return nil, nil
 }
 

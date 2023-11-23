@@ -26,3 +26,11 @@ func (r *Record) AddHeaders(headers map[string]string) {
 	}
 	r.Headers = items
 }
+
+type ConsumerGroup struct {
+	ID             uint
+	Name           string `gorm:"uniqueIndex:topic_name"`
+	TopicID        string `gorm:"uniqueIndex:topic_name"`
+	PartitionCount int64
+	Hash           string
+}
