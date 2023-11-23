@@ -55,6 +55,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-logr/logr v1.3.0 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.1.2 // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
@@ -74,9 +75,12 @@ require (
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
 	github.com/hashicorp/go-sockaddr v1.0.0 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/klauspost/compress v1.12.3 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.18 // indirect
+	github.com/mattn/go-sqlite3 v1.14.18 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
 	github.com/miekg/dns v1.1.41 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
@@ -99,4 +103,8 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20231106174013-bbf56f31fb17 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231106174013-bbf56f31fb17 // indirect
+	gorm.io/datatypes v1.2.0 // indirect
+	gorm.io/driver/mysql v1.4.7 // indirect
+	gorm.io/driver/sqlite v1.5.4 // indirect
+	gorm.io/gorm v1.25.5 // indirect
 )
