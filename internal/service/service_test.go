@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -31,7 +30,6 @@ type Cluster interface {
 }
 
 func (s *ServiceTestSuite) SetupSuite() {
-	fmt.Println("setting up suite")
 	l := slog.New(slog.NewTextHandler(io.Discard, nil))
 	slog.SetDefault(l)
 }
@@ -40,7 +38,6 @@ func (s *ServiceTestSuite) TearDownTest() {
 	s.cluster.Close()
 }
 func (s *ServiceTestSuite) SetupTest() {
-	fmt.Println("setting up test")
 	store := mocks.NewStore(s.T())
 	hclog.SetDefault(hclog.NewNullLogger())
 	conf := raft.DefaultConfig()

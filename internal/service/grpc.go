@@ -36,7 +36,6 @@ func validate(msg protoreflect.ProtoMessage) error {
 	return validator.Validate(msg)
 }
 func (s *service) PutRecords(ctx context.Context, req *connect.Request[kayakv1.PutRecordsRequest]) (*connect.Response[emptypb.Empty], error) {
-	fmt.Println("putting records")
 	slog.Info("put records request")
 	if err := validate(req.Msg); err != nil {
 		slog.Error("invalid put request", "error", err)
@@ -129,7 +128,6 @@ func (s *service) FetchRecord(ctx context.Context, req *connect.Request[kayakv1.
 	}
 	var record *kayakv1.Record
 	for _, record := range records {
-		fmt.Println(record)
 		partition := balancer(record.Id, group.Partitions)
 		if partition == c.Partition {
 			return connect.NewResponse(&kayakv1.FetchRecordsResponse{
@@ -211,7 +209,6 @@ func ToStructValue(item interface{}) (*structpb.Value, error) {
 }
 func (s *service) applyCommand(ctx context.Context, command *kayakv1.Command) (*connect.Response[kayakv1.ApplyResponse], error) {
 	if s.raft.State() != raft.Leader {
-		fmt.Println("not leader")
 		leader := fmt.Sprintf("http://%s", s.raft.Leader())
 		client := kayakv1connect.NewKayakServiceClient(http.DefaultClient, leader)
 		slog.InfoContext(ctx, "applying to leader", "leader", s.raft.Leader())
@@ -324,7 +321,6 @@ func (s *service) Apply(ctx context.Context, req *connect.Request[kayakv1.Comman
 		return connect.NewResponse(&kayakv1.ApplyResponse{}), err
 	}
 	if req.Msg.GetPutRecordsRequest() != nil {
-		fmt.Println("apply grpc")
 		_, err := s.PutRecords(ctx, connect.NewRequest(req.Msg.GetPutRecordsRequest()))
 		return connect.NewResponse(&kayakv1.ApplyResponse{}), err
 	}

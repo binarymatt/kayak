@@ -2,7 +2,6 @@ package kayak_test
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -100,7 +99,6 @@ func (s *KayakIntegrationTestSuite) TestFetchRecordNoCommit() {
 
 	record, err := s.client.FetchRecord(ctx)
 	r.NoError(err)
-	fmt.Println(record)
 	r.Equal(records[0].Headers, record.Headers)
 	r.Equal(records[0].Payload, record.Payload)
 
