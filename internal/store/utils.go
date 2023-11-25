@@ -11,7 +11,6 @@ import (
 )
 
 var (
-	topicsKey                    = []byte("topic")
 	ErrIterFinished              = errors.New("ERR iteration finished successfully")
 	ErrInvalidTopic              = errors.New("invalid topic")
 	ErrTopicAlreadyExists        = errors.New("topic already exists")
@@ -20,6 +19,7 @@ var (
 	ErrMissingBucket             = errors.New("missing topics bucket")
 	ErrCreatingTopic             = errors.New("could not create topic")
 	ErrGroupFull                 = errors.New("no more slots left in consumer group")
+	ErrConsumerGroupInvalid      = errors.New("invalid consumer group")
 	ErrInvalidConsumer           = errors.New("invalid consumer for group")
 	ErrConsumerGroupExists       = errors.New("consumer group already exists")
 	ErrConsumerAlreadyRegistered = errors.New("consumer is already registered")

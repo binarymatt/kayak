@@ -3,7 +3,6 @@ package store
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/oklog/ulid/v2"
@@ -25,7 +24,12 @@ func NewSqlStore(db *gorm.DB) *sqlStore {
 	}
 }
 func (s *sqlStore) RunMigrations() error {
-	return s.db.AutoMigrate(&models.Topic{}, &models.Record{}, &models.ConsumerGroup{})
+	return s.db.AutoMigrate(
+		&models.Topic{},
+		&models.Record{},
+		&models.ConsumerGroup{},
+		&models.Consumer{},
+	)
 }
 
 func (s *sqlStore) CreateTopic(ctx context.Context, name string) error {
@@ -123,14 +127,35 @@ func (s *sqlStore) ListTopics(ctx context.Context) ([]string, error) {
 	return names, nil
 }
 
-func (s *sqlStore) RegisterConsumerGroup(ctx context.Context, group *kayakv1.ConsumerGroup) error {
+func (s *sqlStore) getTopic(topicName string) (*models.Topic, error) {
 	var topic models.Topic
-	result := s.db.First(&topic, "name = ?", group.Topic)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	result := s.db.First(&topic, "name = ?", topicName)
+	return &topic, result.Error
+}
+
+func (s *sqlStore) getConsumerGroup(topicName, groupName string) (*models.ConsumerGroup, error) {
+	topic, err := s.getTopic(topicName)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrInvalidTopic
+		}
+		return nil, err
+	}
+	var cg models.ConsumerGroup
+	result := s.db.First(&cg, "topic_id = ? AND name = ?", topic.ID, groupName)
+	if result.RowsAffected < 1 {
+		return nil, ErrConsumerGroupInvalid
+	}
+	return &cg, nil
+}
+
+func (s *sqlStore) RegisterConsumerGroup(ctx context.Context, group *kayakv1.ConsumerGroup) error {
+	topic, err := s.getTopic(group.Topic)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ErrInvalidTopic
 		}
-		return result.Error
+		return err
 	}
 	if topic.Archived {
 		return ErrTopicArchived
@@ -141,16 +166,42 @@ func (s *sqlStore) RegisterConsumerGroup(ctx context.Context, group *kayakv1.Con
 		PartitionCount: group.PartitionCount,
 		Hash:           group.Hash.String(),
 	}
-	result = s.db.Create(cg)
-	fmt.Println(result.Error.Error())
-	if strings.Contains(result.Error.Error(), "UNIQUE constraint failed: consumer_groups.name") {
-		return ErrConsumerGroupExists
+	result := s.db.Create(cg)
+	if result.Error != nil {
+		if strings.Contains(result.Error.Error(), "UNIQUE constraint failed: consumer_groups.name") {
+			return ErrConsumerGroupExists
+		}
 	}
 	return result.Error
 }
 
 func (s *sqlStore) RegisterConsumer(ctx context.Context, consumer *kayakv1.TopicConsumer) (*kayakv1.TopicConsumer, error) {
-	return nil, nil
+	group, err := s.getConsumerGroup(consumer.Topic, consumer.Group)
+	if err != nil {
+		return nil, err
+	}
+	result := s.db.Find(&models.Consumer{}, "group_id = ?", group.ID)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	if result.RowsAffected >= group.PartitionCount {
+		return nil, ErrGroupFull
+	}
+	c := models.Consumer{
+		ID:        consumer.Id,
+		GroupID:   group.ID,
+		Partition: result.RowsAffected,
+	}
+	result = s.db.Create(&c)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &kayakv1.TopicConsumer{
+		Id:        consumer.Id,
+		Topic:     consumer.Topic,
+		Group:     consumer.Group,
+		Partition: c.Partition,
+	}, nil
 }
 
 func (s *sqlStore) GetConsumerPartitions(ctx context.Context, topic, group string) ([]*kayakv1.TopicConsumer, error) {

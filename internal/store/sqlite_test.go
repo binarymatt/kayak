@@ -16,6 +16,7 @@ import (
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/internal/store/models"
+	"github.com/binarymatt/kayak/internal/test"
 )
 
 type SqlTestSuite struct {
@@ -329,6 +330,8 @@ func (s *SqlTestSuite) TestRegisterConsumerGroup() {
 		TopicID:        s.id.String(),
 		PartitionCount: 1,
 		Hash:           "HASH_MURMUR3",
+		CreatedAt:      s.ts.Unix(),
+		UpdatedAt:      s.ts.Unix(),
 	}, cg)
 }
 func (s *SqlTestSuite) TestRegisterConsumerGroup_InvalidTopic() {
@@ -380,3 +383,90 @@ func (s *SqlTestSuite) TestRegisterConsumerGroup_ExistingGroup() {
 	})
 	r.ErrorIs(err, ErrConsumerGroupExists)
 }
+
+func (s *SqlTestSuite) TestGetConsumerGroup() {
+	r := s.Require()
+
+	err := s.store.CreateTopic(s.ctx, "test")
+	r.NoError(err)
+
+	group, err := s.store.getConsumerGroup("test", "group")
+	r.ErrorIs(err, ErrConsumerGroupInvalid)
+	r.Nil(group)
+
+	err = s.store.RegisterConsumerGroup(s.ctx, &kayakv1.ConsumerGroup{
+		Name:  "group",
+		Topic: "test",
+		Hash:  kayakv1.Hash_HASH_MURMUR3,
+	})
+	r.NoError(err)
+
+	group, err = s.store.getConsumerGroup("test", "group")
+	r.NoError(err)
+	r.Equal(&models.ConsumerGroup{
+		ID:        1,
+		Name:      "group",
+		TopicID:   s.id.String(),
+		Hash:      "HASH_MURMUR3",
+		CreatedAt: s.ts.Unix(),
+		UpdatedAt: s.ts.Unix(),
+	}, group)
+}
+
+func (s *SqlTestSuite) TestRegisterConsumer_InvalidTopic() {
+	r := s.Require()
+
+	_, err := s.store.RegisterConsumer(s.ctx, &kayakv1.TopicConsumer{})
+	r.ErrorIs(err, ErrInvalidTopic)
+}
+
+func (s *SqlTestSuite) TestRegisterConsumer_InvalidGroup() {
+
+	r := s.Require()
+	err := s.store.CreateTopic(s.ctx, "test")
+	r.NoError(err)
+
+	consumer, err := s.store.RegisterConsumer(s.ctx, &kayakv1.TopicConsumer{
+		Topic: "test",
+		Group: "group",
+	})
+	r.ErrorIs(err, ErrConsumerGroupInvalid)
+	r.Nil(consumer)
+}
+
+func (s *SqlTestSuite) TestRegisterConsumer_HappyPath() {
+	r := s.Require()
+	err := s.store.CreateTopic(s.ctx, "test")
+	r.NoError(err)
+	err = s.store.RegisterConsumerGroup(s.ctx, &kayakv1.ConsumerGroup{
+		Topic:          "test",
+		Name:           "testGroup",
+		PartitionCount: 1,
+		Hash:           kayakv1.Hash_HASH_MURMUR3,
+	})
+	r.NoError(err)
+
+	topicConsumer, err := s.store.RegisterConsumer(s.ctx, &kayakv1.TopicConsumer{
+		Topic: "test",
+		Group: "testGroup",
+		Id:    "testID",
+	})
+	r.NoError(err)
+	test.ProtoEqual(s.T(), &kayakv1.TopicConsumer{
+		Id:        "testID",
+		Topic:     "test",
+		Group:     "testGroup",
+		Partition: 0,
+	}, topicConsumer)
+
+	var consumer models.Consumer
+	result := s.db.First(&consumer, "id = ?", "testID")
+	r.NoError(result.Error)
+	r.Equal(models.Consumer{
+		ID:        "testID",
+		GroupID:   1,
+		CreatedAt: s.ts.Unix(),
+		UpdatedAt: s.ts.Unix(),
+	}, consumer)
+}
+func (s *SqlTestSuite) TestRegisterConsumer_GroupFull() {}

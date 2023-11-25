@@ -15,8 +15,10 @@ type Record struct {
 	ID      string `gorm:"primaryKey"`
 	TopicID string
 	// Headers map[string]string
-	Headers datatypes.JSONMap
-	Payload []byte
+	Headers   datatypes.JSONMap
+	Payload   []byte
+	UpdatedAt int64 `gorm:"autoUpdateTime"`
+	CreatedAt int64 `gorm:"autoCreateTime"`
 }
 
 func (r *Record) AddHeaders(headers map[string]string) {
@@ -33,4 +35,15 @@ type ConsumerGroup struct {
 	TopicID        string `gorm:"uniqueIndex:topic_name"`
 	PartitionCount int64
 	Hash           string
+	UpdatedAt      int64 `gorm:"autoUpdateTime"`
+	CreatedAt      int64 `gorm:"autoCreateTime"`
+}
+
+type Consumer struct {
+	ID        string `gorm:"primaryKey"`
+	GroupID   uint
+	Partition int64
+	Position  string
+	CreatedAt int64 `gorm:"autoCreateTime"`
+	UpdatedAt int64 `gorm:"autoUpdateTime"`
 }
