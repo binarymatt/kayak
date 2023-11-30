@@ -469,4 +469,101 @@ func (s *SqlTestSuite) TestRegisterConsumer_HappyPath() {
 		UpdatedAt: s.ts.Unix(),
 	}, consumer)
 }
-func (s *SqlTestSuite) TestRegisterConsumer_GroupFull() {}
+func (s *SqlTestSuite) TestRegisterConsumer_GroupFull() {
+
+	r := s.Require()
+	err := s.store.CreateTopic(s.ctx, "test")
+	r.NoError(err)
+	err = s.store.RegisterConsumerGroup(s.ctx, &kayakv1.ConsumerGroup{
+		Topic:          "test",
+		Name:           "testGroup",
+		PartitionCount: 1,
+		Hash:           kayakv1.Hash_HASH_MURMUR3,
+	})
+	r.NoError(err)
+	_, err = s.store.RegisterConsumer(s.ctx, &kayakv1.TopicConsumer{
+		Topic: "test",
+		Group: "testGroup",
+		Id:    "testID",
+	})
+	r.NoError(err)
+
+	_, err = s.store.RegisterConsumer(s.ctx, &kayakv1.TopicConsumer{
+		Topic: "test",
+		Group: "testGroup",
+		Id:    "testID2",
+	})
+	r.ErrorIs(err, ErrGroupFull)
+}
+
+func (s *SqlTestSuite) TestGetConsumer_Unknown() {
+	r := s.Require()
+
+	consumer, err := s.store.getConsumer("1234")
+	r.ErrorIs(err, gorm.ErrRecordNotFound)
+	r.Nil(consumer)
+}
+func (s *SqlTestSuite) TestGetConsumer() {
+	r := s.Require()
+	res := s.db.Create(&models.Consumer{
+		ID:        "123",
+		GroupID:   1,
+		Position:  "",
+		Partition: 0,
+	})
+	r.NoError(res.Error)
+
+	consumer, err := s.store.getConsumer("123")
+	r.NoError(err)
+	r.Equal(&models.Consumer{
+		ID:        "123",
+		GroupID:   1,
+		Position:  "",
+		Partition: 0,
+		CreatedAt: s.ts.Unix(),
+		UpdatedAt: s.ts.Unix(),
+	}, consumer)
+
+}
+
+func (s *SqlTestSuite) TestGetConsumerPosition() {
+
+	r := s.Require()
+	res := s.db.Create(&models.Consumer{
+		ID:        "123",
+		GroupID:   1,
+		Position:  "start",
+		Partition: 0,
+	})
+	r.NoError(res.Error)
+
+	position, err := s.store.GetConsumerPosition(s.ctx, &kayakv1.TopicConsumer{Id: "123"})
+	r.NoError(err)
+	r.Equal("start", position)
+}
+
+func (s *SqlTestSuite) TestCommitConsumerPosition_Happy() {
+	r := s.Require()
+
+	res := s.db.Create(&models.Consumer{
+		ID:        "123",
+		GroupID:   1,
+		Position:  "",
+		Partition: 0,
+	})
+	r.NoError(res.Error)
+
+	err := s.store.CommitConsumerPosition(s.ctx, &kayakv1.TopicConsumer{
+		Id:       "123",
+		Position: "item1",
+	})
+	r.NoError(err)
+}
+func (s *SqlTestSuite) TestCommitConsumerPosition_NonExistent() {
+	r := s.Require()
+	err := s.store.CommitConsumerPosition(s.ctx, &kayakv1.TopicConsumer{
+		Id:       "1233",
+		Position: "item1",
+	})
+	r.ErrorIs(err, ErrInvalidConsumer)
+}

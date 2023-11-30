@@ -19,6 +19,7 @@ import (
 
 type storeFSM struct {
 	store store.Store
+	path  string
 }
 
 var (
@@ -148,14 +149,19 @@ func (s storeFSM) SnapshotBadger() (raft.FSMSnapshot, error) {
 	return &badgerFsmSnapshot{db: db}, nil
 }
 func (s storeFSM) Snapshot() (raft.FSMSnapshot, error) {
-	_, ok := s.store.Impl().(*bolt.DB)
-	if ok {
-		return s.SnapshotBolt()
-	}
-	return s.SnapshotBadger()
+	//_, ok := s.store.Impl().(*bolt.DB)
+	//if ok {
+	//	return s.SnapshotBolt()
+	//}
+	//return s.SnapshotBadger()
+	return &sqliteFSMSnapshot{dbPath: s.path}, nil
 }
 
+// TODO: figure out how to restore while db is open
 func (s storeFSM) Restore(rClose io.ReadCloser) error {
+	return nil
+}
+func (s storeFSM) RestoreBader(rClose io.ReadCloser) error {
 	db, ok := s.store.Impl().(*badger.DB)
 	if !ok {
 		slog.Error("could not case store", "method", "Restore")
@@ -221,8 +227,9 @@ func (s storeFSM) Read(r io.Reader) ([]byte, error) {
 	return msg, nil
 }
 
-func NewStore(s store.Store) raft.FSM {
+func NewStore(s store.Store, path string) raft.FSM {
 	return &storeFSM{
 		store: s,
+		path:  path,
 	}
 }

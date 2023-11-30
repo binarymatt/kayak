@@ -25,7 +25,6 @@ import (
 	"github.com/hashicorp/serf/serf"
 	"github.com/oklog/ulid/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"golang.org/x/sync/errgroup"
@@ -190,7 +189,7 @@ func (s *service) Init() error {
 		return fmt.Errorf(`error creating snapshot store (%q): %v`, baseDir, err)
 	}
 
-	fsm := fsm.NewStore(s.store)
+	fsm := fsm.NewStore(s.store, s.cfg.DataPath())
 	slog.Warn("fsm initialized")
 
 	manager := transport.New(raft.ServerAddress(s.cfg.RaftAddress()), nil, transport.WithHeartbeatTimeout(30*time.Second))
@@ -309,6 +308,7 @@ func (s *service) stats(ctx context.Context) error {
 				attrs = append(attrs, slog.Any(key, value))
 			}
 			slog.Default().LogAttrs(ctx, slog.LevelInfo, "stats", attrs...)
+			CalculateLag(ctx, s.store)
 		}
 	}
 }
@@ -332,9 +332,9 @@ func (s *service) serve(ctx context.Context) error {
 	defer closer()
 	path, handler := kayakv1connect.NewKayakServiceHandler(s,
 		connect.WithInterceptors(
-			otelconnect.NewInterceptor(),
+			otelconnect.NewInterceptor(otelconnect.WithoutMetrics()),
 			NewLogInterceptor(),
-			// LatencyInterceptor(),
+			MetricsInterceptor(),
 		),
 	)
 	raftPath, raftHandler := transportv1connect.NewRaftTransportHandler(s.manager.Service())
@@ -346,11 +346,11 @@ func (s *service) serve(ctx context.Context) error {
 	mux.Handle(adminPath, adminHandler)
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/ready", s.Ready)
-	router := otelhttp.NewHandler(mux, "")
+	// router := otelhttp.NewHandler(mux, "")
 	slog.Info("setting up api service", "advertise", s.cfg.ServiceAddress(), "listen", s.cfg.ListenAddress())
 	server := http.Server{
 		Addr:    s.cfg.ListenAddress(),
-		Handler: h2c.NewHandler(router, &http2.Server{}),
+		Handler: h2c.NewHandler(mux, &http2.Server{}),
 	}
 
 	go func() {

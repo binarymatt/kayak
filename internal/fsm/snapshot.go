@@ -3,20 +3,39 @@ package fsm
 import (
 	"encoding/binary"
 	"io"
+	"os"
+
+	"github.com/dgraph-io/badger/v4"
+	"github.com/hashicorp/raft"
+	"google.golang.org/protobuf/proto"
 	"log/slog"
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/internal/store"
-	"github.com/dgraph-io/badger/v4"
-	"google.golang.org/protobuf/proto"
-
-	"github.com/hashicorp/raft"
 )
 
 type badgerFsmSnapshot struct {
 	db *badger.DB
 }
 
+type sqliteFSMSnapshot struct {
+	dbPath string
+}
+
+func (ss *sqliteFSMSnapshot) Persist(sink raft.SnapshotSink) error {
+	defer sink.Close()
+	f, err := os.Open(ss.dbPath)
+	if err != nil {
+		return err
+	}
+	if _, err := io.Copy(sink, f); err != nil {
+		return err
+	}
+	return nil
+}
+func (ss *sqliteFSMSnapshot) Release() {
+	slog.Info("releasing fsm sqlite3 snapshot")
+}
 func (fs *badgerFsmSnapshot) Persist(sink raft.SnapshotSink) error {
 	defer sink.Close()
 	_, err := fs.db.Backup(sink, 0)

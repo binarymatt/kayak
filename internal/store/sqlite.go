@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/oklog/ulid/v2"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
+	"log/slog"
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/internal/store/models"
@@ -20,7 +23,8 @@ type sqlStore struct {
 
 func NewSqlStore(db *gorm.DB) *sqlStore {
 	return &sqlStore{
-		db: db,
+		db:     db,
+		idFunc: ulid.Make,
 	}
 }
 func (s *sqlStore) RunMigrations() error {
@@ -205,27 +209,147 @@ func (s *sqlStore) RegisterConsumer(ctx context.Context, consumer *kayakv1.Topic
 }
 
 func (s *sqlStore) GetConsumerPartitions(ctx context.Context, topic, group string) ([]*kayakv1.TopicConsumer, error) {
-	return nil, nil
+	// 1. get group id
+	consumerGroup, err := s.getConsumerGroup(topic, group)
+	if err != nil {
+		return nil, err
+	}
+	var consumers []models.Consumer
+	result := s.db.Find(&consumers, "group_id = ?", consumerGroup.ID)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	topicConsumers := make([]*kayakv1.TopicConsumer, len(consumers))
+	// 2. get all consumer information for group
+	for index, consumer := range consumers {
+		topicConsumers[index] = &kayakv1.TopicConsumer{
+			Id:        consumer.ID,
+			Group:     group,
+			Topic:     topic,
+			Partition: consumer.Partition,
+			Position:  consumer.Position,
+		}
+	}
+	return topicConsumers, nil
 }
 
+func (s *sqlStore) getConsumer(id string) (*models.Consumer, error) {
+	var consumer models.Consumer
+	result := s.db.First(&consumer, "id = ?", id)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &consumer, nil
+}
 func (s *sqlStore) GetConsumerPosition(ctx context.Context, consumer *kayakv1.TopicConsumer) (string, error) {
-	return "", nil
+	c, err := s.getConsumer(consumer.Id)
+	if err != nil {
+		return "", err
+	}
+	return c.Position, nil
 }
 
 func (s *sqlStore) CommitConsumerPosition(ctx context.Context, consumer *kayakv1.TopicConsumer) error {
-	return nil
+	result := s.db.First(&models.Consumer{}, "id = ?", consumer.Id)
+	if result.RowsAffected == 0 {
+		return ErrInvalidConsumer
+	}
+	result = s.db.Model(&models.Consumer{}).Where("id = ?", consumer.Id).Update("position", consumer.Position)
+	return result.Error
 }
 
 func (s *sqlStore) GetConsumerGroupInformation(ctx context.Context, group *kayakv1.ConsumerGroup) (*kayakv1.ConsumerGroup, error) {
-	return nil, nil
+	topic, err := s.getTopic(group.Topic)
+	if err != nil {
+		return nil, err
+	}
+	consumerGroup, err := s.getConsumerGroup(group.Topic, group.Name)
+	if err != nil {
+		return nil, err
+	}
+	return &kayakv1.ConsumerGroup{
+		Name:           consumerGroup.Name,
+		Topic:          topic.Name,
+		PartitionCount: consumerGroup.PartitionCount,
+		Hash:           kayakv1.Hash_HASH_MURMUR3,
+	}, nil
 }
 
-func (s *sqlStore) LoadMeta(ctx context.Context, topic string) (*kayakv1.TopicMetadata, error) {
-	return nil, nil
-}
+func (s *sqlStore) LoadMeta(ctx context.Context, topicName string) (*kayakv1.TopicMetadata, error) {
+	slog.Info("loading topic meta from store", "topic", topicName)
+	groupMeta := map[string]*kayakv1.GroupPartitions{}
+	topic, err := s.getTopic(topicName)
+	if err != nil {
+		return nil, err
+	}
+	var groups []models.ConsumerGroup
+	result := s.db.Find(&groups, "topic_id = ?", topic.ID)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	for _, group := range groups {
+		consumers, err := s.getGroupConsumers(topicName, group.Name, group.ID)
+		if err != nil {
+			return nil, err
+		}
+		groupMeta[group.Name] = &kayakv1.GroupPartitions{
+			Name:       group.Name,
+			Partitions: group.PartitionCount,
+			Consumers:  consumers,
+		}
+	}
 
+	var count int64
+	result = s.db.Model(&models.Record{}).Where("topic_id = ?", topic.ID).Count(&count)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	ts := time.Unix(topic.CreatedAt, 0)
+	meta := &kayakv1.TopicMetadata{
+		Name:          topicName,
+		RecordCount:   count,
+		CreatedAt:     timestamppb.New(ts),
+		Archived:      topic.Archived,
+		GroupMetadata: groupMeta,
+	}
+	return meta, nil
+}
+func (s *sqlStore) getGroupConsumers(topic, group string, groupID uint) ([]*kayakv1.TopicConsumer, error) {
+	var consumers []models.Consumer
+	result := s.db.Find(&consumers, "group_id = ?", groupID)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	topicConsumers := make([]*kayakv1.TopicConsumer, len(consumers))
+	for index, consumer := range consumers {
+		topicConsumers[index] = &kayakv1.TopicConsumer{
+			Id:        consumer.ID,
+			Topic:     topic,
+			Group:     group,
+			Partition: consumer.Partition,
+			Position:  consumer.Position,
+		}
+	}
+	return topicConsumers, nil
+}
 func (s *sqlStore) Stats() map[string]*kayakv1.TopicMetadata {
-	return nil
+	var topics []models.Topic
+	result := s.db.Find(&topics)
+	if result.Error != nil {
+		slog.Error("error with topics find query", "error", result.Error)
+		return nil
+	}
+	meta := map[string]*kayakv1.TopicMetadata{}
+	for _, topic := range topics {
+		topicMeta, err := s.LoadMeta(context.Background(), topic.Name)
+		if err != nil || topicMeta == nil {
+			slog.Error("could not retrieve topic metadata", "error", err)
+			return nil
+		}
+		meta[topicMeta.Name] = topicMeta
+	}
+
+	return meta
 }
 
 func (s *sqlStore) Impl() any {
@@ -236,4 +360,14 @@ func (s *sqlStore) Close() {}
 
 func (s *sqlStore) SnapshotItems() <-chan DataItem {
 	return nil
+}
+
+func (s *sqlStore) GetConsumerLag(ctx context.Context, consumer *kayakv1.TopicConsumer) (int64, error) {
+	topic, err := s.getTopic(consumer.Topic)
+	if err != nil {
+		return 0, err
+	}
+	var count int64
+	result := s.db.Model(&models.Record{}).Where("topic_id = ? and id > ?", topic.ID, consumer.Position).Count(&count)
+	return count, result.Error
 }

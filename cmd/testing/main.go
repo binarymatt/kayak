@@ -108,7 +108,17 @@ func (t *testing) initTest(cctx *cli.Context) error {
 		{Payload: []byte(`{"json":"payload3"}`)},
 		{Payload: []byte("text payload")},
 	}
-	return t.c.PutRecords(cctx.Context, records...)
+	if err := t.c.PutRecords(cctx.Context, records...); err != nil {
+		return err
+	}
+	if err := t.c.CreateConsumerGroup(ctx, 1); err != nil {
+		return err
+	}
+	if err := t.c.RegisterConsumer(ctx); err != nil {
+		return err
+	}
+	slog.Info("init finished")
+	return nil
 }
 func (t *testing) cleanup(cctx *cli.Context) error {
 	if err := t.c.DeleteTopic(cctx.Context, topic); err != nil {
@@ -153,7 +163,7 @@ func (t *testing) commit(cctx *cli.Context) error {
 }
 func (t *testing) get(cctx *cli.Context) error {
 	ctx := cctx.Context
-	records, err := t.c.GetRecords(ctx, topic, "", 10)
+	records, err := t.c.GetRecords(ctx, topic, "", 100)
 	if err != nil {
 		slog.Error("could not query records")
 		return err
@@ -169,6 +179,7 @@ func worker(ctx context.Context, c *client.Client, id int, recordCount int) erro
 	for i < recordCount {
 		if i%4 == id {
 			// create record
+			slog.Info("adding record")
 			record := &kayakv1.Record{
 				Headers: map[string]string{"number": fmt.Sprintf("%d", i)},
 				Payload: []byte(fmt.Sprintf(`{"json":"payload", id:"%d"}`, id)),

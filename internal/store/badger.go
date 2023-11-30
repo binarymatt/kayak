@@ -573,3 +573,6 @@ func (b *badgerStore) loadMeta(ctx context.Context, tx *badger.Txn, topic string
 	slog.Info("returning meta info", "meta", meta)
 	return meta, nil
 }
+func (b *badgerStore) GetConsumerLag(ctx context.Context, consumer *kayakv1.TopicConsumer) (int64, error) {
+	return 0, nil
+}

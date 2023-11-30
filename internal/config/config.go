@@ -2,12 +2,12 @@ package config
 
 import (
 	"fmt"
-	"log/slog"
 	"os"
 	"path/filepath"
 
 	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v3"
+	"log/slog"
 )
 
 type Config struct {
@@ -19,6 +19,7 @@ type Config struct {
 	Bootstrap bool     `yaml:"bootstrap"`
 	Peers     []string `yaml:"peers"`
 	SerfPort  int      `yaml:"serf_port"`
+	DBName    string
 	// MemberBindPort      int      `yaml:"member_bind_port"`
 	// MemberAdvertisePort int      `yaml:"member_advertise_port"`
 	// MemberAdvertiseAddr string   `yaml:"member_advertise_addr"`
@@ -40,7 +41,7 @@ func (c *Config) ListenAddress() string {
 }
 
 func (c *Config) DataPath() string {
-	return filepath.Join(c.DataDir, c.ServerID, "data.db")
+	return filepath.Join(c.DataDir, c.DBName)
 }
 
 func New(cctx *cli.Context) *Config {
@@ -53,6 +54,7 @@ func New(cctx *cli.Context) *Config {
 		Peers:     cctx.StringSlice("peers"),
 		Bootstrap: cctx.Bool("bootstrap"),
 		SerfPort:  cctx.Int("serf_port"),
+		DBName:    "sql.v1.db",
 	}
 }
 

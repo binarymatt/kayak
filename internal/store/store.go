@@ -18,6 +18,7 @@ type Store interface {
 	GetConsumerPosition(ctx context.Context, consumer *kayakv1.TopicConsumer) (string, error)
 	CommitConsumerPosition(ctx context.Context, consumer *kayakv1.TopicConsumer) error
 	GetConsumerGroupInformation(ctx context.Context, group *kayakv1.ConsumerGroup) (*kayakv1.ConsumerGroup, error)
+	GetConsumerLag(ctx context.Context, consumer *kayakv1.TopicConsumer) (int64, error)
 	LoadMeta(ctx context.Context, topic string) (*kayakv1.TopicMetadata, error)
 	Stats() map[string]*kayakv1.TopicMetadata
 	Impl() any

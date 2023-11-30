@@ -6,6 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/protobuf/proto"
 	"log/slog"
 
 	"github.com/binarymatt/kayak/internal/log"
@@ -33,16 +34,41 @@ func NewLogInterceptor() connect.UnaryInterceptorFunc {
 	return connect.UnaryInterceptorFunc(interceptor)
 }
 
-func LatencyInterceptor() connect.UnaryInterceptorFunc {
+func MetricsInterceptor() connect.UnaryInterceptorFunc {
 	interceptor := func(next connect.UnaryFunc) connect.UnaryFunc {
 		return connect.UnaryFunc(func(
 			ctx context.Context,
 			req connect.AnyRequest,
 		) (connect.AnyResponse, error) {
-			method := req.Spec().Procedure
 			start := time.Now()
-			defer RecordLatency(ctx, method, start)
-			return next(ctx, req)
+			endpoint := req.Spec().Procedure
+
+			var reqSize int
+			if req != nil {
+				if msg, ok := req.Any().(proto.Message); ok {
+					reqSize = proto.Size(msg)
+				}
+			}
+			resp, err := next(ctx, req)
+			var respSize int
+			statusCode := "OK"
+			if err == nil {
+				if msg, ok := resp.Any().(proto.Message); ok {
+					respSize = proto.Size(msg)
+				}
+			} else {
+				statusCode = connect.CodeOf(err).String()
+			}
+			duration := time.Since(start).Milliseconds()
+
+			requestSize.WithLabelValues(endpoint).Observe(float64(reqSize))
+			grpcStarted.WithLabelValues(endpoint).Inc()
+
+			responseSize.WithLabelValues(endpoint, statusCode).Observe(float64(respSize))
+			serverLatency.WithLabelValues(endpoint, statusCode).Observe(float64(duration))
+			grpcHandled.WithLabelValues(endpoint, statusCode).Inc()
+
+			return resp, err
 		})
 	}
 	return connect.UnaryInterceptorFunc(interceptor)
