@@ -293,7 +293,7 @@ func (s *service) waitForServe(ctx context.Context, until time.Time) {
 }
 func (s *service) stats(ctx context.Context) error {
 
-	tick := time.NewTicker(30 * time.Second)
+	tick := time.NewTicker(1 * time.Second)
 	for {
 		slog.Debug("starting stats loop")
 		select {
