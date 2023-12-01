@@ -14,6 +14,11 @@ import (
 	"log/slog"
 )
 
+var (
+	ErrConsumerAlreadyRegistered = store.ErrConsumerAlreadyRegistered
+	ErrConsumerGroupExists       = store.ErrConsumerGroupExists
+)
+
 type Config struct {
 	Address       string
 	ConsumerID    string
@@ -73,6 +78,12 @@ type Client struct {
 	client kayakv1connect.KayakServiceClient
 }
 
+func (c *Client) UpdateConfig(options ...CfgOption) {
+	for _, f := range options {
+		f(c.cfg)
+	}
+}
+
 func (c *Client) PutRecords(ctx context.Context, records ...*kayakv1.Record) error {
 	topic := c.cfg.Topic
 	_, err := c.client.PutRecords(ctx, connect.NewRequest(&kayakv1.PutRecordsRequest{
@@ -108,9 +119,6 @@ func (c *Client) CreateConsumerGroup(ctx context.Context, partitionCount int64) 
 }
 
 func (c *Client) FetchRecord(ctx context.Context) (*kayakv1.Record, error) {
-	if err := c.RegisterConsumer(ctx); err != nil && !errors.Is(err, store.ErrConsumerAlreadyRegistered) {
-		return nil, err
-	}
 	req := connect.NewRequest(&kayakv1.FetchRecordRequest{
 		Topic:         c.cfg.Topic,
 		ConsumerGroup: c.cfg.ConsumerGroup,

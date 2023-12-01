@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/oklog/ulid/v2"
 	"github.com/spaolacci/murmur3"
@@ -45,41 +46,25 @@ func mainHash() {
 		fmt.Println(murmur3.Sum64([]byte(key)) % 2)
 	}
 }
-func mainClient() {
-	ctx := context.Background()
-	c := client.New(
-		client.NewConfig(""),
-		client.WithAddress("http://127.0.0.1:8081"),
-		client.WithTopic("test"),
-		client.WithConsumerID("cli"),
-		client.WithConsumerGroup("validation"),
-	)
-	start := "01HF75KXVWV74R8QZ8E0R426QN"
-	records, err := c.GetRecords(ctx, "test", start, 10)
-
-	if err != nil {
-		slog.Error("could not fetch record", "error", err)
-		return
-	}
-	slog.Info("record returned", "records", records, "len", len(records))
-	/*
-		record, err := c.FetchRecord(ctx)
-		if err != nil {
-			slog.Error("could not fetch record", "error", err)
-			return
-		}
-		slog.Info("record returned", "record", record)
-		if err := c.CommitRecord(ctx, record); err != nil {
-			slog.Error("coudl not commit record", "error", err)
-		}
-	*/
-}
 
 type testing struct {
 	c *client.Client
 }
 
 func (t *testing) consumer(cctx *cli.Context) error {
+	group := cctx.String("group")
+	consumer := cctx.String("consumer")
+	sleepTime := cctx.Duration("sleep")
+	if group != "validation" {
+		t.c.UpdateConfig(client.WithConsumerGroup(group), client.WithConsumerID(consumer))
+	}
+
+	if err := t.c.CreateConsumerGroup(cctx.Context, 1); err != nil && !errors.Is(err, client.ErrConsumerGroupExists) {
+		return err
+	}
+	if err := t.c.RegisterConsumer(cctx.Context); err != nil && !errors.Is(err, client.ErrConsumerAlreadyRegistered) {
+		return err
+	}
 	for {
 		record, err := t.c.FetchRecord(cctx.Context)
 		if err != nil {
@@ -94,6 +79,7 @@ func (t *testing) consumer(cctx *cli.Context) error {
 			return err
 		}
 		slog.Info("record committed")
+		time.Sleep(sleepTime)
 	}
 	return nil
 }
@@ -239,6 +225,21 @@ func main() {
 			{
 				Name:   "consume",
 				Action: t.consumer,
+				Flags: []cli.Flag{
+					&cli.DurationFlag{
+						Name:  "sleep",
+						Value: 5 * time.Second,
+					},
+					&cli.StringFlag{
+						Name:  "consumer",
+						Value: "test",
+					},
+
+					&cli.StringFlag{
+						Name:  "group",
+						Value: "validation",
+					},
+				},
 			},
 			{
 				Name: "query",
