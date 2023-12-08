@@ -919,7 +919,34 @@ func (m *CreateTopicRequest) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Name
+	if all {
+		switch v := interface{}(m.GetTopic()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, CreateTopicRequestValidationError{
+					field:  "Topic",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, CreateTopicRequestValidationError{
+					field:  "Topic",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopic()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return CreateTopicRequestValidationError{
+				field:  "Topic",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if len(errors) > 0 {
 		return CreateTopicRequestMultiError(errors)
@@ -1023,9 +1050,34 @@ func (m *DeleteTopicRequest) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Topic
-
-	// no validation rules for Archive
+	if all {
+		switch v := interface{}(m.GetTopic()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, DeleteTopicRequestValidationError{
+					field:  "Topic",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, DeleteTopicRequestValidationError{
+					field:  "Topic",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetTopic()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return DeleteTopicRequestValidationError{
+				field:  "Topic",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if len(errors) > 0 {
 		return DeleteTopicRequestMultiError(errors)
@@ -1131,6 +1183,8 @@ func (m *Topic) validate(all bool) error {
 	// no validation rules for Name
 
 	// no validation rules for Partitions
+
+	// no validation rules for Archived
 
 	if len(errors) > 0 {
 		return TopicMultiError(errors)
@@ -2874,10 +2928,6 @@ func (m *ConsumerGroup) validate(all bool) error {
 	// no validation rules for Name
 
 	// no validation rules for Topic
-
-	// no validation rules for PartitionCount
-
-	// no validation rules for Hash
 
 	if len(errors) > 0 {
 		return ConsumerGroupMultiError(errors)

@@ -79,15 +79,15 @@ message GetRecordsResponse {
 }
 
 message CreateTopicRequest {
-  string name = 1;
+  Topic topic = 1 [(buf.validate.field).required = true];
 }
 message DeleteTopicRequest {
-  string topic = 1 [(buf.validate.field).required = true];
-  bool archive = 2;
+  Topic topic = 1 [(buf.validate.field).required = true];
 }
 message Topic {
-  string name = 1;
-  int64 partitions = 2;
+  string name = 1 [(buf.validate.field).required = true];
+  int64 partitions = 2 [(buf.validate.field).int64.gt = 0];
+  bool archived = 3;
 }
 message ListTopicsRequest {}
 message ListTopicsResponse {
@@ -162,8 +162,6 @@ message TopicConsumer {
 message ConsumerGroup {
   string name = 1 [(buf.validate.field).required = true];
   string topic = 2 [(buf.validate.field).required = true];
-  int64 partition_count = 3 [(buf.validate.field).required = true];
-  Hash hash = 4 [(buf.validate.field).required = true];
 }
 
 message ConsumerGroupPartition {
