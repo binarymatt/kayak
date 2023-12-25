@@ -3,18 +3,22 @@ package store
 import (
 	"context"
 
-	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
+	"github.com/binarymatt/kayak/internal/store/models"
 )
 
 type Store interface {
-	CreateTopic(ctx context.Context, name string) error
-	DeleteTopic(ctx context.Context, topic string, force bool) error
-	AddRecords(ctx context.Context, topic string, records ...*kayakv1.Record) error
-	GetRecords(ctx context.Context, topic string, start string, limit int) ([]*kayakv1.Record, error)
+	CreateTopic(ctx context.Context, topic *models.Topic) error
+	DeleteTopic(ctx context.Context, topic *models.Topic) error
+	AddRecords(ctx context.Context, topic string, records ...*models.Record) error
+	GetRecords(ctx context.Context, topic string, start string, limit int) ([]*models.Record, error)
+	FetchRecord(ctx context.Context, consumer *models.Consumer) (*models.Record, error)
 	ListTopics(ctx context.Context) ([]string, error)
-	GetConsumerPosition(ctx context.Context, topic, group string) (string, error)
-	CommitConsumerPosition(ctx context.Context, topic, consumerGroup, position string) error
-	Stats() map[string]*kayakv1.TopicMetadata
+	RegisterConsumer(ctx context.Context, consumer *models.Consumer) (*models.Consumer, error)
+	GetConsumerPosition(ctx context.Context, consumer *models.Consumer) (string, error)
+	CommitConsumerPosition(ctx context.Context, consumer *models.Consumer) error
+	GetConsumerLag(ctx context.Context, consumer *models.Consumer) (int64, error)
+	LoadMeta(ctx context.Context, topic string) (*models.Topic, error)
+	Stats() map[string]*models.Topic
 	Impl() any
 	Close()
 	SnapshotItems() <-chan DataItem

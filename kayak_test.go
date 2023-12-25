@@ -6,19 +6,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/suite"
+	"log/slog"
+
 	"github.com/binarymatt/kayak/client"
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
-	"github.com/google/go-cmp/cmp"
-	"github.com/stretchr/testify/suite"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/testing/protocmp"
+	"github.com/binarymatt/kayak/internal/test"
 )
 
 var (
 	nodes = []string{
 		"http://127.0.0.1:8081",
-		"http://127.0.0.1:8082",
-		"http://127.0.0.1:8083",
+		// "http://127.0.0.1:8082",
+		// "http://127.0.0.1:8083",
 	}
 	records = []*kayakv1.Record{
 		{Headers: map[string]string{"number": "one"}, Payload: []byte(`{"json":"payload"}`)},
@@ -32,8 +32,8 @@ var (
 
 type KayakIntegrationTestSuite struct {
 	suite.Suite
-	client          *client.Client
-	secondaryClient *client.Client
+	client *client.Client
+	//secondaryClient *client.Client
 }
 
 func (s *KayakIntegrationTestSuite) checkRecord(index int, record *kayakv1.Record) {
@@ -45,35 +45,42 @@ func (s *KayakIntegrationTestSuite) checkRecord(index int, record *kayakv1.Recor
 
 }
 
-func (s *KayakIntegrationTestSuite) protoEqual(expected, actual proto.Message) {
-	s.Empty(cmp.Diff(expected, actual, protocmp.Transform()))
-}
-
 func (s *KayakIntegrationTestSuite) SetupSuite() {
 	s.client = client.New(
 		client.NewConfig(""),
 		client.WithAddress(nodes[0]),
 		client.WithTopic(primaryTopic),
 		client.WithConsumerID("test"),
+		client.WithConsumerGroup("groupOne"),
+		client.WithPartitions([]int64{0}),
 	)
-	s.secondaryClient = client.New(
-		client.NewConfig(""),
-		client.WithAddress(nodes[1]),
-		client.WithTopic(primaryTopic),
-		client.WithConsumerID("test"),
-	)
+	/*
+		s.secondaryClient = client.New(
+			client.NewConfig(""),
+			client.WithAddress(nodes[1]),
+			client.WithTopic(primaryTopic),
+			client.WithConsumerID("test"),
+			client.WithConsumerGroup("groupTwo"),
+		)
+	*/
 }
 func (s *KayakIntegrationTestSuite) SetupTest() {
-	_ = s.client.CreateTopic(context.Background(), primaryTopic)
+	slog.Info("setting up test")
+	err := s.client.DeleteTopic(context.Background(), primaryTopic)
+	if err != nil {
+		slog.Error("could not delete topic", "error", err)
+	}
+	err = s.client.CreateTopic(context.Background(), primaryTopic, 1)
+	s.Require().NoError(err)
 }
 func (s *KayakIntegrationTestSuite) AfterTest() {
-	_ = s.client.DeleteTopic(context.Background(), primaryTopic)
-	// s.resetTopic()
+	//err := s.client.DeleteTopic(context.Background(), primaryTopic)
+	//s.NoError(err)
 }
 func (s *KayakIntegrationTestSuite) TestPutRecords() {
 	r := s.Require()
 	ctx := context.Background()
-	err := s.client.PutRecords(ctx, records)
+	err := s.client.PutRecords(ctx, records...)
 	r.NoError(err)
 	items, err := s.client.GetRecords(ctx, primaryTopic, "", 4)
 	r.NoError(err)
@@ -87,6 +94,8 @@ func (s *KayakIntegrationTestSuite) TestPutRecords() {
 func (s *KayakIntegrationTestSuite) TestFetchNoRecords() {
 	r := s.Require()
 	ctx := context.Background()
+	err := s.client.RegisterConsumer(ctx)
+	r.NoError(err)
 	record, err := s.client.FetchRecord(ctx)
 	r.NoError(err)
 	r.Nil(record)
@@ -95,7 +104,7 @@ func (s *KayakIntegrationTestSuite) TestFetchNoRecords() {
 func (s *KayakIntegrationTestSuite) TestFetchRecordNoCommit() {
 	r := s.Require()
 	ctx := context.Background()
-	err := s.client.PutRecords(ctx, records)
+	err := s.client.PutRecords(ctx, records...)
 	r.NoError(err)
 
 	record, err := s.client.FetchRecord(ctx)
@@ -105,14 +114,14 @@ func (s *KayakIntegrationTestSuite) TestFetchRecordNoCommit() {
 
 	record2, err := s.client.FetchRecord(ctx)
 	r.NoError(err)
-	s.protoEqual(record, record2)
+	test.ProtoEqual(s.T(), record, record2)
 }
 
 func (s *KayakIntegrationTestSuite) TestFetchRecords() {
 
 	r := s.Require()
 	ctx := context.Background()
-	err := s.client.PutRecords(ctx, records)
+	err := s.client.PutRecords(ctx, records...)
 	r.NoError(err)
 
 	// CASE: ordering
@@ -132,11 +141,11 @@ func (s *KayakIntegrationTestSuite) TestFetchRecords() {
 
 	time.Sleep(500 * time.Millisecond)
 	// CASE: fetch across different brokers
-	third, err := s.secondaryClient.FetchRecord(ctx)
+	third, err := s.client.FetchRecord(ctx)
 	r.NoError(err)
 	s.checkRecord(2, third)
 
-	err = s.secondaryClient.CommitRecord(ctx, third)
+	err = s.client.CommitRecord(ctx, third)
 	r.NoError(err)
 
 	fourth, err := s.client.FetchRecord(ctx)

@@ -26,10 +26,15 @@ func TestWithTopic(t *testing.T) {
 	WithTopic("test-topic")(cfg)
 	require.Equal(t, "test-topic", cfg.Topic)
 }
+func TestWithConsumerID(t *testing.T) {
+	cfg := &Config{}
+	WithConsumerID("testID")(cfg)
+	require.Equal(t, "testID", cfg.ConsumerID)
+}
 func TestWithConsumerGroup(t *testing.T) {
 	cfg := &Config{}
-	WithConsumerID("testGroup")(cfg)
-	require.Equal(t, "testGroup", cfg.ConsumerID)
+	WithConsumerGroup("testGroup")(cfg)
+	require.Equal(t, "testGroup", cfg.ConsumerGroup)
 }
 
 func TestWithHTTPClient(t *testing.T) {

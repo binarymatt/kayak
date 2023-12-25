@@ -8,12 +8,22 @@ mocks:
 
 .PHONY: test
 test:
-	go test -v ./...
+	go test -v -cover -coverprofile=coverage.out ./...
 
 .PHONY: local_cluster
 local_cluster:
 	docker compose up
 
+.PHONY: local_server
+local_server:
+	go run cmd/kayak/main.go --id 1 --dir data/ --config server1.yaml --host localhost --console
+
+.PHONY: clean_local
+clean_local:
+	rm -rf data
+.PHONY: local_integration
+local_integration:
+	env KAYAK_INTEGRATION_TESTS=true go test -v ./kayak_test.go
 .PHONY: integration_test
 integration_test:
 	docker compose down
@@ -22,3 +32,10 @@ integration_test:
 	env KAYAK_INTEGRATION_TESTS=true go test -v ./kayak_test.go
 	docker compose down
 
+.PHONY: docker
+docker:
+	docker build . -t kayak:latest
+
+.PHONY: prometheus
+prometheus:
+	prometheus --config.file=prometheus.yml

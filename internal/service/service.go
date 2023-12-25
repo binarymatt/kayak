@@ -23,6 +23,7 @@ import (
 	autopilot "github.com/hashicorp/raft-autopilot"
 	boltdb "github.com/hashicorp/raft-boltdb"
 	"github.com/hashicorp/serf/serf"
+	"github.com/oklog/ulid/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -48,31 +49,33 @@ func New(store store.Store, cfg *config.Config) (*service, error) {
 	signal.Notify(sigs, syscall.SIGUSR1)
 	slog.Info("creating service via New", "addr", cfg.RaftAddress())
 	s := &service{
-		cfg:        cfg,
-		store:      store,
-		reloadChan: sigs,
-		raftAddr:   raft.ServerAddress(cfg.RaftAddress()),
-		peers:      cfg.Peers,
-		eventChan:  eventChan,
+		cfg:         cfg,
+		store:       store,
+		reloadChan:  sigs,
+		raftAddr:    raft.ServerAddress(cfg.RaftAddress()),
+		peers:       cfg.Peers,
+		eventChan:   eventChan,
+		idGenerator: ulid.Make,
 	}
 
 	return s, nil
 }
 
 type service struct {
-	store      store.Store
-	raft       *raft.Raft
-	cfg        *config.Config
-	raftAddr   raft.ServerAddress
-	manager    *transport.Manager
-	reloadChan chan os.Signal
-	eventChan  chan Event
-	pilot      *autopilot.Autopilot
-	serfChan   chan serf.Event
-	serfPeers  []*serf.Member
-	peers      []string
-	sf         *serf.Serf
-	ready      atomic.Bool
+	store       store.Store
+	raft        *raft.Raft
+	cfg         *config.Config
+	raftAddr    raft.ServerAddress
+	manager     *transport.Manager
+	reloadChan  chan os.Signal
+	eventChan   chan Event
+	pilot       *autopilot.Autopilot
+	serfChan    chan serf.Event
+	serfPeers   []*serf.Member
+	peers       []string
+	sf          *serf.Serf
+	ready       atomic.Bool
+	idGenerator func() ulid.ULID
 }
 
 func (s *service) Raft() *raft.Raft {
@@ -186,7 +189,7 @@ func (s *service) Init() error {
 		return fmt.Errorf(`error creating snapshot store (%q): %v`, baseDir, err)
 	}
 
-	fsm := fsm.NewStore(s.store)
+	fsm := fsm.NewStore(s.store, s.cfg.DataPath())
 	slog.Warn("fsm initialized")
 
 	manager := transport.New(raft.ServerAddress(s.cfg.RaftAddress()), nil, transport.WithHeartbeatTimeout(30*time.Second))
@@ -290,7 +293,7 @@ func (s *service) waitForServe(ctx context.Context, until time.Time) {
 }
 func (s *service) stats(ctx context.Context) error {
 
-	tick := time.NewTicker(30 * time.Second)
+	tick := time.NewTicker(1 * time.Second)
 	for {
 		slog.Debug("starting stats loop")
 		select {
@@ -304,7 +307,8 @@ func (s *service) stats(ctx context.Context) error {
 			for key, value := range nodeStats {
 				attrs = append(attrs, slog.Any(key, value))
 			}
-			slog.Default().LogAttrs(ctx, slog.LevelInfo, "stats", attrs...)
+			slog.Default().LogAttrs(ctx, slog.LevelDebug, "stats", attrs...)
+			CalculateLag(ctx, s.store)
 		}
 	}
 }
@@ -328,8 +332,9 @@ func (s *service) serve(ctx context.Context) error {
 	defer closer()
 	path, handler := kayakv1connect.NewKayakServiceHandler(s,
 		connect.WithInterceptors(
-			otelconnect.NewInterceptor(),
+			otelconnect.NewInterceptor(otelconnect.WithoutMetrics()),
 			NewLogInterceptor(),
+			MetricsInterceptor(),
 		),
 	)
 	raftPath, raftHandler := transportv1connect.NewRaftTransportHandler(s.manager.Service())
@@ -341,6 +346,7 @@ func (s *service) serve(ctx context.Context) error {
 	mux.Handle(adminPath, adminHandler)
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/ready", s.Ready)
+	// router := otelhttp.NewHandler(mux, "")
 	slog.Info("setting up api service", "advertise", s.cfg.ServiceAddress(), "listen", s.cfg.ListenAddress())
 	server := http.Server{
 		Addr:    s.cfg.ListenAddress(),

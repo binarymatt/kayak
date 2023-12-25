@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/dgraph-io/badger/v4"
 	"github.com/lmittmann/tint"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
@@ -21,10 +20,11 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 	"log/slog"
 
 	"github.com/binarymatt/kayak/internal/config"
-	"github.com/binarymatt/kayak/internal/log"
 	"github.com/binarymatt/kayak/internal/service"
 	"github.com/binarymatt/kayak/internal/store"
 )
@@ -85,7 +85,8 @@ func setupLogging(console bool) {
 	opts := &slog.HandlerOptions{Level: slog.LevelInfo, AddSource: true}
 	if console {
 		logger = slog.New(tint.NewHandler(os.Stderr, &tint.Options{
-			Level: slog.LevelInfo,
+			Level:     slog.LevelInfo,
+			AddSource: true,
 		}))
 	} else {
 		logger = slog.New(slog.NewJSONHandler(os.Stderr, opts))
@@ -179,19 +180,28 @@ func kayakRun(cctx *cli.Context) error {
 		syscall.SIGKILL,
 	)
 	defer cancel()
-	slog.Warn("opening badger db")
-	options := badger.DefaultOptions(filepath.Join(path, "badger.db")).
-		WithLogger(&log.BadgerLogger{})
-	db, err := badger.Open(options)
+	slog.Warn("opening db")
+	// options := badger.DefaultOptions(filepath.Join(path, "badger.db")).
+	// WithLogger(&log.BadgerLogger{})
+	// db, err := badger.Open(options)
+
+	sdb := sqlite.Open(cfg.DataPath())
+	db, err := gorm.Open(sdb, &gorm.Config{})
 	if err != nil {
-		slog.Error("could not open boltdb file", "error", err)
+		slog.Error("could not open db file", "error", err)
+		return err
+	}
+	// s := store.NewBadger(db)
+	s := store.NewSqlStore(db)
+	defer s.Close()
+
+	err = s.RunMigrations()
+	if err != nil {
+		slog.Error("error running migrations")
 		return err
 	}
 
-	s := store.NewBadger(db)
-	defer s.Close()
 	slog.Info("creating service")
-
 	svc, err := service.New(s, cfg)
 	if err != nil {
 		return err

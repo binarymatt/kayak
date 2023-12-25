@@ -5,29 +5,37 @@ package kayak.v1;
 import "buf/validate/validate.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
+import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/binarymatt/kayak/gen/kayak/v1;kayakv1";
 
 service KayakService {
-  rpc PutRecords(PutRecordsRequest) returns (google.protobuf.Empty) {}
-  rpc CommitRecord(CommitRecordRequest) returns (google.protobuf.Empty) {}
-  rpc Apply(Command) returns (google.protobuf.Empty) {}
+  // Mutating Procedures
 
+  // Apply applies a command on the primary node.
+  rpc Apply(Command) returns (ApplyResponse) {}
+  // PutRecords adds records to the stream
+  rpc PutRecords(PutRecordsRequest) returns (google.protobuf.Empty) {}
+  // Commits Consumer position for a topic/group
+  rpc CommitRecord(CommitRecordRequest) returns (google.protobuf.Empty) {}
+  // Creates new topic on server
+  rpc CreateTopic(CreateTopicRequest) returns (google.protobuf.Empty) {}
+  // Deletes Topic across server - permantly or via archive
+  rpc DeleteTopic(DeleteTopicRequest) returns (google.protobuf.Empty) {}
+  // rpc CreateConsumerGroup(CreateConsumerGroupRequest) returns (google.protobuf.Empty) {}
+  rpc RegisterConsumer(RegisterConsumerRequest) returns (google.protobuf.Empty) {}
+
+  // Read Procedures
   rpc GetRecords(GetRecordsRequest) returns (GetRecordsResponse) {}
   rpc FetchRecord(FetchRecordRequest) returns (FetchRecordsResponse) {}
   rpc StreamRecords(StreamRecordsRequest) returns (stream Record) {}
-  rpc CreateTopic(CreateTopicRequest) returns (google.protobuf.Empty) {}
-  rpc DeleteTopic(DeleteTopicRequest) returns (google.protobuf.Empty) {}
   rpc ListTopics(ListTopicsRequest) returns (ListTopicsResponse) {}
-
   rpc Stats(google.protobuf.Empty) returns (StatsResponse) {}
   rpc GetNodeDetails(google.protobuf.Empty) returns (GetNodeDetailsResponse) {}
 }
 message CommitRecordRequest {
-  string topic = 1;
-  string consumer_id = 2;
-  string position = 3;
+  TopicConsumer consumer = 1;
 }
 
 message PutRecordsRequest {
@@ -40,19 +48,14 @@ message PutRecordsRequest {
 }
 message Record {
   string topic = 1;
-  string partition = 2;
+  int64 partition = 2;
   string id = 3;
   map<string, string> headers = 4;
-  bytes payload = 5 [(buf.validate.field).bytes.min_len = 1];
+  bytes payload = 5 [(buf.validate.field).required = true];
 }
 
 message FetchRecordRequest {
-  // topic is the topic to get records from
-  string topic = 1 [(buf.validate.field).string.min_len = 1];
-  // consumer_group, if passed, will tell kayak what position to start from
-  string consumer_id = 2;
-  // position is where in the stream to start consuming.
-  string position = 3;
+  TopicConsumer consumer = 1 [(buf.validate.field).required = true];
 }
 
 message FetchRecordsResponse {
@@ -62,7 +65,7 @@ message FetchRecordsResponse {
 message GetRecordsRequest {
   string topic = 1 [(buf.validate.field).string.min_len = 1];
   string start = 2;
-  int32 limit = 3;
+  int64 limit = 3;
 }
 
 message GetRecordsResponse {
@@ -70,14 +73,15 @@ message GetRecordsResponse {
 }
 
 message CreateTopicRequest {
-  string name = 1;
+  Topic topic = 1 [(buf.validate.field).required = true];
 }
 message DeleteTopicRequest {
-  string topic = 1 [(buf.validate.field).required = true];
+  Topic topic = 1 [(buf.validate.field).required = true];
 }
 message Topic {
-  string name = 1;
-  int64 partitions = 2;
+  string name = 1 [(buf.validate.field).required = true];
+  int64 partitions = 2 [(buf.validate.field).int64.gt = 0];
+  bool archived = 3;
 }
 message ListTopicsRequest {}
 message ListTopicsResponse {
@@ -94,7 +98,13 @@ message Command {
     CreateTopicRequest create_topic_request = 2;
     CommitRecordRequest commit_record_request = 3;
     DeleteTopicRequest delete_topic_request = 4;
+    CreateConsumerGroupRequest create_consumer_group_request = 5;
+    RegisterConsumerRequest register_consumer_request = 6;
   }
+}
+
+message ApplyResponse {
+  google.protobuf.Value data = 1;
 }
 
 message GetNodeDetailsResponse {
@@ -119,10 +129,44 @@ message StreamRecordsRequest {
   google.protobuf.Duration timeout = 4;
 }
 
+message GroupPartitions {
+  string name = 1;
+  int64 partitions = 2;
+  repeated TopicConsumer consumers = 3;
+}
 message TopicMetadata {
   string name = 1;
   int64 record_count = 2;
   google.protobuf.Timestamp created_at = 3;
   bool archived = 4;
-  map<string, string> consumers = 5;
+  map<string, GroupPartitions> group_metadata = 5;
+}
+
+enum Hash {
+  HASH_UNSPECIFIED = 0;
+  HASH_MURMUR3 = 1;
+}
+message TopicConsumer {
+  string id = 1 [(buf.validate.field).required = true];
+  string topic = 2 [(buf.validate.field).required = true];
+  string group = 3;
+  repeated int64 partitions = 4;
+  string position = 5;
+}
+message ConsumerGroup {
+  string name = 1 [(buf.validate.field).required = true];
+  string topic = 2 [(buf.validate.field).required = true];
+}
+
+message ConsumerGroupPartition {
+  int64 partition_number = 1;
+  string consumer_id = 2;
+  string position = 3;
+}
+message CreateConsumerGroupRequest {
+  ConsumerGroup group = 1 [(buf.validate.field).required = true];
+}
+
+message RegisterConsumerRequest {
+  TopicConsumer consumer = 1;
 }

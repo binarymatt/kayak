@@ -5,19 +5,22 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
-	"log/slog"
 
-	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
-	"github.com/binarymatt/kayak/internal/store"
 	"github.com/boltdb/bolt"
 	"github.com/dgraph-io/badger/v4"
 	"github.com/hashicorp/raft"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"log/slog"
+
+	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
+	"github.com/binarymatt/kayak/internal/store"
+	"github.com/binarymatt/kayak/internal/store/models"
 )
 
 type storeFSM struct {
 	store store.Store
+	path  string
 }
 
 var (
@@ -39,26 +42,25 @@ func (s storeFSM) Apply(log *raft.Log) interface{} {
 			return nil
 		}
 		if command.GetPutRecordsRequest() != nil {
-			records := command.GetPutRecordsRequest().GetRecords()
 			topic := command.GetPutRecordsRequest().Topic
-			for _, record := range records {
-				if record.Topic == "" {
-					record.Topic = topic
-				}
+			records := make([]*models.Record, len(command.GetPutRecordsRequest().GetRecords()))
+			for i, pr := range command.GetPutRecordsRequest().GetRecords() {
+				records[i] = models.RecordFromProto(pr)
+				records[i].TopicID = topic
 			}
 			err := s.store.AddRecords(context.TODO(), topic, records...)
 			if err != nil {
-				slog.Error("could not save records", "error", err)
+				slog.Error("error while adding records in fsm", "error", err)
 			}
 			return &ApplyResponse{
-				Error: s.store.AddRecords(context.TODO(), topic, records...),
-				Data:  records,
+				Error: err,
 			}
 		}
 		if command.GetCreateTopicRequest() != nil {
-			name := command.GetCreateTopicRequest().Name
+			topic := command.GetCreateTopicRequest().Topic
+			name := topic.Name
 			slog.Info("creating topic in state machine", "topic", name)
-			err := s.store.CreateTopic(context.TODO(), name)
+			err := s.store.CreateTopic(context.TODO(), models.TopicFromProto(topic))
 			if err != nil {
 				slog.Error("Error creating topic in state machine", "topic", name, "error", err)
 			}
@@ -69,27 +71,26 @@ func (s storeFSM) Apply(log *raft.Log) interface{} {
 
 			return &ApplyResponse{
 				Error: err,
-				Data:  name,
 			}
 		}
 		if command.GetCommitRecordRequest() != nil {
-			topic := command.GetCommitRecordRequest().GetTopic()
-			consumer := command.GetCommitRecordRequest().GetConsumerId()
-			position := command.GetCommitRecordRequest().GetPosition()
-			err := s.store.CommitConsumerPosition(context.TODO(), topic, consumer, position)
+			consumer := models.ConsumerFromProto(command.GetCommitRecordRequest().GetConsumer())
+			err := s.store.CommitConsumerPosition(context.TODO(), consumer)
 			if err != nil {
 				slog.Error("error committing group position", "error", err)
 			}
 
-			slog.Info("Commited record in fsm", "topic", topic, "consumer", consumer, "position", position)
+			slog.Info("Commited record in fsm", "topic", consumer.TopicID, "consumer", consumer.ID, "position", consumer.Position)
 			return &ApplyResponse{
 				Error: err,
 			}
 		}
 		if command.GetDeleteTopicRequest() != nil {
 			req := command.GetDeleteTopicRequest()
-			topic := req.Topic
-			err := s.store.DeleteTopic(context.TODO(), topic, true)
+			slog.Info("deleting topic from state machine", "topic", req.Topic.Name, "archived", req.Topic.Archived)
+			topic := models.TopicFromProto(req.Topic)
+
+			err := s.store.DeleteTopic(context.TODO(), topic)
 			if err != nil {
 				slog.Error("Error deleting topic in state machine", "topic", topic, "error", err)
 			}
@@ -99,7 +100,17 @@ func (s storeFSM) Apply(log *raft.Log) interface{} {
 			}
 			return &ApplyResponse{
 				Error: err,
-				Data:  topic,
+			}
+		}
+		if req := command.GetCreateConsumerGroupRequest(); req != nil {
+			return &ApplyResponse{
+				Error: errors.New("not available."),
+			}
+		}
+		if req := command.GetRegisterConsumerRequest(); req != nil {
+			_, err := s.store.RegisterConsumer(context.TODO(), models.ConsumerFromProto(req.Consumer))
+			return &ApplyResponse{
+				Error: err,
 			}
 		}
 
@@ -124,14 +135,19 @@ func (s storeFSM) SnapshotBadger() (raft.FSMSnapshot, error) {
 	return &badgerFsmSnapshot{db: db}, nil
 }
 func (s storeFSM) Snapshot() (raft.FSMSnapshot, error) {
-	_, ok := s.store.Impl().(*bolt.DB)
-	if ok {
-		return s.SnapshotBolt()
-	}
-	return s.SnapshotBadger()
+	//_, ok := s.store.Impl().(*bolt.DB)
+	//if ok {
+	//	return s.SnapshotBolt()
+	//}
+	//return s.SnapshotBadger()
+	return &sqliteFSMSnapshot{dbPath: s.path}, nil
 }
 
+// TODO: figure out how to restore while db is open
 func (s storeFSM) Restore(rClose io.ReadCloser) error {
+	return nil
+}
+func (s storeFSM) RestoreBader(rClose io.ReadCloser) error {
 	db, ok := s.store.Impl().(*badger.DB)
 	if !ok {
 		slog.Error("could not case store", "method", "Restore")
@@ -197,8 +213,9 @@ func (s storeFSM) Read(r io.Reader) ([]byte, error) {
 	return msg, nil
 }
 
-func NewStore(s store.Store) raft.FSM {
+func NewStore(s store.Store, path string) raft.FSM {
 	return &storeFSM{
 		store: s,
+		path:  path,
 	}
 }
