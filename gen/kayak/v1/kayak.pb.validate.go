@@ -436,11 +436,34 @@ func (m *FetchRecordRequest) validate(all bool) error {
 
 	var errors []error
 
-	// no validation rules for Topic
-
-	// no validation rules for ConsumerGroup
-
-	// no validation rules for ConsumerId
+	if all {
+		switch v := interface{}(m.GetConsumer()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, FetchRecordRequestValidationError{
+					field:  "Consumer",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, FetchRecordRequestValidationError{
+					field:  "Consumer",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetConsumer()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return FetchRecordRequestValidationError{
+				field:  "Consumer",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
 
 	if len(errors) > 0 {
 		return FetchRecordRequestMultiError(errors)
@@ -2820,8 +2843,6 @@ func (m *TopicConsumer) validate(all bool) error {
 	// no validation rules for Topic
 
 	// no validation rules for Group
-
-	// no validation rules for Partition
 
 	// no validation rules for Position
 

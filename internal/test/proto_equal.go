@@ -10,6 +10,7 @@ import (
 )
 
 func ProtoEqual(t *testing.T, expected, actual proto.Message, msgAndArgs ...interface{}) {
+	t.Helper()
 	r := require.New(t)
 	r.Empty(cmp.Diff(expected, actual, protocmp.Transform()), msgAndArgs...)
 }

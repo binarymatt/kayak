@@ -2,17 +2,18 @@ package service
 
 import (
 	"context"
-	"log/slog"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
 
 	"connectrpc.com/connect"
-	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
 	"github.com/hashicorp/raft"
 	autopilot "github.com/hashicorp/raft-autopilot"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"log/slog"
+
+	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
 )
 
 type integration struct {
@@ -61,7 +62,7 @@ func (i *integration) FetchServerStats(ctx context.Context, servers map[raft.Ser
 			continue
 		}
 		stats := resp.Msg.Raft
-		slog.Info("", "stats", resp.Msg)
+		// slog.Info("", "stats", resp.Msg)
 		duration := stats["last_contact"]
 		lastIndex, err := strconv.ParseUint(stats["last_log_index"], 10, 64)
 		if err != nil {

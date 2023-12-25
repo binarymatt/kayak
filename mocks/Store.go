@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
+	models "github.com/binarymatt/kayak/internal/store/models"
 	mock "github.com/stretchr/testify/mock"
 
 	store "github.com/binarymatt/kayak/internal/store"
@@ -25,7 +25,7 @@ func (_m *Store) EXPECT() *Store_Expecter {
 }
 
 // AddRecords provides a mock function with given fields: ctx, topic, records
-func (_m *Store) AddRecords(ctx context.Context, topic string, records ...*kayakv1.Record) error {
+func (_m *Store) AddRecords(ctx context.Context, topic string, records ...*models.Record) error {
 	_va := make([]interface{}, len(records))
 	for _i := range records {
 		_va[_i] = records[_i]
@@ -36,7 +36,7 @@ func (_m *Store) AddRecords(ctx context.Context, topic string, records ...*kayak
 	ret := _m.Called(_ca...)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, ...*kayakv1.Record) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, ...*models.Record) error); ok {
 		r0 = rf(ctx, topic, records...)
 	} else {
 		r0 = ret.Error(0)
@@ -53,18 +53,18 @@ type Store_AddRecords_Call struct {
 // AddRecords is a helper method to define mock.On call
 //   - ctx context.Context
 //   - topic string
-//   - records ...*kayakv1.Record
+//   - records ...*models.Record
 func (_e *Store_Expecter) AddRecords(ctx interface{}, topic interface{}, records ...interface{}) *Store_AddRecords_Call {
 	return &Store_AddRecords_Call{Call: _e.mock.On("AddRecords",
 		append([]interface{}{ctx, topic}, records...)...)}
 }
 
-func (_c *Store_AddRecords_Call) Run(run func(ctx context.Context, topic string, records ...*kayakv1.Record)) *Store_AddRecords_Call {
+func (_c *Store_AddRecords_Call) Run(run func(ctx context.Context, topic string, records ...*models.Record)) *Store_AddRecords_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]*kayakv1.Record, len(args)-2)
+		variadicArgs := make([]*models.Record, len(args)-2)
 		for i, a := range args[2:] {
 			if a != nil {
-				variadicArgs[i] = a.(*kayakv1.Record)
+				variadicArgs[i] = a.(*models.Record)
 			}
 		}
 		run(args[0].(context.Context), args[1].(string), variadicArgs...)
@@ -77,7 +77,7 @@ func (_c *Store_AddRecords_Call) Return(_a0 error) *Store_AddRecords_Call {
 	return _c
 }
 
-func (_c *Store_AddRecords_Call) RunAndReturn(run func(context.Context, string, ...*kayakv1.Record) error) *Store_AddRecords_Call {
+func (_c *Store_AddRecords_Call) RunAndReturn(run func(context.Context, string, ...*models.Record) error) *Store_AddRecords_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -115,11 +115,11 @@ func (_c *Store_Close_Call) RunAndReturn(run func()) *Store_Close_Call {
 }
 
 // CommitConsumerPosition provides a mock function with given fields: ctx, consumer
-func (_m *Store) CommitConsumerPosition(ctx context.Context, consumer *kayakv1.TopicConsumer) error {
+func (_m *Store) CommitConsumerPosition(ctx context.Context, consumer *models.Consumer) error {
 	ret := _m.Called(ctx, consumer)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *kayakv1.TopicConsumer) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Consumer) error); ok {
 		r0 = rf(ctx, consumer)
 	} else {
 		r0 = ret.Error(0)
@@ -135,14 +135,14 @@ type Store_CommitConsumerPosition_Call struct {
 
 // CommitConsumerPosition is a helper method to define mock.On call
 //   - ctx context.Context
-//   - consumer *kayakv1.TopicConsumer
+//   - consumer *models.Consumer
 func (_e *Store_Expecter) CommitConsumerPosition(ctx interface{}, consumer interface{}) *Store_CommitConsumerPosition_Call {
 	return &Store_CommitConsumerPosition_Call{Call: _e.mock.On("CommitConsumerPosition", ctx, consumer)}
 }
 
-func (_c *Store_CommitConsumerPosition_Call) Run(run func(ctx context.Context, consumer *kayakv1.TopicConsumer)) *Store_CommitConsumerPosition_Call {
+func (_c *Store_CommitConsumerPosition_Call) Run(run func(ctx context.Context, consumer *models.Consumer)) *Store_CommitConsumerPosition_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*kayakv1.TopicConsumer))
+		run(args[0].(context.Context), args[1].(*models.Consumer))
 	})
 	return _c
 }
@@ -152,18 +152,18 @@ func (_c *Store_CommitConsumerPosition_Call) Return(_a0 error) *Store_CommitCons
 	return _c
 }
 
-func (_c *Store_CommitConsumerPosition_Call) RunAndReturn(run func(context.Context, *kayakv1.TopicConsumer) error) *Store_CommitConsumerPosition_Call {
+func (_c *Store_CommitConsumerPosition_Call) RunAndReturn(run func(context.Context, *models.Consumer) error) *Store_CommitConsumerPosition_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// CreateTopic provides a mock function with given fields: ctx, name
-func (_m *Store) CreateTopic(ctx context.Context, name string) error {
-	ret := _m.Called(ctx, name)
+// CreateTopic provides a mock function with given fields: ctx, topic
+func (_m *Store) CreateTopic(ctx context.Context, topic *models.Topic) error {
+	ret := _m.Called(ctx, topic)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, name)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Topic) error); ok {
+		r0 = rf(ctx, topic)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -178,14 +178,14 @@ type Store_CreateTopic_Call struct {
 
 // CreateTopic is a helper method to define mock.On call
 //   - ctx context.Context
-//   - name string
-func (_e *Store_Expecter) CreateTopic(ctx interface{}, name interface{}) *Store_CreateTopic_Call {
-	return &Store_CreateTopic_Call{Call: _e.mock.On("CreateTopic", ctx, name)}
+//   - topic *models.Topic
+func (_e *Store_Expecter) CreateTopic(ctx interface{}, topic interface{}) *Store_CreateTopic_Call {
+	return &Store_CreateTopic_Call{Call: _e.mock.On("CreateTopic", ctx, topic)}
 }
 
-func (_c *Store_CreateTopic_Call) Run(run func(ctx context.Context, name string)) *Store_CreateTopic_Call {
+func (_c *Store_CreateTopic_Call) Run(run func(ctx context.Context, topic *models.Topic)) *Store_CreateTopic_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(*models.Topic))
 	})
 	return _c
 }
@@ -195,18 +195,18 @@ func (_c *Store_CreateTopic_Call) Return(_a0 error) *Store_CreateTopic_Call {
 	return _c
 }
 
-func (_c *Store_CreateTopic_Call) RunAndReturn(run func(context.Context, string) error) *Store_CreateTopic_Call {
+func (_c *Store_CreateTopic_Call) RunAndReturn(run func(context.Context, *models.Topic) error) *Store_CreateTopic_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteTopic provides a mock function with given fields: ctx, topic, force
-func (_m *Store) DeleteTopic(ctx context.Context, topic string, force bool) error {
-	ret := _m.Called(ctx, topic, force)
+// DeleteTopic provides a mock function with given fields: ctx, topic
+func (_m *Store) DeleteTopic(ctx context.Context, topic *models.Topic) error {
+	ret := _m.Called(ctx, topic)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, bool) error); ok {
-		r0 = rf(ctx, topic, force)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Topic) error); ok {
+		r0 = rf(ctx, topic)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -221,15 +221,14 @@ type Store_DeleteTopic_Call struct {
 
 // DeleteTopic is a helper method to define mock.On call
 //   - ctx context.Context
-//   - topic string
-//   - force bool
-func (_e *Store_Expecter) DeleteTopic(ctx interface{}, topic interface{}, force interface{}) *Store_DeleteTopic_Call {
-	return &Store_DeleteTopic_Call{Call: _e.mock.On("DeleteTopic", ctx, topic, force)}
+//   - topic *models.Topic
+func (_e *Store_Expecter) DeleteTopic(ctx interface{}, topic interface{}) *Store_DeleteTopic_Call {
+	return &Store_DeleteTopic_Call{Call: _e.mock.On("DeleteTopic", ctx, topic)}
 }
 
-func (_c *Store_DeleteTopic_Call) Run(run func(ctx context.Context, topic string, force bool)) *Store_DeleteTopic_Call {
+func (_c *Store_DeleteTopic_Call) Run(run func(ctx context.Context, topic *models.Topic)) *Store_DeleteTopic_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(bool))
+		run(args[0].(context.Context), args[1].(*models.Topic))
 	})
 	return _c
 }
@@ -239,30 +238,30 @@ func (_c *Store_DeleteTopic_Call) Return(_a0 error) *Store_DeleteTopic_Call {
 	return _c
 }
 
-func (_c *Store_DeleteTopic_Call) RunAndReturn(run func(context.Context, string, bool) error) *Store_DeleteTopic_Call {
+func (_c *Store_DeleteTopic_Call) RunAndReturn(run func(context.Context, *models.Topic) error) *Store_DeleteTopic_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetConsumerGroupInformation provides a mock function with given fields: ctx, group
-func (_m *Store) GetConsumerGroupInformation(ctx context.Context, group *kayakv1.ConsumerGroup) (*kayakv1.ConsumerGroup, error) {
-	ret := _m.Called(ctx, group)
+// FetchRecord provides a mock function with given fields: ctx, consumer
+func (_m *Store) FetchRecord(ctx context.Context, consumer *models.Consumer) (*models.Record, error) {
+	ret := _m.Called(ctx, consumer)
 
-	var r0 *kayakv1.ConsumerGroup
+	var r0 *models.Record
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *kayakv1.ConsumerGroup) (*kayakv1.ConsumerGroup, error)); ok {
-		return rf(ctx, group)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Consumer) (*models.Record, error)); ok {
+		return rf(ctx, consumer)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *kayakv1.ConsumerGroup) *kayakv1.ConsumerGroup); ok {
-		r0 = rf(ctx, group)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Consumer) *models.Record); ok {
+		r0 = rf(ctx, consumer)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*kayakv1.ConsumerGroup)
+			r0 = ret.Get(0).(*models.Record)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *kayakv1.ConsumerGroup) error); ok {
-		r1 = rf(ctx, group)
+	if rf, ok := ret.Get(1).(func(context.Context, *models.Consumer) error); ok {
+		r1 = rf(ctx, consumer)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -270,54 +269,52 @@ func (_m *Store) GetConsumerGroupInformation(ctx context.Context, group *kayakv1
 	return r0, r1
 }
 
-// Store_GetConsumerGroupInformation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetConsumerGroupInformation'
-type Store_GetConsumerGroupInformation_Call struct {
+// Store_FetchRecord_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FetchRecord'
+type Store_FetchRecord_Call struct {
 	*mock.Call
 }
 
-// GetConsumerGroupInformation is a helper method to define mock.On call
+// FetchRecord is a helper method to define mock.On call
 //   - ctx context.Context
-//   - group *kayakv1.ConsumerGroup
-func (_e *Store_Expecter) GetConsumerGroupInformation(ctx interface{}, group interface{}) *Store_GetConsumerGroupInformation_Call {
-	return &Store_GetConsumerGroupInformation_Call{Call: _e.mock.On("GetConsumerGroupInformation", ctx, group)}
+//   - consumer *models.Consumer
+func (_e *Store_Expecter) FetchRecord(ctx interface{}, consumer interface{}) *Store_FetchRecord_Call {
+	return &Store_FetchRecord_Call{Call: _e.mock.On("FetchRecord", ctx, consumer)}
 }
 
-func (_c *Store_GetConsumerGroupInformation_Call) Run(run func(ctx context.Context, group *kayakv1.ConsumerGroup)) *Store_GetConsumerGroupInformation_Call {
+func (_c *Store_FetchRecord_Call) Run(run func(ctx context.Context, consumer *models.Consumer)) *Store_FetchRecord_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*kayakv1.ConsumerGroup))
+		run(args[0].(context.Context), args[1].(*models.Consumer))
 	})
 	return _c
 }
 
-func (_c *Store_GetConsumerGroupInformation_Call) Return(_a0 *kayakv1.ConsumerGroup, _a1 error) *Store_GetConsumerGroupInformation_Call {
+func (_c *Store_FetchRecord_Call) Return(_a0 *models.Record, _a1 error) *Store_FetchRecord_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Store_GetConsumerGroupInformation_Call) RunAndReturn(run func(context.Context, *kayakv1.ConsumerGroup) (*kayakv1.ConsumerGroup, error)) *Store_GetConsumerGroupInformation_Call {
+func (_c *Store_FetchRecord_Call) RunAndReturn(run func(context.Context, *models.Consumer) (*models.Record, error)) *Store_FetchRecord_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetConsumerPartitions provides a mock function with given fields: ctx, topic, group
-func (_m *Store) GetConsumerPartitions(ctx context.Context, topic string, group string) ([]*kayakv1.TopicConsumer, error) {
-	ret := _m.Called(ctx, topic, group)
+// GetConsumerLag provides a mock function with given fields: ctx, consumer
+func (_m *Store) GetConsumerLag(ctx context.Context, consumer *models.Consumer) (int64, error) {
+	ret := _m.Called(ctx, consumer)
 
-	var r0 []*kayakv1.TopicConsumer
+	var r0 int64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]*kayakv1.TopicConsumer, error)); ok {
-		return rf(ctx, topic, group)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Consumer) (int64, error)); ok {
+		return rf(ctx, consumer)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string) []*kayakv1.TopicConsumer); ok {
-		r0 = rf(ctx, topic, group)
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Consumer) int64); ok {
+		r0 = rf(ctx, consumer)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*kayakv1.TopicConsumer)
-		}
+		r0 = ret.Get(0).(int64)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = rf(ctx, topic, group)
+	if rf, ok := ret.Get(1).(func(context.Context, *models.Consumer) error); ok {
+		r1 = rf(ctx, consumer)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -325,52 +322,51 @@ func (_m *Store) GetConsumerPartitions(ctx context.Context, topic string, group 
 	return r0, r1
 }
 
-// Store_GetConsumerPartitions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetConsumerPartitions'
-type Store_GetConsumerPartitions_Call struct {
+// Store_GetConsumerLag_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetConsumerLag'
+type Store_GetConsumerLag_Call struct {
 	*mock.Call
 }
 
-// GetConsumerPartitions is a helper method to define mock.On call
+// GetConsumerLag is a helper method to define mock.On call
 //   - ctx context.Context
-//   - topic string
-//   - group string
-func (_e *Store_Expecter) GetConsumerPartitions(ctx interface{}, topic interface{}, group interface{}) *Store_GetConsumerPartitions_Call {
-	return &Store_GetConsumerPartitions_Call{Call: _e.mock.On("GetConsumerPartitions", ctx, topic, group)}
+//   - consumer *models.Consumer
+func (_e *Store_Expecter) GetConsumerLag(ctx interface{}, consumer interface{}) *Store_GetConsumerLag_Call {
+	return &Store_GetConsumerLag_Call{Call: _e.mock.On("GetConsumerLag", ctx, consumer)}
 }
 
-func (_c *Store_GetConsumerPartitions_Call) Run(run func(ctx context.Context, topic string, group string)) *Store_GetConsumerPartitions_Call {
+func (_c *Store_GetConsumerLag_Call) Run(run func(ctx context.Context, consumer *models.Consumer)) *Store_GetConsumerLag_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		run(args[0].(context.Context), args[1].(*models.Consumer))
 	})
 	return _c
 }
 
-func (_c *Store_GetConsumerPartitions_Call) Return(_a0 []*kayakv1.TopicConsumer, _a1 error) *Store_GetConsumerPartitions_Call {
+func (_c *Store_GetConsumerLag_Call) Return(_a0 int64, _a1 error) *Store_GetConsumerLag_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Store_GetConsumerPartitions_Call) RunAndReturn(run func(context.Context, string, string) ([]*kayakv1.TopicConsumer, error)) *Store_GetConsumerPartitions_Call {
+func (_c *Store_GetConsumerLag_Call) RunAndReturn(run func(context.Context, *models.Consumer) (int64, error)) *Store_GetConsumerLag_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetConsumerPosition provides a mock function with given fields: ctx, consumer
-func (_m *Store) GetConsumerPosition(ctx context.Context, consumer *kayakv1.TopicConsumer) (string, error) {
+func (_m *Store) GetConsumerPosition(ctx context.Context, consumer *models.Consumer) (string, error) {
 	ret := _m.Called(ctx, consumer)
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *kayakv1.TopicConsumer) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Consumer) (string, error)); ok {
 		return rf(ctx, consumer)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *kayakv1.TopicConsumer) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Consumer) string); ok {
 		r0 = rf(ctx, consumer)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *kayakv1.TopicConsumer) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *models.Consumer) error); ok {
 		r1 = rf(ctx, consumer)
 	} else {
 		r1 = ret.Error(1)
@@ -386,14 +382,14 @@ type Store_GetConsumerPosition_Call struct {
 
 // GetConsumerPosition is a helper method to define mock.On call
 //   - ctx context.Context
-//   - consumer *kayakv1.TopicConsumer
+//   - consumer *models.Consumer
 func (_e *Store_Expecter) GetConsumerPosition(ctx interface{}, consumer interface{}) *Store_GetConsumerPosition_Call {
 	return &Store_GetConsumerPosition_Call{Call: _e.mock.On("GetConsumerPosition", ctx, consumer)}
 }
 
-func (_c *Store_GetConsumerPosition_Call) Run(run func(ctx context.Context, consumer *kayakv1.TopicConsumer)) *Store_GetConsumerPosition_Call {
+func (_c *Store_GetConsumerPosition_Call) Run(run func(ctx context.Context, consumer *models.Consumer)) *Store_GetConsumerPosition_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*kayakv1.TopicConsumer))
+		run(args[0].(context.Context), args[1].(*models.Consumer))
 	})
 	return _c
 }
@@ -403,25 +399,25 @@ func (_c *Store_GetConsumerPosition_Call) Return(_a0 string, _a1 error) *Store_G
 	return _c
 }
 
-func (_c *Store_GetConsumerPosition_Call) RunAndReturn(run func(context.Context, *kayakv1.TopicConsumer) (string, error)) *Store_GetConsumerPosition_Call {
+func (_c *Store_GetConsumerPosition_Call) RunAndReturn(run func(context.Context, *models.Consumer) (string, error)) *Store_GetConsumerPosition_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetRecords provides a mock function with given fields: ctx, topic, start, limit
-func (_m *Store) GetRecords(ctx context.Context, topic string, start string, limit int) ([]*kayakv1.Record, error) {
+func (_m *Store) GetRecords(ctx context.Context, topic string, start string, limit int) ([]*models.Record, error) {
 	ret := _m.Called(ctx, topic, start, limit)
 
-	var r0 []*kayakv1.Record
+	var r0 []*models.Record
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, int) ([]*kayakv1.Record, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int) ([]*models.Record, error)); ok {
 		return rf(ctx, topic, start, limit)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, int) []*kayakv1.Record); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int) []*models.Record); ok {
 		r0 = rf(ctx, topic, start, limit)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*kayakv1.Record)
+			r0 = ret.Get(0).([]*models.Record)
 		}
 	}
 
@@ -455,12 +451,12 @@ func (_c *Store_GetRecords_Call) Run(run func(ctx context.Context, topic string,
 	return _c
 }
 
-func (_c *Store_GetRecords_Call) Return(_a0 []*kayakv1.Record, _a1 error) *Store_GetRecords_Call {
+func (_c *Store_GetRecords_Call) Return(_a0 []*models.Record, _a1 error) *Store_GetRecords_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Store_GetRecords_Call) RunAndReturn(run func(context.Context, string, string, int) ([]*kayakv1.Record, error)) *Store_GetRecords_Call {
+func (_c *Store_GetRecords_Call) RunAndReturn(run func(context.Context, string, string, int) ([]*models.Record, error)) *Store_GetRecords_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -563,19 +559,19 @@ func (_c *Store_ListTopics_Call) RunAndReturn(run func(context.Context) ([]strin
 }
 
 // LoadMeta provides a mock function with given fields: ctx, topic
-func (_m *Store) LoadMeta(ctx context.Context, topic string) (*kayakv1.TopicMetadata, error) {
+func (_m *Store) LoadMeta(ctx context.Context, topic string) (*models.Topic, error) {
 	ret := _m.Called(ctx, topic)
 
-	var r0 *kayakv1.TopicMetadata
+	var r0 *models.Topic
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*kayakv1.TopicMetadata, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*models.Topic, error)); ok {
 		return rf(ctx, topic)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *kayakv1.TopicMetadata); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *models.Topic); ok {
 		r0 = rf(ctx, topic)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*kayakv1.TopicMetadata)
+			r0 = ret.Get(0).(*models.Topic)
 		}
 	}
 
@@ -607,34 +603,34 @@ func (_c *Store_LoadMeta_Call) Run(run func(ctx context.Context, topic string)) 
 	return _c
 }
 
-func (_c *Store_LoadMeta_Call) Return(_a0 *kayakv1.TopicMetadata, _a1 error) *Store_LoadMeta_Call {
+func (_c *Store_LoadMeta_Call) Return(_a0 *models.Topic, _a1 error) *Store_LoadMeta_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Store_LoadMeta_Call) RunAndReturn(run func(context.Context, string) (*kayakv1.TopicMetadata, error)) *Store_LoadMeta_Call {
+func (_c *Store_LoadMeta_Call) RunAndReturn(run func(context.Context, string) (*models.Topic, error)) *Store_LoadMeta_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RegisterConsumer provides a mock function with given fields: ctx, consumer
-func (_m *Store) RegisterConsumer(ctx context.Context, consumer *kayakv1.TopicConsumer) (*kayakv1.TopicConsumer, error) {
+func (_m *Store) RegisterConsumer(ctx context.Context, consumer *models.Consumer) (*models.Consumer, error) {
 	ret := _m.Called(ctx, consumer)
 
-	var r0 *kayakv1.TopicConsumer
+	var r0 *models.Consumer
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *kayakv1.TopicConsumer) (*kayakv1.TopicConsumer, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Consumer) (*models.Consumer, error)); ok {
 		return rf(ctx, consumer)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *kayakv1.TopicConsumer) *kayakv1.TopicConsumer); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *models.Consumer) *models.Consumer); ok {
 		r0 = rf(ctx, consumer)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*kayakv1.TopicConsumer)
+			r0 = ret.Get(0).(*models.Consumer)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *kayakv1.TopicConsumer) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *models.Consumer) error); ok {
 		r1 = rf(ctx, consumer)
 	} else {
 		r1 = ret.Error(1)
@@ -650,67 +646,24 @@ type Store_RegisterConsumer_Call struct {
 
 // RegisterConsumer is a helper method to define mock.On call
 //   - ctx context.Context
-//   - consumer *kayakv1.TopicConsumer
+//   - consumer *models.Consumer
 func (_e *Store_Expecter) RegisterConsumer(ctx interface{}, consumer interface{}) *Store_RegisterConsumer_Call {
 	return &Store_RegisterConsumer_Call{Call: _e.mock.On("RegisterConsumer", ctx, consumer)}
 }
 
-func (_c *Store_RegisterConsumer_Call) Run(run func(ctx context.Context, consumer *kayakv1.TopicConsumer)) *Store_RegisterConsumer_Call {
+func (_c *Store_RegisterConsumer_Call) Run(run func(ctx context.Context, consumer *models.Consumer)) *Store_RegisterConsumer_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*kayakv1.TopicConsumer))
+		run(args[0].(context.Context), args[1].(*models.Consumer))
 	})
 	return _c
 }
 
-func (_c *Store_RegisterConsumer_Call) Return(_a0 *kayakv1.TopicConsumer, _a1 error) *Store_RegisterConsumer_Call {
+func (_c *Store_RegisterConsumer_Call) Return(_a0 *models.Consumer, _a1 error) *Store_RegisterConsumer_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Store_RegisterConsumer_Call) RunAndReturn(run func(context.Context, *kayakv1.TopicConsumer) (*kayakv1.TopicConsumer, error)) *Store_RegisterConsumer_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RegisterConsumerGroup provides a mock function with given fields: ctx, group
-func (_m *Store) RegisterConsumerGroup(ctx context.Context, group *kayakv1.ConsumerGroup) error {
-	ret := _m.Called(ctx, group)
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *kayakv1.ConsumerGroup) error); ok {
-		r0 = rf(ctx, group)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// Store_RegisterConsumerGroup_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RegisterConsumerGroup'
-type Store_RegisterConsumerGroup_Call struct {
-	*mock.Call
-}
-
-// RegisterConsumerGroup is a helper method to define mock.On call
-//   - ctx context.Context
-//   - group *kayakv1.ConsumerGroup
-func (_e *Store_Expecter) RegisterConsumerGroup(ctx interface{}, group interface{}) *Store_RegisterConsumerGroup_Call {
-	return &Store_RegisterConsumerGroup_Call{Call: _e.mock.On("RegisterConsumerGroup", ctx, group)}
-}
-
-func (_c *Store_RegisterConsumerGroup_Call) Run(run func(ctx context.Context, group *kayakv1.ConsumerGroup)) *Store_RegisterConsumerGroup_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*kayakv1.ConsumerGroup))
-	})
-	return _c
-}
-
-func (_c *Store_RegisterConsumerGroup_Call) Return(_a0 error) *Store_RegisterConsumerGroup_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *Store_RegisterConsumerGroup_Call) RunAndReturn(run func(context.Context, *kayakv1.ConsumerGroup) error) *Store_RegisterConsumerGroup_Call {
+func (_c *Store_RegisterConsumer_Call) RunAndReturn(run func(context.Context, *models.Consumer) (*models.Consumer, error)) *Store_RegisterConsumer_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -759,15 +712,15 @@ func (_c *Store_SnapshotItems_Call) RunAndReturn(run func() <-chan store.DataIte
 }
 
 // Stats provides a mock function with given fields:
-func (_m *Store) Stats() map[string]*kayakv1.TopicMetadata {
+func (_m *Store) Stats() map[string]*models.Topic {
 	ret := _m.Called()
 
-	var r0 map[string]*kayakv1.TopicMetadata
-	if rf, ok := ret.Get(0).(func() map[string]*kayakv1.TopicMetadata); ok {
+	var r0 map[string]*models.Topic
+	if rf, ok := ret.Get(0).(func() map[string]*models.Topic); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]*kayakv1.TopicMetadata)
+			r0 = ret.Get(0).(map[string]*models.Topic)
 		}
 	}
 
@@ -791,12 +744,12 @@ func (_c *Store_Stats_Call) Run(run func()) *Store_Stats_Call {
 	return _c
 }
 
-func (_c *Store_Stats_Call) Return(_a0 map[string]*kayakv1.TopicMetadata) *Store_Stats_Call {
+func (_c *Store_Stats_Call) Return(_a0 map[string]*models.Topic) *Store_Stats_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Store_Stats_Call) RunAndReturn(run func() map[string]*kayakv1.TopicMetadata) *Store_Stats_Call {
+func (_c *Store_Stats_Call) RunAndReturn(run func() map[string]*models.Topic) *Store_Stats_Call {
 	_c.Call.Return(run)
 	return _c
 }

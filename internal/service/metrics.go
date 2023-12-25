@@ -106,14 +106,17 @@ func CalculateLag(ctx context.Context, store store.Store) {
 			slog.Error("could not get meta information for topic", "topic", topic)
 			continue
 		}
-		for groupName, partitions := range meta.GroupMetadata {
-			for _, consumer := range partitions.Consumers {
-				lag, err := store.GetConsumerLag(ctx, consumer)
-				if err != nil {
-					continue
+		slog.Debug("topic info", "topic", meta)
+		/*
+			for groupName, partitions := range meta.GroupMetadata {
+				for _, consumer := range partitions.Consumers {
+					lag, err := store.GetConsumerLag(ctx, consumer)
+					if err != nil {
+						continue
+					}
+					recordLag(ctx, topic, groupName, consumer.Id, lag)
 				}
-				recordLag(ctx, topic, groupName, consumer.Id, lag)
 			}
-		}
+		*/
 	}
 }

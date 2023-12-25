@@ -17,15 +17,19 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/structpb"
+	"gorm.io/gorm"
 	"log/slog"
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
 	"github.com/binarymatt/kayak/internal/fsm"
+	"github.com/binarymatt/kayak/internal/store"
+	"github.com/binarymatt/kayak/internal/store/models"
 )
 
 var (
 	ErrInvalidConsumer = errors.New("invalid consumer")
+	ErrRecordNotFound  = errors.New("no record found")
 )
 
 func validate(msg protoreflect.ProtoMessage) error {
@@ -47,6 +51,7 @@ func (s *service) PutRecords(ctx context.Context, req *connect.Request[kayakv1.P
 		record.Id = id.String()
 		record.Topic = req.Msg.Topic
 	}
+	slog.Info("runnign apply for put", "record_id", req.Msg.Records[0].Id)
 	command := &kayakv1.Command{
 		Payload: &kayakv1.Command_PutRecordsRequest{
 			PutRecordsRequest: req.Msg,
@@ -69,11 +74,16 @@ func (s *service) GetRecords(ctx context.Context, req *connect.Request[kayakv1.G
 		limit = 99
 	}
 	slog.Info("getting records from store", "default", def, "limit", limit)
-	records, err := s.store.GetRecords(ctx, req.Msg.Topic, req.Msg.Start, limit)
+	items, err := s.store.GetRecords(ctx, req.Msg.Topic, req.Msg.Start, limit)
 	if err != nil {
 		slog.Error("error getting records from store", "error", err)
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
+	records := make([]*kayakv1.Record, len(items))
+	for i, item := range items {
+		records[i] = item.ToProto()
+	}
+
 	return connect.NewResponse(&kayakv1.GetRecordsResponse{
 		Records: records,
 	}), nil
@@ -93,6 +103,26 @@ func balancer(key string, partitionCount int64) int64 {
 	return int64(partition)
 }
 func (s *service) FetchRecord(ctx context.Context, req *connect.Request[kayakv1.FetchRecordRequest]) (*connect.Response[kayakv1.FetchRecordsResponse], error) {
+	logger := slog.With("consumer", req.Msg.Consumer.Id, "topic", req.Msg.Consumer.Topic)
+	if err := validate(req.Msg); err != nil {
+		logger.Error("invalid request", "error", err)
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+	record, err := s.store.FetchRecord(ctx, models.ConsumerFromProto(req.Msg.Consumer))
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, ErrRecordNotFound)
+		}
+		logger.Error("could not fetch record", "error", err)
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(&kayakv1.FetchRecordsResponse{
+		Record: record.ToProto(),
+	}), nil
+}
+
+/*
+func (s *service) FetchRecordOld(ctx context.Context, req *connect.Request[kayakv1.FetchRecordRequest]) (*connect.Response[kayakv1.FetchRecordsResponse], error) {
 	logger := slog.With("consumer", req.Msg.ConsumerId, "topic", req.Msg.Topic)
 	if err := validate(req.Msg); err != nil {
 		slog.Error("invalid request", "error", err)
@@ -140,6 +170,7 @@ func (s *service) FetchRecord(ctx context.Context, req *connect.Request[kayakv1.
 		Record: record,
 	}), nil
 }
+*/
 
 func (s *service) StreamRecords(ctx context.Context, req *connect.Request[kayakv1.StreamRecordsRequest], stream *connect.ServerStream[kayakv1.Record]) error {
 	validator, err := protovalidate.New()
@@ -171,7 +202,7 @@ func (s *service) StreamRecords(ctx context.Context, req *connect.Request[kayakv
 			startTime = time.Now()
 		}
 		for _, record := range records {
-			if err := stream.Send(record); err != nil {
+			if err := stream.Send(record.ToProto()); err != nil {
 				return err
 			}
 		}
@@ -218,6 +249,7 @@ func (s *service) applyCommand(ctx context.Context, command *kayakv1.Command) (*
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
+	slog.Info("apply to raft members")
 	applyFuture := s.raft.Apply(data, 500*time.Millisecond)
 	if err := applyFuture.Error(); err != nil {
 		slog.ErrorContext(ctx, "could not apply command to raft", "error", err)
@@ -232,6 +264,11 @@ func (s *service) applyCommand(ctx context.Context, command *kayakv1.Command) (*
 		if err != nil {
 			return nil, err
 		}
+
+		return connect.NewResponse(&kayakv1.ApplyResponse{
+			Data: val,
+		}), resp.Error
+
 		//val, err = structpb.NewValue(resp.Data)
 
 		//anypb.New(resp.Data)
@@ -269,7 +306,7 @@ func (s *service) CreateTopic(ctx context.Context, req *connect.Request[kayakv1.
 	if err := req.Msg.Validate(); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
-	slog.InfoContext(ctx, "creating topic", "topic", req.Msg.Name)
+	slog.InfoContext(ctx, "creating topic", "topic", req.Msg.Topic.Name)
 
 	command := &kayakv1.Command{
 		Payload: &kayakv1.Command_CreateTopicRequest{
@@ -302,8 +339,8 @@ func (s *service) Stats(ctx context.Context, _ *connect.Request[emptypb.Empty]) 
 	_, span := otel.GetTracerProvider().Tracer("").Start(ctx, "stats-span")
 	defer span.End()
 	return connect.NewResponse(&kayakv1.StatsResponse{
-		Raft:  s.raft.Stats(),
-		Store: s.store.Stats(),
+		Raft: s.raft.Stats(),
+		// Store: s.store.Stats(),
 	}), nil
 }
 
@@ -366,12 +403,16 @@ func (s *service) RegisterConsumer(ctx context.Context, req *connect.Request[kay
 		slog.Error("invalid create consumer group request", "error", err)
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
+	slog.Info("getting ready to apply", "partitions", req.Msg.Consumer.Partitions)
 	command := &kayakv1.Command{
 		Payload: &kayakv1.Command_RegisterConsumerRequest{
 			RegisterConsumerRequest: req.Msg,
 		},
 	}
 	resp, err := s.applyCommand(ctx, command)
-	slog.Debug("apply response", "response", resp)
+	slog.Info("apply response", "response", resp, "already_registerd", errors.Is(err, store.ErrConsumerAlreadyRegistered))
+	if errors.Is(err, store.ErrConsumerAlreadyRegistered) {
+		return connect.NewResponse(&emptypb.Empty{}), nil
+	}
 	return connect.NewResponse(&emptypb.Empty{}), err
 }

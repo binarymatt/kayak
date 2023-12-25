@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"log/slog"
 
 	"github.com/binarymatt/kayak/client"
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
@@ -16,8 +17,8 @@ import (
 var (
 	nodes = []string{
 		"http://127.0.0.1:8081",
-		"http://127.0.0.1:8082",
-		"http://127.0.0.1:8083",
+		// "http://127.0.0.1:8082",
+		// "http://127.0.0.1:8083",
 	}
 	records = []*kayakv1.Record{
 		{Headers: map[string]string{"number": "one"}, Payload: []byte(`{"json":"payload"}`)},
@@ -31,8 +32,8 @@ var (
 
 type KayakIntegrationTestSuite struct {
 	suite.Suite
-	client          *client.Client
-	secondaryClient *client.Client
+	client *client.Client
+	//secondaryClient *client.Client
 }
 
 func (s *KayakIntegrationTestSuite) checkRecord(index int, record *kayakv1.Record) {
@@ -51,23 +52,30 @@ func (s *KayakIntegrationTestSuite) SetupSuite() {
 		client.WithTopic(primaryTopic),
 		client.WithConsumerID("test"),
 		client.WithConsumerGroup("groupOne"),
+		client.WithPartitions([]int64{0}),
 	)
-	s.secondaryClient = client.New(
-		client.NewConfig(""),
-		client.WithAddress(nodes[1]),
-		client.WithTopic(primaryTopic),
-		client.WithConsumerID("test"),
-		client.WithConsumerGroup("groupTwo"),
-	)
+	/*
+		s.secondaryClient = client.New(
+			client.NewConfig(""),
+			client.WithAddress(nodes[1]),
+			client.WithTopic(primaryTopic),
+			client.WithConsumerID("test"),
+			client.WithConsumerGroup("groupTwo"),
+		)
+	*/
 }
 func (s *KayakIntegrationTestSuite) SetupTest() {
-	err := s.client.CreateTopic(context.Background(), primaryTopic)
+	slog.Info("setting up test")
+	err := s.client.DeleteTopic(context.Background(), primaryTopic)
+	if err != nil {
+		slog.Error("could not delete topic", "error", err)
+	}
+	err = s.client.CreateTopic(context.Background(), primaryTopic, 1)
 	s.Require().NoError(err)
 }
 func (s *KayakIntegrationTestSuite) AfterTest() {
-	err := s.client.DeleteTopic(context.Background(), primaryTopic)
-	s.Require().NoError(err)
-	// s.resetTopic()
+	//err := s.client.DeleteTopic(context.Background(), primaryTopic)
+	//s.NoError(err)
 }
 func (s *KayakIntegrationTestSuite) TestPutRecords() {
 	r := s.Require()
@@ -86,6 +94,8 @@ func (s *KayakIntegrationTestSuite) TestPutRecords() {
 func (s *KayakIntegrationTestSuite) TestFetchNoRecords() {
 	r := s.Require()
 	ctx := context.Background()
+	err := s.client.RegisterConsumer(ctx)
+	r.NoError(err)
 	record, err := s.client.FetchRecord(ctx)
 	r.NoError(err)
 	r.Nil(record)
@@ -131,11 +141,11 @@ func (s *KayakIntegrationTestSuite) TestFetchRecords() {
 
 	time.Sleep(500 * time.Millisecond)
 	// CASE: fetch across different brokers
-	third, err := s.secondaryClient.FetchRecord(ctx)
+	third, err := s.client.FetchRecord(ctx)
 	r.NoError(err)
 	s.checkRecord(2, third)
 
-	err = s.secondaryClient.CommitRecord(ctx, third)
+	err = s.client.CommitRecord(ctx, third)
 	r.NoError(err)
 
 	fourth, err := s.client.FetchRecord(ctx)

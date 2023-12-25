@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"testing"
 	"time"
@@ -16,7 +17,6 @@ import (
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/internal/store/models"
-	"github.com/binarymatt/kayak/internal/test"
 )
 
 type SqlTestSuite struct {
@@ -52,11 +52,17 @@ func (s *SqlTestSuite) SetupTest() {
 	}
 	err := s.store.RunMigrations()
 	s.Require().NoError(err)
+	// s.db.Logger = logger.Default.LogMode(logger.Info)
 }
+
 func (s *SqlTestSuite) TestCreateTopic_Simple() {
 	r := s.Require()
+	t := &models.Topic{
+		ID:             "test",
+		PartitionCount: 1,
+	}
 
-	err := s.store.CreateTopic(s.ctx, "test")
+	err := s.store.CreateTopic(s.ctx, t)
 	r.NoError(err)
 
 	var topic models.Topic
@@ -64,32 +70,36 @@ func (s *SqlTestSuite) TestCreateTopic_Simple() {
 	r.Equal(int64(1), result.RowsAffected)
 	r.NoError(result.Error)
 	s.Equal(models.Topic{
-		ID:        s.id.String(),
-		Name:      "test",
-		Archived:  false,
-		CreatedAt: s.ts.Unix(),
-		UpdatedAt: s.ts.Unix(),
+		ID:             "test",
+		PartitionCount: 1,
+		Archived:       false,
+		CreatedAt:      s.ts.Unix(),
+		UpdatedAt:      s.ts.Unix(),
+		DefaultHash:    kayakv1.Hash_HASH_MURMUR3.String(),
 	}, topic)
 }
 func (s *SqlTestSuite) TestCreateTopic_Existing() {
 	r := s.Require()
+	t := &models.Topic{
+		ID:             "test",
+		PartitionCount: 1,
+	}
 
-	err := s.store.CreateTopic(s.ctx, "test")
+	err := s.store.CreateTopic(s.ctx, t)
 	r.NoError(err)
 
-	err = s.store.CreateTopic(s.ctx, "test")
+	err = s.store.CreateTopic(s.ctx, t)
 	r.Error(err)
 
 }
 
 func (s *SqlTestSuite) TestDeleteTopic_Force() {
 	r := s.Require()
+	s.createTopic("test", 1)
 
-	err := s.store.CreateTopic(s.ctx, "test")
+	err := s.store.DeleteTopic(s.ctx, &models.Topic{ID: "test", Archived: false})
 	r.NoError(err)
 
-	err = s.store.DeleteTopic(s.ctx, "test", true)
-	r.NoError(err)
 	var topic models.Topic
 	result := s.db.First(&topic)
 	r.Error(result.Error)
@@ -98,10 +108,9 @@ func (s *SqlTestSuite) TestDeleteTopic_Force() {
 func (s *SqlTestSuite) TestDeleteTopic_Archive() {
 	r := s.Require()
 
-	err := s.store.CreateTopic(s.ctx, "test")
-	r.NoError(err)
+	s.createTopic("test", 1)
 
-	err = s.store.DeleteTopic(s.ctx, "test", false)
+	err := s.store.DeleteTopic(s.ctx, &models.Topic{ID: "test", Archived: true})
 	r.NoError(err)
 
 	var topic models.Topic
@@ -109,24 +118,35 @@ func (s *SqlTestSuite) TestDeleteTopic_Archive() {
 	r.NoError(result.Error)
 	r.Equal(int64(1), result.RowsAffected)
 	r.Equal(models.Topic{
-		ID:        s.id.String(),
-		Name:      "test",
-		Archived:  true,
-		CreatedAt: s.ts.Unix(),
-		UpdatedAt: s.ts.Unix(),
+		ID:             "test",
+		Archived:       true,
+		PartitionCount: 1,
+		CreatedAt:      s.ts.Unix(),
+		UpdatedAt:      s.ts.Unix(),
+		DefaultHash:    kayakv1.Hash_HASH_MURMUR3.String(),
 	}, topic)
+}
+
+func (s *SqlTestSuite) createTopic(name string, count int) {
+
+	t := &models.Topic{
+		ID:             name,
+		PartitionCount: count,
+	}
+
+	err := s.store.CreateTopic(s.ctx, t)
+	s.Require().NoError(err)
 }
 
 func (s *SqlTestSuite) TestAddRecords() {
 	r := s.Require()
+	s.createTopic("test", 1)
 
-	err := s.store.CreateTopic(s.ctx, "test")
-	r.NoError(err)
 	var records []models.Record
-	err = s.store.AddRecords(s.ctx, "test", &kayakv1.Record{
-		Topic:   "test",
-		Id:      "testID",
-		Headers: map[string]string{"header": "test"},
+	err := s.store.AddRecords(s.ctx, "test", &models.Record{
+		TopicID: "test",
+		ID:      "testID",
+		Headers: datatypes.JSONMap(map[string]interface{}{"header": "test"}),
 		Payload: []byte("test record"),
 	})
 	r.NoError(err)
@@ -134,54 +154,75 @@ func (s *SqlTestSuite) TestAddRecords() {
 	result := s.db.Find(&records)
 	r.NoError(result.Error)
 	r.Equal(int64(1), result.RowsAffected)
-	r.Equal(s.id.String(), records[0].TopicID)
+	r.Equal("test", records[0].TopicID)
 	r.Equal(datatypes.JSONMap(map[string]interface{}{"header": "test"}), records[0].Headers)
 	r.Equal("testID", records[0].ID)
 }
 
+func (s *SqlTestSuite) TestAddRecords_Balance() {
+	r := s.Require()
+	t := &models.Topic{
+		ID:             "test",
+		PartitionCount: 2,
+	}
+
+	err := s.store.CreateTopic(s.ctx, t)
+	r.NoError(err)
+
+	_, err = s.store.RegisterConsumer(s.ctx, &models.Consumer{
+		ID:         "testConsumer",
+		TopicID:    "test",
+		Partitions: datatypes.NewJSONSlice([]int64{1}),
+	})
+	r.NoError(err)
+	records := generateRecords("test", 10)
+	err = s.store.AddRecords(s.ctx, "test", records...)
+	r.NoError(err)
+
+	var items []models.Record
+	s.db.Find(&items)
+	r.Len(items, 10)
+	partitions := map[string]int64{}
+	for i, item := range items {
+		partitions[fmt.Sprintf("%d", item.Partition)] = item.Partition
+		r.Equal(models.Record{
+			ID:        records[i].ID,
+			TopicID:   "test",
+			Partition: item.Partition,
+			Headers:   records[i].Headers,
+			Payload:   records[i].Payload,
+			CreatedAt: s.ts.Unix(),
+			UpdatedAt: s.ts.Unix(),
+		}, item)
+	}
+	r.NotEmpty(partitions)
+	r.Len(partitions, 2)
+
+}
+
 func (s *SqlTestSuite) TestAddRecords_InvalidTopic() {
 	r := s.Require()
-	err := s.store.AddRecords(s.ctx, "test", &kayakv1.Record{})
+	err := s.store.AddRecords(s.ctx, "test", &models.Record{})
 	r.ErrorIs(err, ErrInvalidTopic)
 }
 
 func (s *SqlTestSuite) TestAddRecords_ArchivedTopic() {
 	r := s.Require()
-	err := s.store.CreateTopic(s.ctx, "test")
-	r.NoError(err)
-	result := s.db.Model(&models.Topic{}).Where("name = ?", "test").Update("archived", true)
+	s.createTopic("test", 1)
+
+	result := s.db.Model(&models.Topic{}).Where("id = ?", "test").Update("archived", true)
 	r.NoError(result.Error)
-	err = s.store.AddRecords(s.ctx, "test", &kayakv1.Record{})
-	r.ErrorIs(err, ErrTopicArchived)
+	err := s.store.AddRecords(s.ctx, "test", &models.Record{})
+	r.ErrorIs(err, ErrArchivedTopic)
 }
 
 func (s *SqlTestSuite) TestGetRecords_Simple() {
 	r := s.Require()
-	err := s.store.CreateTopic(s.ctx, "testget")
-	r.NoError(err)
+	s.createTopic("testget", 1)
 
-	records := []*kayakv1.Record{
-		{
-			Topic:   "testget",
-			Id:      ulid.Make().String(),
-			Headers: map[string]string{"header": "first"},
-			Payload: []byte("first record"),
-		},
-		{
-			Topic:   "testget",
-			Id:      ulid.Make().String(),
-			Headers: map[string]string{"header": "second"},
-			Payload: []byte("second record"),
-		},
-		{
-			Topic:   "testget",
-			Id:      ulid.Make().String(),
-			Headers: map[string]string{"header": "third"},
-			Payload: []byte("third record"),
-		},
-	}
+	records := generateRecords("testget", 3)
 
-	err = s.store.AddRecords(s.ctx, "testget", records...)
+	err := s.store.AddRecords(s.ctx, "testget", records...)
 	r.NoError(err)
 
 	items, err := s.store.GetRecords(s.ctx, "testget", "", 10)
@@ -191,7 +232,7 @@ func (s *SqlTestSuite) TestGetRecords_Simple() {
 func (s *SqlTestSuite) TestGetRecords_Empty() {
 	r := s.Require()
 
-	err := s.store.CreateTopic(s.ctx, "testget")
+	err := s.store.CreateTopic(s.ctx, &models.Topic{ID: "testget"})
 	r.NoError(err)
 
 	items, err := s.store.GetRecords(s.ctx, "testget", "", 10)
@@ -201,65 +242,30 @@ func (s *SqlTestSuite) TestGetRecords_Empty() {
 func (s *SqlTestSuite) TestGetRecords_StartKey() {
 	r := s.Require()
 
-	err := s.store.CreateTopic(s.ctx, "testget")
+	err := s.store.CreateTopic(s.ctx, &models.Topic{
+		ID:             "testget",
+		PartitionCount: 1,
+	})
 	r.NoError(err)
 
-	records := []*kayakv1.Record{
-		{
-			Id:      ulid.Make().String(),
-			Topic:   "testget",
-			Headers: map[string]string{"header": "first"},
-			Payload: []byte("first record"),
-		},
-		{
-			Id:      ulid.Make().String(),
-			Topic:   "testget",
-			Headers: map[string]string{"header": "second"},
-			Payload: []byte("second record"),
-		},
-		{
-			Id:      ulid.Make().String(),
-			Topic:   "testget",
-			Headers: map[string]string{"header": "third"},
-			Payload: []byte("third record"),
-		},
-	}
+	records := generateRecords("testget", 3)
 
 	err = s.store.AddRecords(s.ctx, "testget", records...)
 	r.NoError(err)
 
-	items, err := s.store.GetRecords(s.ctx, "testget", records[0].Id, 10)
+	items, err := s.store.GetRecords(s.ctx, "testget", records[0].ID, 10)
 	r.NoError(err)
 	r.Len(items, 2)
-	r.Equal(records[1].Id, items[0].Id)
-	r.Equal(records[2].Id, items[1].Id)
+	r.Equal(records[1].ID, items[0].ID)
+	r.Equal(records[2].ID, items[1].ID)
 }
 func (s *SqlTestSuite) TestGetRecords_Limit() {
 
 	r := s.Require()
-	err := s.store.CreateTopic(s.ctx, "testget")
+	err := s.store.CreateTopic(s.ctx, &models.Topic{ID: "testget", PartitionCount: 1})
 	r.NoError(err)
 
-	records := []*kayakv1.Record{
-		{
-			Id:      ulid.Make().String(),
-			Topic:   "testget",
-			Headers: map[string]string{"header": "first"},
-			Payload: []byte("first record"),
-		},
-		{
-			Id:      ulid.Make().String(),
-			Topic:   "testget",
-			Headers: map[string]string{"header": "second"},
-			Payload: []byte("second record"),
-		},
-		{
-			Id:      ulid.Make().String(),
-			Topic:   "testget",
-			Headers: map[string]string{"header": "third"},
-			Payload: []byte("third record"),
-		},
-	}
+	records := generateRecords("testget", 3)
 
 	err = s.store.AddRecords(s.ctx, "testget", records...)
 	r.NoError(err)
@@ -267,8 +273,8 @@ func (s *SqlTestSuite) TestGetRecords_Limit() {
 	items, err := s.store.GetRecords(s.ctx, "testget", "", 2)
 	r.NoError(err)
 	r.Len(items, 2)
-	r.Equal(records[0].Id, items[0].Id)
-	r.Equal(records[1].Id, items[1].Id)
+	r.Equal(records[0].ID, items[0].ID)
+	r.Equal(records[1].ID, items[1].ID)
 }
 
 func (s *SqlTestSuite) TestGetRecords_InvalidTopic() {
@@ -281,14 +287,14 @@ func (s *SqlTestSuite) TestGetRecords_InvalidTopic() {
 func (s *SqlTestSuite) TestGetRecords_ArchivedTopic() {
 	r := s.Require()
 
-	err := s.store.CreateTopic(s.ctx, "testget")
+	err := s.store.CreateTopic(s.ctx, &models.Topic{ID: "testget"})
 	r.NoError(err)
 
-	err = s.store.DeleteTopic(s.ctx, "testget", false)
+	err = s.store.DeleteTopic(s.ctx, &models.Topic{ID: "testget", Archived: true})
 	r.NoError(err)
 
 	items, err := s.store.GetRecords(s.ctx, "testget", "", 2)
-	r.ErrorIs(err, ErrTopicArchived)
+	r.ErrorIs(err, ErrArchivedTopic)
 	r.Len(items, 0)
 }
 
@@ -299,201 +305,50 @@ func (s *SqlTestSuite) TestListTopics() {
 	r.NoError(err)
 	r.Empty(topics)
 
-	err = s.store.CreateTopic(s.ctx, "test")
-	r.NoError(err)
+	s.createTopic("test", 1)
 	topics, err = s.store.ListTopics(s.ctx)
 	r.NoError(err)
 	r.ElementsMatch([]string{"test"}, topics)
 }
 
-func (s *SqlTestSuite) TestRegisterConsumerGroup() {
-	r := s.Require()
-
-	err := s.store.CreateTopic(s.ctx, "test")
-	r.NoError(err)
-
-	err = s.store.RegisterConsumerGroup(s.ctx, &kayakv1.ConsumerGroup{
-		Name:           "testGroup",
-		Topic:          "test",
-		PartitionCount: 1,
-		Hash:           kayakv1.Hash_HASH_MURMUR3,
-	})
-	r.NoError(err)
-
-	var cg models.ConsumerGroup
-	result := s.db.First(&cg)
-	r.NoError(result.Error)
-	r.Equal(int64(1), result.RowsAffected)
-	r.Equal(models.ConsumerGroup{
-		ID:             1,
-		Name:           "testGroup",
-		TopicID:        s.id.String(),
-		PartitionCount: 1,
-		Hash:           "HASH_MURMUR3",
-		CreatedAt:      s.ts.Unix(),
-		UpdatedAt:      s.ts.Unix(),
-	}, cg)
-}
-func (s *SqlTestSuite) TestRegisterConsumerGroup_InvalidTopic() {
-	err := s.store.RegisterConsumerGroup(s.ctx, &kayakv1.ConsumerGroup{
-		Name:           "testGroup",
-		Topic:          "test",
-		PartitionCount: 1,
-		Hash:           kayakv1.Hash_HASH_MURMUR3,
-	})
-	s.Require().ErrorIs(err, ErrInvalidTopic)
-}
-
-func (s *SqlTestSuite) TestRegisterConsumerGroup_ArchivedTopic() {
-	r := s.Require()
-	result := s.db.Create(&models.Topic{
-		ID:       s.id.String(),
-		Name:     "test",
-		Archived: true,
-	})
-	r.NoError(result.Error)
-	err := s.store.RegisterConsumerGroup(s.ctx, &kayakv1.ConsumerGroup{
-		Name:           "testGroup",
-		Topic:          "test",
-		PartitionCount: 1,
-		Hash:           kayakv1.Hash_HASH_MURMUR3,
-	})
-	r.ErrorIs(err, ErrTopicArchived)
-}
-func (s *SqlTestSuite) TestRegisterConsumerGroup_ExistingGroup() {
-	r := s.Require()
-	result := s.db.Create(&models.Topic{
-		ID:       s.id.String(),
-		Name:     "test",
-		Archived: false,
-	})
-	r.NoError(result.Error)
-	result = s.db.Create(&models.ConsumerGroup{
-		Name:           "testGroup",
-		TopicID:        s.id.String(),
-		PartitionCount: 1,
-		Hash:           kayakv1.Hash_HASH_MURMUR3.String(),
-	})
-	r.NoError(result.Error)
-
-	err := s.store.RegisterConsumerGroup(s.ctx, &kayakv1.ConsumerGroup{
-		Name:           "testGroup",
-		Topic:          "test",
-		PartitionCount: 2,
-	})
-	r.ErrorIs(err, ErrConsumerGroupExists)
-}
-
-func (s *SqlTestSuite) TestGetConsumerGroup() {
-	r := s.Require()
-
-	err := s.store.CreateTopic(s.ctx, "test")
-	r.NoError(err)
-
-	group, err := s.store.getConsumerGroup("test", "group")
-	r.ErrorIs(err, ErrConsumerGroupInvalid)
-	r.Nil(group)
-
-	err = s.store.RegisterConsumerGroup(s.ctx, &kayakv1.ConsumerGroup{
-		Name:  "group",
-		Topic: "test",
-		Hash:  kayakv1.Hash_HASH_MURMUR3,
-	})
-	r.NoError(err)
-
-	group, err = s.store.getConsumerGroup("test", "group")
-	r.NoError(err)
-	r.Equal(&models.ConsumerGroup{
-		ID:        1,
-		Name:      "group",
-		TopicID:   s.id.String(),
-		Hash:      "HASH_MURMUR3",
-		CreatedAt: s.ts.Unix(),
-		UpdatedAt: s.ts.Unix(),
-	}, group)
-}
-
 func (s *SqlTestSuite) TestRegisterConsumer_InvalidTopic() {
 	r := s.Require()
 
-	_, err := s.store.RegisterConsumer(s.ctx, &kayakv1.TopicConsumer{})
+	_, err := s.store.RegisterConsumer(s.ctx, &models.Consumer{})
 	r.ErrorIs(err, ErrInvalidTopic)
-}
-
-func (s *SqlTestSuite) TestRegisterConsumer_InvalidGroup() {
-
-	r := s.Require()
-	err := s.store.CreateTopic(s.ctx, "test")
-	r.NoError(err)
-
-	consumer, err := s.store.RegisterConsumer(s.ctx, &kayakv1.TopicConsumer{
-		Topic: "test",
-		Group: "group",
-	})
-	r.ErrorIs(err, ErrConsumerGroupInvalid)
-	r.Nil(consumer)
 }
 
 func (s *SqlTestSuite) TestRegisterConsumer_HappyPath() {
 	r := s.Require()
-	err := s.store.CreateTopic(s.ctx, "test")
-	r.NoError(err)
-	err = s.store.RegisterConsumerGroup(s.ctx, &kayakv1.ConsumerGroup{
-		Topic:          "test",
-		Name:           "testGroup",
-		PartitionCount: 1,
-		Hash:           kayakv1.Hash_HASH_MURMUR3,
-	})
-	r.NoError(err)
+	s.createTopic("test", 1)
 
-	topicConsumer, err := s.store.RegisterConsumer(s.ctx, &kayakv1.TopicConsumer{
-		Topic: "test",
-		Group: "testGroup",
-		Id:    "testID",
+	topicConsumer, err := s.store.RegisterConsumer(s.ctx, &models.Consumer{
+		TopicID:    "test",
+		Group:      "testGroup",
+		ID:         "testID",
+		Partitions: datatypes.NewJSONSlice([]int64{1, 2, 3}),
 	})
 	r.NoError(err)
-	test.ProtoEqual(s.T(), &kayakv1.TopicConsumer{
-		Id:        "testID",
-		Topic:     "test",
-		Group:     "testGroup",
-		Partition: 0,
+	r.Equal(&models.Consumer{
+		ID:         "testID",
+		TopicID:    "test",
+		Group:      "testGroup",
+		Partitions: datatypes.JSONSlice[int64]{1, 2, 3},
+		CreatedAt:  s.ts.Unix(),
+		UpdatedAt:  s.ts.Unix(),
 	}, topicConsumer)
 
 	var consumer models.Consumer
 	result := s.db.First(&consumer, "id = ?", "testID")
 	r.NoError(result.Error)
 	r.Equal(models.Consumer{
-		ID:        "testID",
-		GroupID:   1,
-		CreatedAt: s.ts.Unix(),
-		UpdatedAt: s.ts.Unix(),
+		ID:         "testID",
+		TopicID:    "test",
+		Group:      "testGroup",
+		CreatedAt:  s.ts.Unix(),
+		UpdatedAt:  s.ts.Unix(),
+		Partitions: datatypes.JSONSlice[int64]{1, 2, 3},
 	}, consumer)
-}
-func (s *SqlTestSuite) TestRegisterConsumer_GroupFull() {
-
-	r := s.Require()
-	err := s.store.CreateTopic(s.ctx, "test")
-	r.NoError(err)
-	err = s.store.RegisterConsumerGroup(s.ctx, &kayakv1.ConsumerGroup{
-		Topic:          "test",
-		Name:           "testGroup",
-		PartitionCount: 1,
-		Hash:           kayakv1.Hash_HASH_MURMUR3,
-	})
-	r.NoError(err)
-	_, err = s.store.RegisterConsumer(s.ctx, &kayakv1.TopicConsumer{
-		Topic: "test",
-		Group: "testGroup",
-		Id:    "testID",
-	})
-	r.NoError(err)
-
-	_, err = s.store.RegisterConsumer(s.ctx, &kayakv1.TopicConsumer{
-		Topic: "test",
-		Group: "testGroup",
-		Id:    "testID2",
-	})
-	r.ErrorIs(err, ErrGroupFull)
 }
 
 func (s *SqlTestSuite) TestGetConsumer_Unknown() {
@@ -506,10 +361,8 @@ func (s *SqlTestSuite) TestGetConsumer_Unknown() {
 func (s *SqlTestSuite) TestGetConsumer() {
 	r := s.Require()
 	res := s.db.Create(&models.Consumer{
-		ID:        "123",
-		GroupID:   1,
-		Position:  "",
-		Partition: 0,
+		ID:       "123",
+		Position: "",
 	})
 	r.NoError(res.Error)
 
@@ -517,9 +370,7 @@ func (s *SqlTestSuite) TestGetConsumer() {
 	r.NoError(err)
 	r.Equal(&models.Consumer{
 		ID:        "123",
-		GroupID:   1,
 		Position:  "",
-		Partition: 0,
 		CreatedAt: s.ts.Unix(),
 		UpdatedAt: s.ts.Unix(),
 	}, consumer)
@@ -530,14 +381,12 @@ func (s *SqlTestSuite) TestGetConsumerPosition() {
 
 	r := s.Require()
 	res := s.db.Create(&models.Consumer{
-		ID:        "123",
-		GroupID:   1,
-		Position:  "start",
-		Partition: 0,
+		ID:       "123",
+		Position: "start",
 	})
 	r.NoError(res.Error)
 
-	position, err := s.store.GetConsumerPosition(s.ctx, &kayakv1.TopicConsumer{Id: "123"})
+	position, err := s.store.GetConsumerPosition(s.ctx, &models.Consumer{ID: "123"})
 	r.NoError(err)
 	r.Equal("start", position)
 }
@@ -546,24 +395,97 @@ func (s *SqlTestSuite) TestCommitConsumerPosition_Happy() {
 	r := s.Require()
 
 	res := s.db.Create(&models.Consumer{
-		ID:        "123",
-		GroupID:   1,
-		Position:  "",
-		Partition: 0,
+		ID:       "123",
+		Position: "",
 	})
 	r.NoError(res.Error)
 
-	err := s.store.CommitConsumerPosition(s.ctx, &kayakv1.TopicConsumer{
-		Id:       "123",
+	err := s.store.CommitConsumerPosition(s.ctx, &models.Consumer{
+		ID:       "123",
 		Position: "item1",
 	})
 	r.NoError(err)
 }
+
 func (s *SqlTestSuite) TestCommitConsumerPosition_NonExistent() {
 	r := s.Require()
-	err := s.store.CommitConsumerPosition(s.ctx, &kayakv1.TopicConsumer{
-		Id:       "1233",
+	err := s.store.CommitConsumerPosition(s.ctx, &models.Consumer{
+		ID:       "1233",
 		Position: "item1",
 	})
 	r.ErrorIs(err, ErrInvalidConsumer)
+}
+
+func (s *SqlTestSuite) TestFetchRecord_SinglePartition() {
+	r := s.Require()
+	s.createTopic("test", 1)
+
+	_, err := s.store.RegisterConsumer(s.ctx, &models.Consumer{
+		ID:         "testConsumer",
+		TopicID:    "test",
+		Partitions: datatypes.NewJSONSlice([]int64{0}),
+	})
+	r.NoError(err)
+	records := generateRecords("test", 3)
+	err = s.store.AddRecords(s.ctx, "test", records...)
+	r.NoError(err)
+
+	record, err := s.store.FetchRecord(s.ctx, &models.Consumer{TopicID: "test", ID: "testConsumer"})
+	r.NoError(err)
+	s.Equal(records[0].ID, record.ID)
+
+}
+func (s *SqlTestSuite) TestFetchRecord_AllPartitions() {
+	s.createTopic("test", 2)
+
+	_, err := s.store.RegisterConsumer(s.ctx, &models.Consumer{
+		ID:         "testConsumer",
+		TopicID:    "test",
+		Partitions: datatypes.NewJSONSlice([]int64{0, 1}),
+	})
+	s.NoError(err)
+	records := generateRecords("test", 3)
+	err = s.store.AddRecords(s.ctx, "test", records...)
+	s.NoError(err)
+
+	record, err := s.store.FetchRecord(s.ctx, &models.Consumer{TopicID: "test", ID: "testConsumer"})
+	s.NoError(err)
+	s.Equal(records[0].ID, record.ID)
+}
+func (s *SqlTestSuite) TestFetchRecord_TopicArchived() {
+
+	s.createTopic("test", 1)
+
+	_, err := s.store.RegisterConsumer(s.ctx, &models.Consumer{
+		ID:         "testConsumer",
+		TopicID:    "test",
+		Partitions: datatypes.NewJSONSlice([]int64{0, 1}),
+	})
+	s.NoError(err)
+	records := generateRecords("test", 3)
+	err = s.store.AddRecords(s.ctx, "test", records...)
+	s.NoError(err)
+	s.NoError(s.store.DeleteTopic(s.ctx, &models.Topic{ID: "test", Archived: true}))
+	record, err := s.store.FetchRecord(s.ctx, &models.Consumer{TopicID: "test", ID: "testConsumer"})
+	s.ErrorIs(err, ErrArchivedTopic)
+	s.Nil(record)
+}
+func (s *SqlTestSuite) TestFetchRecord_UnregisteredConsumer() {
+	s.createTopic("test", 1)
+	record, err := s.store.FetchRecord(s.ctx, &models.Consumer{TopicID: "test", ID: "testConsumer"})
+	s.ErrorIs(err, ErrInvalidConsumer)
+	s.Nil(record)
+}
+
+func generateRecords(topic string, total int) []*models.Record {
+	records := []*models.Record{}
+	for i := 0; i < total; i++ {
+		records = append(records, &models.Record{
+			TopicID: topic,
+			ID:      ulid.Make().String(),
+			Headers: datatypes.JSONMap(map[string]interface{}{"header": fmt.Sprintf("%d", i)}),
+			Payload: []byte(fmt.Sprintf("record %d", i)),
+		})
+	}
+	return records
 }

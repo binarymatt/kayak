@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strings"
 
 	"connectrpc.com/connect"
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
+	"github.com/binarymatt/kayak/internal/service"
 	"github.com/binarymatt/kayak/internal/store"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/oklog/ulid/v2"
@@ -16,7 +18,9 @@ import (
 
 var (
 	ErrConsumerAlreadyRegistered = store.ErrConsumerAlreadyRegistered
-	ErrConsumerGroupExists       = store.ErrConsumerGroupExists
+	ErrTopicEmpty                = errors.New("topic cannot be empty")
+	ErrCfgConsumerIDEmpty        = errors.New("consumer id must be set when a consumer group exists")
+	ErrCfgConsumerGroupEmpty     = errors.New("consumer group must be set when a consumer id exists")
 )
 
 type Config struct {
@@ -26,6 +30,7 @@ type Config struct {
 	HTTPClient    *http.Client
 	ID            string
 	Topic         string
+	Partitions    []int64
 }
 type CfgOption func(*Config)
 
@@ -72,10 +77,32 @@ func WithHTTPClient(client *http.Client) CfgOption {
 		c.HTTPClient = client
 	}
 }
+func WithPartitions(partitions []int64) CfgOption {
+	return func(c *Config) {
+		c.Partitions = partitions
+	}
+}
 
 type Client struct {
 	cfg    *Config
 	client kayakv1connect.KayakServiceClient
+}
+
+func (c *Client) validateConfig() error {
+	if c.cfg.Topic == "" {
+		return ErrTopicEmpty
+	}
+	if c.cfg.ConsumerGroup != "" || c.cfg.ConsumerID != "" {
+		// consumer id must be set
+		if c.cfg.ConsumerID == "" {
+			return ErrCfgConsumerIDEmpty
+		}
+		// consumer group must be set
+		if c.cfg.ConsumerGroup == "" {
+			return ErrCfgConsumerGroupEmpty
+		}
+	}
+	return nil
 }
 
 func (c *Client) UpdateConfig(options ...CfgOption) {
@@ -94,45 +121,57 @@ func (c *Client) PutRecords(ctx context.Context, records ...*kayakv1.Record) err
 }
 
 func (c *Client) RegisterConsumer(ctx context.Context) error {
+	if err := c.validateConfig(); err != nil {
+		return err
+	}
 	_, err := c.client.RegisterConsumer(ctx, connect.NewRequest(&kayakv1.RegisterConsumerRequest{
 		Consumer: &kayakv1.TopicConsumer{
-			Id:    c.cfg.ConsumerID,
-			Topic: c.cfg.Topic,
-			Group: c.cfg.ConsumerGroup,
+			Id:         c.cfg.ConsumerID,
+			Topic:      c.cfg.Topic,
+			Group:      c.cfg.ConsumerGroup,
+			Partitions: c.cfg.Partitions,
 		},
 	}))
-	return err
-}
-func (c *Client) CreateConsumerGroup(ctx context.Context, partitionCount int64) error {
-	if c.cfg.ConsumerGroup == "" {
-		return errors.New("missing group config")
+	if err != nil && errors.Is(err, ErrConsumerAlreadyRegistered) {
+		return nil
 	}
-	_, err := c.client.CreateConsumerGroup(ctx, connect.NewRequest(&kayakv1.CreateConsumerGroupRequest{
-		Group: &kayakv1.ConsumerGroup{
-			Name:           c.cfg.ConsumerGroup,
-			Topic:          c.cfg.Topic,
-			PartitionCount: partitionCount,
-			Hash:           kayakv1.Hash_HASH_MURMUR3,
-		},
-	}))
 	return err
 }
 
 func (c *Client) FetchRecord(ctx context.Context) (*kayakv1.Record, error) {
+	if err := c.validateConfig(); err != nil {
+		return nil, err
+	}
+	if err := c.RegisterConsumer(ctx); err != nil {
+		if errors.Is(err, ErrConsumerAlreadyRegistered) {
+			slog.Warn("consumer is already registered")
+		} else {
+			return nil, err
+		}
+
+	}
 	req := connect.NewRequest(&kayakv1.FetchRecordRequest{
-		Topic:         c.cfg.Topic,
-		ConsumerGroup: c.cfg.ConsumerGroup,
-		ConsumerId:    c.cfg.ConsumerID,
+		Consumer: &kayakv1.TopicConsumer{
+			Id:    c.cfg.ConsumerID,
+			Topic: c.cfg.Topic,
+		},
 	})
 	slog.Info("kayak client fetch", "topic", c.cfg.Topic, "consumer", c.cfg.ConsumerID)
 	resp, err := c.client.FetchRecord(ctx, req)
 	if err != nil {
+		slog.Info("record not found", "error", err)
+		if errors.Is(err, service.ErrRecordNotFound) || strings.Contains(err.Error(), "no record found") {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return resp.Msg.GetRecord(), err
 }
 
 func (c *Client) CommitRecord(ctx context.Context, record *kayakv1.Record) error {
+	if err := c.validateConfig(); err != nil {
+		return err
+	}
 	_, err := c.client.CommitRecord(ctx, connect.NewRequest(&kayakv1.CommitRecordRequest{
 		Consumer: &kayakv1.TopicConsumer{
 			Group:    c.cfg.ConsumerGroup,
@@ -145,6 +184,9 @@ func (c *Client) CommitRecord(ctx context.Context, record *kayakv1.Record) error
 }
 
 func (c *Client) GetRecords(ctx context.Context, topic string, start string, limit int64) ([]*kayakv1.Record, error) {
+	if topic == "" {
+		return nil, ErrTopicEmpty
+	}
 	req := connect.NewRequest(&kayakv1.GetRecordsRequest{
 		Topic: topic,
 		Start: start,
@@ -154,17 +196,25 @@ func (c *Client) GetRecords(ctx context.Context, topic string, start string, lim
 	return resp.Msg.GetRecords(), err
 }
 
-func (c *Client) CreateTopic(ctx context.Context, topic string) error {
+func (c *Client) CreateTopic(ctx context.Context, topicName string, partitions int64) error {
+	topic := &kayakv1.Topic{
+		Name:       topicName,
+		Partitions: partitions,
+	}
 	_, err := c.client.CreateTopic(ctx, connect.NewRequest(&kayakv1.CreateTopicRequest{
-		Name: topic,
+		Topic: topic,
 	}))
 	return err
 }
 
 func (c *Client) DeleteTopic(ctx context.Context, topic string) error {
+
 	req := connect.NewRequest(&kayakv1.DeleteTopicRequest{
-		Topic:   topic,
-		Archive: false,
+		Topic: &kayakv1.Topic{
+			Name:       topic,
+			Archived:   false,
+			Partitions: 1,
+		},
 	})
 	_, err := c.client.DeleteTopic(ctx, req)
 	return err

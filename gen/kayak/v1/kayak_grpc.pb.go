@@ -33,7 +33,7 @@ type KayakServiceClient interface {
 	CreateTopic(ctx context.Context, in *CreateTopicRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Deletes Topic across server - permantly or via archive
 	DeleteTopic(ctx context.Context, in *DeleteTopicRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
-	CreateConsumerGroup(ctx context.Context, in *CreateConsumerGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// rpc CreateConsumerGroup(CreateConsumerGroupRequest) returns (google.protobuf.Empty) {}
 	RegisterConsumer(ctx context.Context, in *RegisterConsumerRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	// Read Procedures
 	GetRecords(ctx context.Context, in *GetRecordsRequest, opts ...grpc.CallOption) (*GetRecordsResponse, error)
@@ -91,15 +91,6 @@ func (c *kayakServiceClient) CreateTopic(ctx context.Context, in *CreateTopicReq
 func (c *kayakServiceClient) DeleteTopic(ctx context.Context, in *DeleteTopicRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
 	out := new(emptypb.Empty)
 	err := c.cc.Invoke(ctx, "/kayak.v1.KayakService/DeleteTopic", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *kayakServiceClient) CreateConsumerGroup(ctx context.Context, in *CreateConsumerGroupRequest, opts ...grpc.CallOption) (*emptypb.Empty, error) {
-	out := new(emptypb.Empty)
-	err := c.cc.Invoke(ctx, "/kayak.v1.KayakService/CreateConsumerGroup", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -206,7 +197,7 @@ type KayakServiceServer interface {
 	CreateTopic(context.Context, *CreateTopicRequest) (*emptypb.Empty, error)
 	// Deletes Topic across server - permantly or via archive
 	DeleteTopic(context.Context, *DeleteTopicRequest) (*emptypb.Empty, error)
-	CreateConsumerGroup(context.Context, *CreateConsumerGroupRequest) (*emptypb.Empty, error)
+	// rpc CreateConsumerGroup(CreateConsumerGroupRequest) returns (google.protobuf.Empty) {}
 	RegisterConsumer(context.Context, *RegisterConsumerRequest) (*emptypb.Empty, error)
 	// Read Procedures
 	GetRecords(context.Context, *GetRecordsRequest) (*GetRecordsResponse, error)
@@ -235,9 +226,6 @@ func (UnimplementedKayakServiceServer) CreateTopic(context.Context, *CreateTopic
 }
 func (UnimplementedKayakServiceServer) DeleteTopic(context.Context, *DeleteTopicRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteTopic not implemented")
-}
-func (UnimplementedKayakServiceServer) CreateConsumerGroup(context.Context, *CreateConsumerGroupRequest) (*emptypb.Empty, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateConsumerGroup not implemented")
 }
 func (UnimplementedKayakServiceServer) RegisterConsumer(context.Context, *RegisterConsumerRequest) (*emptypb.Empty, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterConsumer not implemented")
@@ -358,24 +346,6 @@ func _KayakService_DeleteTopic_Handler(srv interface{}, ctx context.Context, dec
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(KayakServiceServer).DeleteTopic(ctx, req.(*DeleteTopicRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _KayakService_CreateConsumerGroup_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CreateConsumerGroupRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(KayakServiceServer).CreateConsumerGroup(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/kayak.v1.KayakService/CreateConsumerGroup",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(KayakServiceServer).CreateConsumerGroup(ctx, req.(*CreateConsumerGroupRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -535,10 +505,6 @@ var KayakService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteTopic",
 			Handler:    _KayakService_DeleteTopic_Handler,
-		},
-		{
-			MethodName: "CreateConsumerGroup",
-			Handler:    _KayakService_CreateConsumerGroup_Handler,
 		},
 		{
 			MethodName: "RegisterConsumer",

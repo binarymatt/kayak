@@ -85,7 +85,8 @@ func setupLogging(console bool) {
 	opts := &slog.HandlerOptions{Level: slog.LevelInfo, AddSource: true}
 	if console {
 		logger = slog.New(tint.NewHandler(os.Stderr, &tint.Options{
-			Level: slog.LevelInfo,
+			Level:     slog.LevelInfo,
+			AddSource: true,
 		}))
 	} else {
 		logger = slog.New(slog.NewJSONHandler(os.Stderr, opts))

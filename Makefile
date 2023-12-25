@@ -18,6 +18,12 @@ local_cluster:
 local_server:
 	go run cmd/kayak/main.go --id 1 --dir data/ --config server1.yaml --host localhost --console
 
+.PHONY: clean_local
+clean_local:
+	rm -rf data
+.PHONY: local_integration
+local_integration:
+	env KAYAK_INTEGRATION_TESTS=true go test -v ./kayak_test.go
 .PHONY: integration_test
 integration_test:
 	docker compose down

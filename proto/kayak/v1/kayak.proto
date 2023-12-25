@@ -23,7 +23,7 @@ service KayakService {
   rpc CreateTopic(CreateTopicRequest) returns (google.protobuf.Empty) {}
   // Deletes Topic across server - permantly or via archive
   rpc DeleteTopic(DeleteTopicRequest) returns (google.protobuf.Empty) {}
-  rpc CreateConsumerGroup(CreateConsumerGroupRequest) returns (google.protobuf.Empty) {}
+  // rpc CreateConsumerGroup(CreateConsumerGroupRequest) returns (google.protobuf.Empty) {}
   rpc RegisterConsumer(RegisterConsumerRequest) returns (google.protobuf.Empty) {}
 
   // Read Procedures
@@ -55,13 +55,7 @@ message Record {
 }
 
 message FetchRecordRequest {
-  // topic is the topic to get records from
-  string topic = 1 [(buf.validate.field).required = true];
-  // consumer_group, if passed, will indicate which group to consume from
-  string consumer_group = 2 [(buf.validate.field).required = true];
-
-  // consumer_id is needed to indicate positioning within consumer group.
-  string consumer_id = 3 [(buf.validate.field).required = true];
+  TopicConsumer consumer = 1 [(buf.validate.field).required = true];
 }
 
 message FetchRecordsResponse {
@@ -153,10 +147,10 @@ enum Hash {
   HASH_MURMUR3 = 1;
 }
 message TopicConsumer {
-  string id = 1;
-  string topic = 2;
+  string id = 1 [(buf.validate.field).required = true];
+  string topic = 2 [(buf.validate.field).required = true];
   string group = 3;
-  int64 partition = 4;
+  repeated int64 partitions = 4;
   string position = 5;
 }
 message ConsumerGroup {

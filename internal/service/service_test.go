@@ -51,7 +51,7 @@ func (s *ServiceTestSuite) SetupTest() {
 	conf.Logger.SetLevel(hclog.Off)
 
 	// c := raft.MakeCluster(1, s.T(), conf)
-	finiteStateMachine := fsm.NewStore(store)
+	finiteStateMachine := fsm.NewStore(store, "")
 	c := raft.MakeClusterCustom(s.T(), &raft.MakeClusterOpts{
 		Peers:     1,
 		Bootstrap: true,
@@ -91,4 +91,7 @@ func (s *ServiceTestSuite) TestReady() {
 	s.service.Ready(w2, req)
 	resp2 := w2.Result()
 	r.Equal(http.StatusOK, resp2.StatusCode)
+}
+func (s *ServiceTestSuite) TestAutopilotServers() {
+
 }

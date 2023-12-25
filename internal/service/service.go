@@ -307,7 +307,7 @@ func (s *service) stats(ctx context.Context) error {
 			for key, value := range nodeStats {
 				attrs = append(attrs, slog.Any(key, value))
 			}
-			slog.Default().LogAttrs(ctx, slog.LevelInfo, "stats", attrs...)
+			slog.Default().LogAttrs(ctx, slog.LevelDebug, "stats", attrs...)
 			CalculateLag(ctx, s.store)
 		}
 	}

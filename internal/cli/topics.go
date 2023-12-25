@@ -12,7 +12,10 @@ import (
 func CreateTopic(ctx *cli.Context) error {
 	client := buildClient(ctx.String("host"))
 	_, err := client.CreateTopic(ctx.Context, connect.NewRequest(&kayakv1.CreateTopicRequest{
-		Name: ctx.String("name"),
+		Topic: &kayakv1.Topic{
+			Name:       ctx.String("name"),
+			Partitions: 1,
+		},
 	}))
 	return err
 }
@@ -26,4 +29,15 @@ func ListTopics(cCtx *cli.Context) error {
 		fmt.Println(topic.GetName())
 	}
 	return nil
+}
+func DeleteTopic(ctx *cli.Context) error {
+	client := buildClient(ctx.String("host"))
+	_, err := client.DeleteTopic(ctx.Context, connect.NewRequest(&kayakv1.DeleteTopicRequest{
+		Topic: &kayakv1.Topic{
+			Name:       ctx.String("name"),
+			Archived:   ctx.Bool("archive"),
+			Partitions: 1,
+		},
+	}))
+	return err
 }

@@ -59,9 +59,6 @@ func (t *testing) consumer(cctx *cli.Context) error {
 		t.c.UpdateConfig(client.WithConsumerGroup(group), client.WithConsumerID(consumer))
 	}
 
-	if err := t.c.CreateConsumerGroup(cctx.Context, 1); err != nil && !errors.Is(err, client.ErrConsumerGroupExists) {
-		return err
-	}
 	if err := t.c.RegisterConsumer(cctx.Context); err != nil && !errors.Is(err, client.ErrConsumerAlreadyRegistered) {
 		return err
 	}
@@ -85,7 +82,7 @@ func (t *testing) consumer(cctx *cli.Context) error {
 }
 func (t *testing) initTest(cctx *cli.Context) error {
 	ctx := cctx.Context
-	if err := t.c.CreateTopic(ctx, topic); err != nil {
+	if err := t.c.CreateTopic(ctx, topic, 1); err != nil {
 		return err
 	}
 	records := []*kayakv1.Record{
@@ -95,9 +92,6 @@ func (t *testing) initTest(cctx *cli.Context) error {
 		{Payload: []byte("text payload")},
 	}
 	if err := t.c.PutRecords(cctx.Context, records...); err != nil {
-		return err
-	}
-	if err := t.c.CreateConsumerGroup(ctx, 1); err != nil {
 		return err
 	}
 	if err := t.c.RegisterConsumer(ctx); err != nil {

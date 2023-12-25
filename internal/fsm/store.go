@@ -15,6 +15,7 @@ import (
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/internal/store"
+	"github.com/binarymatt/kayak/internal/store/models"
 )
 
 type storeFSM struct {
@@ -41,12 +42,11 @@ func (s storeFSM) Apply(log *raft.Log) interface{} {
 			return nil
 		}
 		if command.GetPutRecordsRequest() != nil {
-			records := command.GetPutRecordsRequest().GetRecords()
 			topic := command.GetPutRecordsRequest().Topic
-			for _, record := range records {
-				if record.Topic == "" {
-					record.Topic = topic
-				}
+			records := make([]*models.Record, len(command.GetPutRecordsRequest().GetRecords()))
+			for i, pr := range command.GetPutRecordsRequest().GetRecords() {
+				records[i] = models.RecordFromProto(pr)
+				records[i].TopicID = topic
 			}
 			err := s.store.AddRecords(context.TODO(), topic, records...)
 			if err != nil {
@@ -57,9 +57,10 @@ func (s storeFSM) Apply(log *raft.Log) interface{} {
 			}
 		}
 		if command.GetCreateTopicRequest() != nil {
-			name := command.GetCreateTopicRequest().Name
+			topic := command.GetCreateTopicRequest().Topic
+			name := topic.Name
 			slog.Info("creating topic in state machine", "topic", name)
-			err := s.store.CreateTopic(context.TODO(), name)
+			err := s.store.CreateTopic(context.TODO(), models.TopicFromProto(topic))
 			if err != nil {
 				slog.Error("Error creating topic in state machine", "topic", name, "error", err)
 			}
@@ -73,30 +74,23 @@ func (s storeFSM) Apply(log *raft.Log) interface{} {
 			}
 		}
 		if command.GetCommitRecordRequest() != nil {
-			topic := command.GetCommitRecordRequest().GetConsumer().GetTopic()
-			consumer := command.GetCommitRecordRequest().GetConsumer().GetId()
-			position := command.GetCommitRecordRequest().GetConsumer().GetPosition()
-			group := command.GetCommitRecordRequest().GetConsumer().GetGroup()
-			err := s.store.CommitConsumerPosition(context.TODO(), &kayakv1.TopicConsumer{
-				Topic:    topic,
-				Group:    group,
-				Id:       consumer,
-				Position: position,
-			})
+			consumer := models.ConsumerFromProto(command.GetCommitRecordRequest().GetConsumer())
+			err := s.store.CommitConsumerPosition(context.TODO(), consumer)
 			if err != nil {
 				slog.Error("error committing group position", "error", err)
 			}
 
-			slog.Info("Commited record in fsm", "topic", topic, "consumer", consumer, "position", position)
+			slog.Info("Commited record in fsm", "topic", consumer.TopicID, "consumer", consumer.ID, "position", consumer.Position)
 			return &ApplyResponse{
 				Error: err,
 			}
 		}
 		if command.GetDeleteTopicRequest() != nil {
 			req := command.GetDeleteTopicRequest()
-			slog.Info("deleting topic from state machine", "topic", req.Topic, "archived", req.Archive)
-			topic := req.Topic
-			err := s.store.DeleteTopic(context.TODO(), topic, req.Archive)
+			slog.Info("deleting topic from state machine", "topic", req.Topic.Name, "archived", req.Topic.Archived)
+			topic := models.TopicFromProto(req.Topic)
+
+			err := s.store.DeleteTopic(context.TODO(), topic)
 			if err != nil {
 				slog.Error("Error deleting topic in state machine", "topic", topic, "error", err)
 			}
@@ -109,22 +103,14 @@ func (s storeFSM) Apply(log *raft.Log) interface{} {
 			}
 		}
 		if req := command.GetCreateConsumerGroupRequest(); req != nil {
-			group := req.GetGroup()
-			err := s.store.RegisterConsumerGroup(context.TODO(), group)
 			return &ApplyResponse{
-				Error: err,
+				Error: errors.New("not available."),
 			}
 		}
 		if req := command.GetRegisterConsumerRequest(); req != nil {
-			partitionID, err := s.store.RegisterConsumer(context.TODO(),
-				&kayakv1.TopicConsumer{
-					Topic: req.Consumer.Topic,
-					Group: req.Consumer.Group,
-					Id:    req.Consumer.Id,
-				})
+			_, err := s.store.RegisterConsumer(context.TODO(), models.ConsumerFromProto(req.Consumer))
 			return &ApplyResponse{
 				Error: err,
-				Data:  partitionID,
 			}
 		}
 

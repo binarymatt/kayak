@@ -26,7 +26,7 @@ func NewLogInterceptor() connect.UnaryInterceptorFunc {
 				logger = logger.With("trace_id", scontext.TraceID())
 			}
 			log.WithContext(ctx, logger)
-			logger.InfoContext(ctx, "grpc endpoint called", slog.Group("grpc", slog.String("http_method", httpMethod), slog.String("method", method)))
+			logger.DebugContext(ctx, "grpc endpoint called", slog.Group("grpc", slog.String("http_method", httpMethod), slog.String("method", method)))
 			//slog.SetDefault(slog.Default().With(slog.Group("grpc", slog.String("http_method", httpMethod), slog.String("method", method))))
 			return next(ctx, req)
 		})

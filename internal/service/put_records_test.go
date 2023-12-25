@@ -7,6 +7,7 @@ import (
 	"connectrpc.com/connect"
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
+	"github.com/binarymatt/kayak/internal/store/models"
 )
 
 func (s *ServiceTestSuite) TestPutRecords() {
@@ -17,7 +18,8 @@ func (s *ServiceTestSuite) TestPutRecords() {
 			Payload: []byte(" "),
 		},
 	}
-	s.mockStore.EXPECT().AddRecords(context.TODO(), "test", records[0]).Return(nil).Once()
+	record := models.RecordFromProto(records[0])
+	s.mockStore.EXPECT().AddRecords(context.TODO(), "test", record).Return(nil).Once()
 	_, err := s.service.PutRecords(context.Background(), connect.NewRequest(&kayakv1.PutRecordsRequest{
 		Topic:   "test",
 		Records: records,
