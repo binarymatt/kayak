@@ -156,19 +156,26 @@ func (t *testing) get(cctx *cli.Context) error {
 func worker(ctx context.Context, c *client.Client, id int, recordCount int) error {
 	slog.Info("worker started", "id", id, "count", recordCount)
 	i := 0
+	batchSize := 0
+	records := []*kayakv1.Record{}
 	for i < recordCount {
-		if i%4 == id {
-			// create record
-			slog.Info("adding record")
-			record := &kayakv1.Record{
-				Headers: map[string]string{"number": fmt.Sprintf("%d", i)},
-				Payload: []byte(fmt.Sprintf(`{"json":"payload", id:"%d"}`, id)),
-			}
-			if err := c.PutRecords(ctx, record); err != nil {
+		// create record
+		record := &kayakv1.Record{
+			Headers: map[string]string{"number": fmt.Sprintf("%d", i)},
+			Payload: []byte(fmt.Sprintf(`{"json":"payload", id:"%d"}`, id)),
+		}
+		records = append(records, record)
+		i++
+		if batchSize >= 49 || i == recordCount {
+			// slog.Info("adding record")
+			if err := c.PutRecords(ctx, records...); err != nil {
 				return err
 			}
+			batchSize = 0
+			records = []*kayakv1.Record{}
+			continue
 		}
-		i++
+		batchSize++
 	}
 	slog.Info("done with worker", "id", id)
 	return nil
