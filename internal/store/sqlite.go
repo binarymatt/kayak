@@ -291,7 +291,7 @@ func (s *sqlStore) Stats() map[string]*models.Topic {
 }
 
 func (s *sqlStore) Impl() any {
-	return nil
+	return s.db
 }
 
 func (s *sqlStore) Close() {}

@@ -40,7 +40,7 @@ func validate(msg protoreflect.ProtoMessage) error {
 	return validator.Validate(msg)
 }
 func (s *service) PutRecords(ctx context.Context, req *connect.Request[kayakv1.PutRecordsRequest]) (*connect.Response[emptypb.Empty], error) {
-	slog.Info("put records request")
+	slog.Debug("put records request")
 	if err := validate(req.Msg); err != nil {
 		slog.Error("invalid put request", "error", err)
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
@@ -51,7 +51,7 @@ func (s *service) PutRecords(ctx context.Context, req *connect.Request[kayakv1.P
 		record.Id = id.String()
 		record.Topic = req.Msg.Topic
 	}
-	slog.Info("runnign apply for put", "record_id", req.Msg.Records[0].Id)
+	slog.Debug("runnign apply for put", "record_id", req.Msg.Records[0].Id)
 	command := &kayakv1.Command{
 		Payload: &kayakv1.Command_PutRecordsRequest{
 			PutRecordsRequest: req.Msg,
@@ -249,7 +249,7 @@ func (s *service) applyCommand(ctx context.Context, command *kayakv1.Command) (*
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
-	slog.Info("apply to raft members")
+	slog.Debug("apply to raft members")
 	applyFuture := s.raft.Apply(data, 500*time.Millisecond)
 	if err := applyFuture.Error(); err != nil {
 		slog.ErrorContext(ctx, "could not apply command to raft", "error", err)
@@ -258,7 +258,6 @@ func (s *service) applyCommand(ctx context.Context, command *kayakv1.Command) (*
 	}
 	var val *structpb.Value
 	if applyFuture.Response() != nil {
-		slog.Info("response fromm apply", "response", applyFuture.Response())
 		resp := applyFuture.Response().(*fsm.ApplyResponse)
 		val, err = ToStructValue(resp.Data)
 		if err != nil {
@@ -410,7 +409,7 @@ func (s *service) RegisterConsumer(ctx context.Context, req *connect.Request[kay
 		},
 	}
 	resp, err := s.applyCommand(ctx, command)
-	slog.Info("apply response", "response", resp, "already_registerd", errors.Is(err, store.ErrConsumerAlreadyRegistered))
+	slog.Info("consumer registration apply response", "response", resp, "already_registerd", errors.Is(err, store.ErrConsumerAlreadyRegistered))
 	if errors.Is(err, store.ErrConsumerAlreadyRegistered) {
 		return connect.NewResponse(&emptypb.Empty{}), nil
 	}

@@ -18,6 +18,7 @@ type Topic struct {
 	UpdatedAt      int64 `gorm:"autoUpdateTime"`
 	CreatedAt      int64 `gorm:"autoCreateTime"`
 	Consumers      []Consumer
+	TTL            int64
 }
 
 func (t *Topic) RandomBalancer(record *Record) {

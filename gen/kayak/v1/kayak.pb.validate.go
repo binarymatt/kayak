@@ -1209,6 +1209,8 @@ func (m *Topic) validate(all bool) error {
 
 	// no validation rules for Archived
 
+	// no validation rules for Ttl
+
 	if len(errors) > 0 {
 		return TopicMultiError(errors)
 	}

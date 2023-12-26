@@ -6,9 +6,11 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"gorm.io/gorm"
 	"log/slog"
 
 	"github.com/binarymatt/kayak/internal/store"
+	"github.com/binarymatt/kayak/internal/store/models"
 )
 
 /*
@@ -77,8 +79,16 @@ var (
 		"group",
 		"consumer",
 	})
+	visible_records = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "visible_records",
+	}, []string{
+		"topic",
+	})
 )
 
+func recordVisibleCount(topic string, number float64) {
+	visible_records.WithLabelValues(topic).Set(number)
+}
 func recordRequestSize(endpoint string, requestSize int64) {}
 func recordDuration(endpoint string, start time.Time) {
 	dur := time.Since(start).Microseconds()
@@ -95,6 +105,21 @@ func recordLag(ctx context.Context, topic, group, consumer string, lag int64) {
 	consumerLag.WithLabelValues(topic, group, consumer).Set(float64(lag))
 }
 
+func CalculateVisibleRecords(ctx context.Context, store store.Store) {
+	db, ok := store.Impl().(*gorm.DB)
+	if !ok {
+		return
+	}
+	topics, err := store.ListTopics(ctx)
+	if err != nil {
+		return
+	}
+	for _, topic := range topics {
+		var count int64
+		db.Model(&models.Record{}).Where("topic_id = ?", topic).Count(&count)
+		recordVisibleCount(topic, float64(count))
+	}
+}
 func CalculateLag(ctx context.Context, store store.Store) {
 	topics, err := store.ListTopics(ctx)
 	if err != nil {

@@ -308,6 +308,7 @@ func (s *service) stats(ctx context.Context) error {
 				attrs = append(attrs, slog.Any(key, value))
 			}
 			slog.Default().LogAttrs(ctx, slog.LevelDebug, "stats", attrs...)
+			CalculateVisibleRecords(ctx, s.store)
 			CalculateLag(ctx, s.store)
 		}
 	}
