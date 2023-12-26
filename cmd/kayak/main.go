@@ -25,6 +25,7 @@ import (
 	"log/slog"
 
 	"github.com/binarymatt/kayak/internal/config"
+	"github.com/binarymatt/kayak/internal/log"
 	"github.com/binarymatt/kayak/internal/service"
 	"github.com/binarymatt/kayak/internal/store"
 )
@@ -186,7 +187,9 @@ func kayakRun(cctx *cli.Context) error {
 	// db, err := badger.Open(options)
 
 	sdb := sqlite.Open(cfg.DataPath())
-	db, err := gorm.Open(sdb, &gorm.Config{})
+	db, err := gorm.Open(sdb, &gorm.Config{
+		Logger: &log.GormLogger{},
+	})
 	if err != nil {
 		slog.Error("could not open db file", "error", err)
 		return err
