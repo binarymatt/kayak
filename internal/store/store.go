@@ -22,6 +22,7 @@ type Store interface {
 	Impl() any
 	Close()
 	SnapshotItems() <-chan DataItem
+	PruneOldRecords(ctx context.Context) error
 }
 
 type DataItem interface{}

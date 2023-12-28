@@ -124,6 +124,7 @@ func (s *SqlTestSuite) TestDeleteTopic_Archive() {
 		CreatedAt:      s.ts.Unix(),
 		UpdatedAt:      s.ts.Unix(),
 		DefaultHash:    kayakv1.Hash_HASH_MURMUR3.String(),
+		TTL:            30,
 	}, topic)
 }
 
@@ -132,6 +133,7 @@ func (s *SqlTestSuite) createTopic(name string, count int) {
 	t := &models.Topic{
 		ID:             name,
 		PartitionCount: count,
+		TTL:            30,
 	}
 
 	err := s.store.CreateTopic(s.ctx, t)
@@ -475,6 +477,24 @@ func (s *SqlTestSuite) TestFetchRecord_UnregisteredConsumer() {
 	record, err := s.store.FetchRecord(s.ctx, &models.Consumer{TopicID: "test", ID: "testConsumer"})
 	s.ErrorIs(err, ErrInvalidConsumer)
 	s.Nil(record)
+}
+
+func (s *SqlTestSuite) TestCleanupRecords() {
+	s.createTopic("test", 1)
+	records := generateRecords("test", 5)
+	old := time.Now().Add(-(45 * time.Second)).Unix()
+	records[0].CreatedAt = old
+	err := s.store.AddRecords(s.ctx, "test", records...)
+	s.NoError(err)
+
+	err = s.store.CleanupRecords(s.ctx)
+	s.NoError(err)
+
+	var r []models.Record
+	err = s.db.Find(&r).Error
+	s.NoError(err)
+
+	s.Len(r, 4)
 }
 
 func generateRecords(topic string, total int) []*models.Record {

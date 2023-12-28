@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/oklog/ulid/v2"
 	"gorm.io/gorm"
@@ -162,20 +162,8 @@ func (s *sqlStore) getTopic(id string) (*models.Topic, error) {
 	}
 	return &topic, result.Error
 }
-func (s *sqlStore) getTopicByName(name string) (*models.Topic, error) {
-	var topic models.Topic
-	result := s.db.First(&topic, "name = ?", name)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-		return nil, ErrInvalidTopic
-	}
-	return &topic, result.Error
-}
 
-func chooseConsumer(topic *models.Topic, consumers []models.Consumer) models.Consumer {
-
-	return consumers[rand.Int()%topic.PartitionCount]
-}
-
+/*
 // balance partitions
 func (s *sqlStore) balancePartitionAssignments(topic *models.Topic, groupID string) error {
 	return s.db.Transaction(func(tx *gorm.DB) error {
@@ -197,6 +185,7 @@ func (s *sqlStore) balancePartitionAssignments(topic *models.Topic, groupID stri
 		return nil
 	})
 }
+*/
 
 func (s *sqlStore) RegisterConsumer(ctx context.Context, consumer *models.Consumer) (*models.Consumer, error) {
 
@@ -262,14 +251,7 @@ func (s *sqlStore) LoadMeta(ctx context.Context, topicName string) (*models.Topi
 	}
 	return &topic, nil
 }
-func (s *sqlStore) getGroupConsumers(topic, group string) ([]*models.Consumer, error) {
-	var consumers []*models.Consumer
-	result := s.db.Find(&consumers, "group = ?", group)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return consumers, nil
-}
+
 func (s *sqlStore) Stats() map[string]*models.Topic {
 	var topics []models.Topic
 	result := s.db.Find(&topics)
@@ -308,4 +290,29 @@ func (s *sqlStore) GetConsumerLag(ctx context.Context, consumer *models.Consumer
 	var count int64
 	result := s.db.Model(&models.Record{}).Where("topic_id = ? and id > ?", topic.ID, consumer.Position).Count(&count)
 	return count, result.Error
+}
+
+func (s *sqlStore) PruneOldRecords(ctx context.Context) error {
+	topics, err := s.ListTopics(ctx)
+	if err != nil {
+		return err
+	}
+	for _, name := range topics {
+		topic, err := s.getTopic(name)
+		if err != nil {
+			return err
+		}
+		dur := time.Duration(topic.TTL) * time.Second
+		before := time.Now().Add(-dur).Unix()
+		// select * from records where created_at < ?
+		var records []models.Record
+		if err := s.db.Where("created_at < ?", before).Find(&records).Error; err != nil {
+			return err
+		}
+
+		if err := s.db.Delete(records).Error; err != nil {
+			return err
+		}
+	}
+	return nil
 }
