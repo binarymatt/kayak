@@ -218,7 +218,7 @@ func (s *service) Start(ctx context.Context) error {
 	g.Go(func() error { return s.serve(ctx) })
 	g.Go(func() error { return s.stats(ctx) })
 	g.Go(func() error { return s.handleSerf(ctx) })
-	// g.Go(func() error { return s.handleReload(ctx) })
+	g.Go(func() error { return s.backGroundStoreOperations(ctx) })
 	g.Go(func() error { s.startAutopilot(ctx); return nil })
 	err := g.Wait()
 	slog.Error("error from service errgroup", "error", err)
@@ -291,9 +291,26 @@ func (s *service) waitForServe(ctx context.Context, until time.Time) {
 		}
 	}
 }
+func (s *service) backGroundStoreOperations(ctx context.Context) error {
+	dur := time.Duration(s.cfg.BackgroundTimer) * time.Second
+	tick := time.NewTicker(dur)
+	for {
+		slog.Debug("store operational loop")
+		select {
+		case <-ctx.Done():
+			slog.Warn("context marked done, shutting down store operational loop")
+			return nil
+		case <-tick.C:
+			slog.Debug("prune old records")
+			if err := s.store.PruneOldRecords(ctx); err != nil {
+				slog.Error("error pruning records", "error", err)
+			}
+		}
+	}
+}
 func (s *service) stats(ctx context.Context) error {
-
-	tick := time.NewTicker(1 * time.Second)
+	dur := time.Duration(s.cfg.StatsTimer) * time.Second
+	tick := time.NewTicker(dur)
 	for {
 		slog.Debug("starting stats loop")
 		select {
