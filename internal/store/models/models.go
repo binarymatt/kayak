@@ -4,8 +4,8 @@ import (
 	"math/rand"
 
 	"github.com/spaolacci/murmur3"
-	"golang.org/x/exp/slog"
 	"gorm.io/datatypes"
+	"log/slog"
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 )

@@ -9,11 +9,11 @@ import (
 
 	"github.com/oklog/ulid/v2"
 	"github.com/stretchr/testify/suite"
-	"golang.org/x/exp/slog"
 	"gorm.io/datatypes"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+	"log/slog"
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/internal/store/models"

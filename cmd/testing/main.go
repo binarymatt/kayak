@@ -10,8 +10,8 @@ import (
 	"github.com/oklog/ulid/v2"
 	"github.com/spaolacci/murmur3"
 	"github.com/urfave/cli/v2"
-	"golang.org/x/exp/slog"
 	"golang.org/x/sync/errgroup"
+	"log/slog"
 
 	"github.com/binarymatt/kayak/client"
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
