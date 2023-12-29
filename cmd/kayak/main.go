@@ -68,6 +68,17 @@ func main() {
 		&cli.StringFlag{
 			Name: "config",
 		},
+		altsrc.NewInt64Flag(&cli.Int64Flag{
+			Name:     "stats_timer",
+			Required: true,
+			Value:    1,
+		}),
+		altsrc.NewInt64Flag(&cli.Int64Flag{
+
+			Name:     "background_timer",
+			Required: true,
+			Value:    5,
+		}),
 	}
 
 	app := &cli.App{

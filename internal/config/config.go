@@ -11,15 +11,17 @@ import (
 )
 
 type Config struct {
-	Path      string   `yaml:"path"`
-	ServerID  string   `yaml:"id"`
-	Host      string   `yaml:"host"`
-	Port      int      `yaml:"port"`
-	DataDir   string   `yaml:"dir"`
-	Bootstrap bool     `yaml:"bootstrap"`
-	Peers     []string `yaml:"peers"`
-	SerfPort  int      `yaml:"serf_port"`
-	DBName    string
+	Path            string   `yaml:"path"`
+	ServerID        string   `yaml:"id"`
+	Host            string   `yaml:"host"`
+	Port            int      `yaml:"port"`
+	DataDir         string   `yaml:"dir"`
+	Bootstrap       bool     `yaml:"bootstrap"`
+	Peers           []string `yaml:"peers"`
+	SerfPort        int      `yaml:"serf_port"`
+	StatsTimer      int64    `yaml:"stats_loop_timer"`
+	BackgroundTimer int64    `yaml:"background_loop_timer"`
+	DBName          string
 	// MemberBindPort      int      `yaml:"member_bind_port"`
 	// MemberAdvertisePort int      `yaml:"member_advertise_port"`
 	// MemberAdvertiseAddr string   `yaml:"member_advertise_addr"`
@@ -46,15 +48,17 @@ func (c *Config) DataPath() string {
 
 func New(cctx *cli.Context) *Config {
 	return &Config{
-		Path:      cctx.String("config"),
-		ServerID:  cctx.String("id"),
-		Host:      cctx.String("host"),
-		Port:      cctx.Int("port"),
-		DataDir:   cctx.String("dir"),
-		Peers:     cctx.StringSlice("peers"),
-		Bootstrap: cctx.Bool("bootstrap"),
-		SerfPort:  cctx.Int("serf_port"),
-		DBName:    "sql.v1.db",
+		Path:            cctx.String("config"),
+		ServerID:        cctx.String("id"),
+		Host:            cctx.String("host"),
+		Port:            cctx.Int("port"),
+		DataDir:         cctx.String("dir"),
+		Peers:           cctx.StringSlice("peers"),
+		Bootstrap:       cctx.Bool("bootstrap"),
+		SerfPort:        cctx.Int("serf_port"),
+		StatsTimer:      cctx.Int64("stats_timer"),
+		BackgroundTimer: cctx.Int64("background_timer"),
+		DBName:          "sql.v1.db",
 	}
 }
 
