@@ -479,7 +479,7 @@ func (s *SqlTestSuite) TestFetchRecord_UnregisteredConsumer() {
 	s.Nil(record)
 }
 
-func (s *SqlTestSuite) TestCleanupRecords() {
+func (s *SqlTestSuite) TestPruneOldRecords() {
 	s.createTopic("test", 1)
 	records := generateRecords("test", 5)
 	old := time.Now().Add(-(45 * time.Second)).Unix()
@@ -487,7 +487,7 @@ func (s *SqlTestSuite) TestCleanupRecords() {
 	err := s.store.AddRecords(s.ctx, "test", records...)
 	s.NoError(err)
 
-	err = s.store.CleanupRecords(s.ctx)
+	err = s.store.PruneOldRecords(s.ctx)
 	s.NoError(err)
 
 	var r []models.Record

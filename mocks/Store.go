@@ -613,6 +613,48 @@ func (_c *Store_LoadMeta_Call) RunAndReturn(run func(context.Context, string) (*
 	return _c
 }
 
+// PruneOldRecords provides a mock function with given fields: ctx
+func (_m *Store) PruneOldRecords(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Store_PruneOldRecords_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PruneOldRecords'
+type Store_PruneOldRecords_Call struct {
+	*mock.Call
+}
+
+// PruneOldRecords is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *Store_Expecter) PruneOldRecords(ctx interface{}) *Store_PruneOldRecords_Call {
+	return &Store_PruneOldRecords_Call{Call: _e.mock.On("PruneOldRecords", ctx)}
+}
+
+func (_c *Store_PruneOldRecords_Call) Run(run func(ctx context.Context)) *Store_PruneOldRecords_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *Store_PruneOldRecords_Call) Return(_a0 error) *Store_PruneOldRecords_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Store_PruneOldRecords_Call) RunAndReturn(run func(context.Context) error) *Store_PruneOldRecords_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RegisterConsumer provides a mock function with given fields: ctx, consumer
 func (_m *Store) RegisterConsumer(ctx context.Context, consumer *models.Consumer) (*models.Consumer, error) {
 	ret := _m.Called(ctx, consumer)
