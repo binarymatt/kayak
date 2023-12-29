@@ -47,7 +47,7 @@ func New(store store.Store, cfg *config.Config) (*service, error) {
 	sigs := make(chan os.Signal, 1)
 	eventChan := make(chan Event, 1)
 	signal.Notify(sigs, syscall.SIGUSR1)
-	slog.Info("creating service via New", "addr", cfg.RaftAddress())
+	slog.Info("service creation", "addr", cfg.RaftAddress())
 	s := &service{
 		cfg:         cfg,
 		store:       store,
@@ -145,7 +145,7 @@ func (s *service) initSerf(id string, cfg *raft.Config) error {
 	serfConfig.MemberlistConfig = memberConfig
 	serfConfig.Logger = discardLogger
 	raftVersion := strconv.Itoa(int(cfg.ProtocolVersion))
-	slog.Warn("raft version", "version", raftVersion)
+	slog.Debug("raft version", "version", raftVersion)
 	serfConfig.Tags = map[string]string{
 		"server_id":    id,
 		"port":         strconv.Itoa(s.cfg.Port),
@@ -201,7 +201,7 @@ func (s *service) Init() error {
 		slog.Error("error setting up raft", "error", err)
 		return err
 	}
-	slog.Warn("done setting up raft")
+	slog.Debug("done setting up raft")
 	s.raft = r
 
 	s.initAutopilot()
@@ -278,7 +278,7 @@ func (s *service) waitForServe(ctx context.Context, until time.Time) {
 		case <-ctx.Done():
 			return
 		default:
-			slog.Info("sleeping while waiting for server")
+			slog.Debug("sleeping while waiting for server")
 			time.Sleep(500 * time.Millisecond)
 
 		}
@@ -292,16 +292,16 @@ func (s *service) waitForServe(ctx context.Context, until time.Time) {
 	}
 }
 func (s *service) backGroundStoreOperations(ctx context.Context) error {
-	dur := time.Duration(s.cfg.BackgroundTimer) * time.Second
+	dur := s.cfg.BackgroundTimer
 	tick := time.NewTicker(dur)
 	for {
-		slog.Debug("store operational loop")
+		slog.Debug("background loop", "duration", dur)
 		select {
 		case <-ctx.Done():
 			slog.Warn("context marked done, shutting down store operational loop")
 			return nil
 		case <-tick.C:
-			slog.Debug("prune old records")
+			slog.Debug("pruning old records")
 			if err := s.store.PruneOldRecords(ctx); err != nil {
 				slog.Error("error pruning records", "error", err)
 			}
@@ -309,16 +309,15 @@ func (s *service) backGroundStoreOperations(ctx context.Context) error {
 	}
 }
 func (s *service) stats(ctx context.Context) error {
-	dur := time.Duration(s.cfg.StatsTimer) * time.Second
+	dur := s.cfg.StatsTimer
 	tick := time.NewTicker(dur)
 	for {
-		slog.Debug("starting stats loop")
+		slog.Debug("stats loop", "duration", dur)
 		select {
 		case <-ctx.Done():
 			slog.Info("context done, shutting down stats loop")
 			return nil
 		case <-tick.C:
-			slog.Debug("tick finished, emitting stats")
 			attrs := []slog.Attr{}
 			nodeStats := s.raft.Stats()
 			for key, value := range nodeStats {
@@ -357,7 +356,7 @@ func (s *service) serve(ctx context.Context) error {
 	)
 	raftPath, raftHandler := transportv1connect.NewRaftTransportHandler(s.manager.Service())
 	adminPath, adminHandler := adminv1connect.NewAdminServiceHandler(s)
-	slog.Info("setting up mux", "path", path, "admin_path", adminPath, "raft_path", raftPath)
+	slog.Debug("setting up mux", "path", path, "admin_path", adminPath, "raft_path", raftPath)
 	mux := http.NewServeMux()
 	mux.Handle(path, handler)
 	mux.Handle(raftPath, raftHandler)
@@ -382,7 +381,7 @@ func (s *service) serve(ctx context.Context) error {
 		slog.Warn("done shutting down api server")
 	}()
 
-	slog.Warn("api server listen event")
+	slog.Debug("api server listen event")
 	s.SetReady()
 	slog.Info("api server starting")
 	return server.ListenAndServe()
@@ -406,7 +405,7 @@ func (s *service) handleSerf(ctx context.Context) error {
 			slog.Info("context is done, shutting down serf event loop")
 			return nil
 		case ev := <-s.serfChan:
-			slog.Info("serf event")
+			slog.Debug("serf event")
 			leader := s.raft.VerifyLeader()
 			if memberEvent, ok := ev.(serf.MemberEvent); ok {
 				for _, member := range memberEvent.Members {

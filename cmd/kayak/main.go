@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"syscall"
+	"time"
 
 	"github.com/lmittmann/tint"
 	"github.com/urfave/cli/v2"
@@ -68,16 +69,20 @@ func main() {
 		&cli.StringFlag{
 			Name: "config",
 		},
-		altsrc.NewInt64Flag(&cli.Int64Flag{
+		altsrc.NewDurationFlag(&cli.DurationFlag{
 			Name:     "stats_timer",
-			Required: true,
-			Value:    1,
+			Required: false,
+			Value:    15 * time.Second,
 		}),
-		altsrc.NewInt64Flag(&cli.Int64Flag{
-
+		altsrc.NewDurationFlag(&cli.DurationFlag{
 			Name:     "background_timer",
-			Required: true,
-			Value:    5,
+			Required: false,
+			Value:    5 * time.Second,
+		}),
+		altsrc.NewStringFlag(&cli.StringFlag{
+			Name:    "log_level",
+			Aliases: []string{"L"},
+			Value:   "info",
 		}),
 	}
 
@@ -92,12 +97,12 @@ func main() {
 	}
 
 }
-func setupLogging(console bool) {
+func setupLogging(console bool, level slog.Leveler) {
 	var logger *slog.Logger
-	opts := &slog.HandlerOptions{Level: slog.LevelInfo, AddSource: true}
+	opts := &slog.HandlerOptions{Level: level, AddSource: true}
 	if console {
 		logger = slog.New(tint.NewHandler(os.Stderr, &tint.Options{
-			Level:     slog.LevelInfo,
+			Level:     level,
 			AddSource: true,
 		}))
 	} else {
@@ -167,7 +172,21 @@ func setupMetrics() error {
 func kayakRun(cctx *cli.Context) error {
 	ctx := cctx.Context
 	cfg := config.New(cctx)
-	setupLogging(cctx.Bool("console"))
+	var level slog.Leveler
+	switch cctx.String("log_level") {
+	case "info":
+		level = slog.LevelInfo
+	case "debug":
+		level = slog.LevelDebug
+	case "warn":
+		level = slog.LevelWarn
+	case "error":
+		level = slog.LevelError
+	default:
+		level = slog.LevelInfo
+	}
+
+	setupLogging(cctx.Bool("console"), level)
 	if err := setupMetrics(); err != nil {
 		return err
 	}
@@ -215,7 +234,7 @@ func kayakRun(cctx *cli.Context) error {
 		return err
 	}
 
-	slog.Info("creating service")
+	slog.Debug("creating service")
 	svc, err := service.New(s, cfg)
 	if err != nil {
 		return err

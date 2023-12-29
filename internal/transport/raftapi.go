@@ -3,13 +3,14 @@ package transport
 import (
 	"context"
 	"io"
-	"log/slog"
 	"sync"
 	"time"
 
-	transportv1 "github.com/binarymatt/kayak/gen/transport/v1"
 	"github.com/hashicorp/raft"
 	"google.golang.org/grpc"
+	"log/slog"
+
+	transportv1 "github.com/binarymatt/kayak/gen/transport/v1"
 )
 
 type raftAPI struct {
@@ -182,7 +183,7 @@ func (r raftAPI) DecodePeer(p []byte) raft.ServerAddress {
 }
 
 func (r raftAPI) SetHeartbeatHandler(cb func(rpc raft.RPC)) {
-	slog.Info("setting heartbeat handler")
+	slog.Debug("setting heartbeat handler")
 	r.manager.heartbeatFuncMtx.Lock()
 	r.manager.heartbeatFunc = cb
 	r.manager.heartbeatFuncMtx.Unlock()

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/urfave/cli/v2"
 	"gopkg.in/yaml.v3"
@@ -11,16 +12,16 @@ import (
 )
 
 type Config struct {
-	Path            string   `yaml:"path"`
-	ServerID        string   `yaml:"id"`
-	Host            string   `yaml:"host"`
-	Port            int      `yaml:"port"`
-	DataDir         string   `yaml:"dir"`
-	Bootstrap       bool     `yaml:"bootstrap"`
-	Peers           []string `yaml:"peers"`
-	SerfPort        int      `yaml:"serf_port"`
-	StatsTimer      int64    `yaml:"stats_loop_timer"`
-	BackgroundTimer int64    `yaml:"background_loop_timer"`
+	Path            string        `yaml:"path"`
+	ServerID        string        `yaml:"id"`
+	Host            string        `yaml:"host"`
+	Port            int           `yaml:"port"`
+	DataDir         string        `yaml:"dir"`
+	Bootstrap       bool          `yaml:"bootstrap"`
+	Peers           []string      `yaml:"peers"`
+	SerfPort        int           `yaml:"serf_port"`
+	StatsTimer      time.Duration `yaml:"stats_loop_timer"`
+	BackgroundTimer time.Duration `yaml:"background_loop_timer"`
 	DBName          string
 	// MemberBindPort      int      `yaml:"member_bind_port"`
 	// MemberAdvertisePort int      `yaml:"member_advertise_port"`
@@ -56,8 +57,8 @@ func New(cctx *cli.Context) *Config {
 		Peers:           cctx.StringSlice("peers"),
 		Bootstrap:       cctx.Bool("bootstrap"),
 		SerfPort:        cctx.Int("serf_port"),
-		StatsTimer:      cctx.Int64("stats_timer"),
-		BackgroundTimer: cctx.Int64("background_timer"),
+		StatsTimer:      cctx.Duration("stats_timer"),
+		BackgroundTimer: cctx.Duration("background_timer"),
 		DBName:          "sql.v1.db",
 	}
 }
