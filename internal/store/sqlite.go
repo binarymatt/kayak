@@ -302,17 +302,16 @@ func (s *sqlStore) PruneOldRecords(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		if topic.TTL == 0 {
+			continue
+		}
 		dur := time.Duration(topic.TTL) * time.Second
 		before := time.Now().Add(-dur).Unix()
 		// select * from records where created_at < ?
-		var records []models.Record
-		if err := s.db.Where("created_at < ?", before).Find(&records).Error; err != nil {
+		if err := s.db.Where("created_at < ? and topic_id = ?", before, topic.ID).Delete(&models.Record{}).Error; err != nil {
 			return err
 		}
 
-		if err := s.db.Delete(records).Error; err != nil {
-			return err
-		}
 	}
 	return nil
 }

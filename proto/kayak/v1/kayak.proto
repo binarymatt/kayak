@@ -82,7 +82,7 @@ message Topic {
   string name = 1 [(buf.validate.field).required = true];
   int64 partitions = 2 [(buf.validate.field).int64.gt = 0];
   bool archived = 3;
-  int64 ttl = 4 [(buf.validate.field).int64.gt = 0]; // max age of record in seconds
+  int64 ttl = 4; // max age of record in seconds
 }
 message ListTopicsRequest {}
 message ListTopicsResponse {

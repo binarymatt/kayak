@@ -170,6 +170,7 @@ func (s *service) initSerf(id string, cfg *raft.Config) error {
 func (s *service) Init() error {
 
 	c := raft.DefaultConfig()
+	c.LogLevel = "WARN"
 	c.LocalID = raft.ServerID(s.cfg.ServerID)
 
 	baseDir := filepath.Join(s.cfg.DataDir, s.cfg.ServerID)

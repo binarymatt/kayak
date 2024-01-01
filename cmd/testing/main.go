@@ -82,7 +82,7 @@ func (t *testing) consumer(cctx *cli.Context) error {
 }
 func (t *testing) initTest(cctx *cli.Context) error {
 	ctx := cctx.Context
-	if err := t.c.CreateTopic(ctx, topic, 1); err != nil {
+	if err := t.c.CreateTopic(ctx, topic, 1, 300); err != nil {
 		return err
 	}
 	records := []*kayakv1.Record{

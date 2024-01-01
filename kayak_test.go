@@ -70,7 +70,7 @@ func (s *KayakIntegrationTestSuite) SetupTest() {
 	if err != nil {
 		slog.Error("could not delete topic", "error", err)
 	}
-	err = s.client.CreateTopic(context.Background(), primaryTopic, 1)
+	err = s.client.CreateTopic(context.Background(), primaryTopic, 1, 300)
 	s.Require().NoError(err)
 }
 func (s *KayakIntegrationTestSuite) AfterTest() {

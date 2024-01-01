@@ -196,10 +196,11 @@ func (c *Client) GetRecords(ctx context.Context, topic string, start string, lim
 	return resp.Msg.GetRecords(), err
 }
 
-func (c *Client) CreateTopic(ctx context.Context, topicName string, partitions int64) error {
+func (c *Client) CreateTopic(ctx context.Context, topicName string, partitions int64, ttl int64) error {
 	topic := &kayakv1.Topic{
 		Name:       topicName,
 		Partitions: partitions,
+		Ttl:        ttl,
 	}
 	_, err := c.client.CreateTopic(ctx, connect.NewRequest(&kayakv1.CreateTopicRequest{
 		Topic: topic,

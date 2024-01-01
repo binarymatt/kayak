@@ -21,9 +21,11 @@ local_server:
 .PHONY: clean_local
 clean_local:
 	rm -rf data
+
 .PHONY: local_integration
 local_integration:
 	env KAYAK_INTEGRATION_TESTS=true go test -v ./kayak_test.go
+
 .PHONY: integration_test
 integration_test:
 	docker compose down

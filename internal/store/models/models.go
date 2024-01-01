@@ -54,6 +54,7 @@ func TopicFromProto(pt *kayakv1.Topic) *Topic {
 		ID:             pt.Name,
 		PartitionCount: int(pt.Partitions),
 		DefaultHash:    kayakv1.Hash_HASH_MURMUR3.String(),
+		TTL:            pt.Ttl,
 	}
 	return topic
 }
