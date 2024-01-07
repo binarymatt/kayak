@@ -12,8 +12,8 @@ import (
 	"connectrpc.com/connect"
 	"github.com/bufbuild/protovalidate-go"
 	"github.com/hashicorp/raft"
-	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"log/slog"
 
 	adminv1 "github.com/binarymatt/kayak/gen/admin/v1"
 )
@@ -87,9 +87,6 @@ func (s *service) AddNonvoter(ctx context.Context, req *connect.Request[adminv1.
 }
 func (s *service) AddVoter(ctx context.Context, req *connect.Request[adminv1.AddVoterRequest]) (*connect.Response[adminv1.Future], error) {
 	id := req.Msg.GetId()
-	if id == "" {
-		id = ulid.Make().String()
-	}
 	return toFuture(
 		s.raft.AddVoter(
 			raft.ServerID(id),
@@ -190,11 +187,13 @@ func (s *service) VerifyLeader(ctx context.Context, req *connect.Request[adminv1
 }
 
 func (s *service) Join(ctx context.Context, req *connect.Request[adminv1.JoinRequest]) (*connect.Response[emptypb.Empty], error) {
+	slog.Info("request to join serf cluster")
 	validator, err := protovalidate.New()
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	if err := validator.Validate(req.Msg); err != nil {
+		slog.Error("validation error", "error", err)
 		var valErr *protovalidate.ValidationError
 		if ok := errors.As(err, &valErr); ok {
 			return nil, connect.NewError(connect.CodeInvalidArgument, valErr)
@@ -202,7 +201,26 @@ func (s *service) Join(ctx context.Context, req *connect.Request[adminv1.JoinReq
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	if _, err := s.sf.Join([]string{req.Msg.GetAddress()}, false); err != nil {
+		slog.Error("could not join serf", "address", req.Msg.Address)
 		return nil, connect.NewError(connect.CodeAborted, err)
+	}
+	return connect.NewResponse(&emptypb.Empty{}), nil
+}
+
+func (s *service) Bootstrap(ctx context.Context, req *connect.Request[emptypb.Empty]) (*connect.Response[emptypb.Empty], error) {
+
+	cfg := raft.Configuration{
+		Servers: []raft.Server{
+			{
+				Suffrage: raft.Voter,
+				ID:       raft.ServerID(s.cfg.ServerID),
+				Address:  s.raftAddr,
+			},
+		},
+	}
+	f := s.raft.BootstrapCluster(cfg)
+	if f.Error() != nil && f.Error() != raft.ErrCantBootstrap {
+		slog.Error("error bootstraping cluster", "error", f.Error())
 	}
 	return connect.NewResponse(&emptypb.Empty{}), nil
 }
