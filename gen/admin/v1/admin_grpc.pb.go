@@ -41,6 +41,7 @@ type AdminServiceClient interface {
 	Join(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
 	Await(ctx context.Context, in *Future, opts ...grpc.CallOption) (*AwaitResponse, error)
 	Forget(ctx context.Context, in *Future, opts ...grpc.CallOption) (*ForgetResponse, error)
+	Bootstrap(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error)
 }
 
 type adminServiceClient struct {
@@ -213,6 +214,15 @@ func (c *adminServiceClient) Forget(ctx context.Context, in *Future, opts ...grp
 	return out, nil
 }
 
+func (c *adminServiceClient) Bootstrap(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*emptypb.Empty, error) {
+	out := new(emptypb.Empty)
+	err := c.cc.Invoke(ctx, "/admin.v1.AdminService/Bootstrap", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AdminServiceServer is the server API for AdminService service.
 // All implementations should embed UnimplementedAdminServiceServer
 // for forward compatibility
@@ -235,6 +245,7 @@ type AdminServiceServer interface {
 	Join(context.Context, *JoinRequest) (*emptypb.Empty, error)
 	Await(context.Context, *Future) (*AwaitResponse, error)
 	Forget(context.Context, *Future) (*ForgetResponse, error)
+	Bootstrap(context.Context, *emptypb.Empty) (*emptypb.Empty, error)
 }
 
 // UnimplementedAdminServiceServer should be embedded to have forward compatible implementations.
@@ -294,6 +305,9 @@ func (UnimplementedAdminServiceServer) Await(context.Context, *Future) (*AwaitRe
 }
 func (UnimplementedAdminServiceServer) Forget(context.Context, *Future) (*ForgetResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Forget not implemented")
+}
+func (UnimplementedAdminServiceServer) Bootstrap(context.Context, *emptypb.Empty) (*emptypb.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Bootstrap not implemented")
 }
 
 // UnsafeAdminServiceServer may be embedded to opt out of forward compatibility for this service.
@@ -631,6 +645,24 @@ func _AdminService_Forget_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AdminService_Bootstrap_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(emptypb.Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AdminServiceServer).Bootstrap(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/admin.v1.AdminService/Bootstrap",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AdminServiceServer).Bootstrap(ctx, req.(*emptypb.Empty))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AdminService_ServiceDesc is the grpc.ServiceDesc for AdminService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -709,6 +741,10 @@ var AdminService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Forget",
 			Handler:    _AdminService_Forget_Handler,
+		},
+		{
+			MethodName: "Bootstrap",
+			Handler:    _AdminService_Bootstrap_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

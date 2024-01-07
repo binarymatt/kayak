@@ -27,6 +27,8 @@ service AdminService {
 
   rpc Await(Future) returns (AwaitResponse) {}
   rpc Forget(Future) returns (ForgetResponse) {}
+
+  rpc Bootstrap(google.protobuf.Empty) returns (google.protobuf.Empty) {}
 }
 
 message Future {
@@ -129,5 +131,5 @@ message StateResponse {
 message VerifyLeaderRequest {}
 
 message JoinRequest {
-  string address = 1 [(buf.validate.field).string.uri_ref = true];
+  string address = 1;
 }

@@ -79,6 +79,8 @@ const (
 	AdminServiceAwaitProcedure = "/admin.v1.AdminService/Await"
 	// AdminServiceForgetProcedure is the fully-qualified name of the AdminService's Forget RPC.
 	AdminServiceForgetProcedure = "/admin.v1.AdminService/Forget"
+	// AdminServiceBootstrapProcedure is the fully-qualified name of the AdminService's Bootstrap RPC.
+	AdminServiceBootstrapProcedure = "/admin.v1.AdminService/Bootstrap"
 )
 
 // AdminServiceClient is a client for the admin.v1.AdminService service.
@@ -101,6 +103,7 @@ type AdminServiceClient interface {
 	Join(context.Context, *connect.Request[v1.JoinRequest]) (*connect.Response[emptypb.Empty], error)
 	Await(context.Context, *connect.Request[v1.Future]) (*connect.Response[v1.AwaitResponse], error)
 	Forget(context.Context, *connect.Request[v1.Future]) (*connect.Response[v1.ForgetResponse], error)
+	Bootstrap(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[emptypb.Empty], error)
 }
 
 // NewAdminServiceClient constructs a client for the admin.v1.AdminService service. By default, it
@@ -203,6 +206,11 @@ func NewAdminServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			baseURL+AdminServiceForgetProcedure,
 			opts...,
 		),
+		bootstrap: connect.NewClient[emptypb.Empty, emptypb.Empty](
+			httpClient,
+			baseURL+AdminServiceBootstrapProcedure,
+			opts...,
+		),
 	}
 }
 
@@ -226,6 +234,7 @@ type adminServiceClient struct {
 	join                       *connect.Client[v1.JoinRequest, emptypb.Empty]
 	await                      *connect.Client[v1.Future, v1.AwaitResponse]
 	forget                     *connect.Client[v1.Future, v1.ForgetResponse]
+	bootstrap                  *connect.Client[emptypb.Empty, emptypb.Empty]
 }
 
 // AddNonvoter calls admin.v1.AdminService.AddNonvoter.
@@ -318,6 +327,11 @@ func (c *adminServiceClient) Forget(ctx context.Context, req *connect.Request[v1
 	return c.forget.CallUnary(ctx, req)
 }
 
+// Bootstrap calls admin.v1.AdminService.Bootstrap.
+func (c *adminServiceClient) Bootstrap(ctx context.Context, req *connect.Request[emptypb.Empty]) (*connect.Response[emptypb.Empty], error) {
+	return c.bootstrap.CallUnary(ctx, req)
+}
+
 // AdminServiceHandler is an implementation of the admin.v1.AdminService service.
 type AdminServiceHandler interface {
 	AddNonvoter(context.Context, *connect.Request[v1.AddNonvoterRequest]) (*connect.Response[v1.Future], error)
@@ -338,6 +352,7 @@ type AdminServiceHandler interface {
 	Join(context.Context, *connect.Request[v1.JoinRequest]) (*connect.Response[emptypb.Empty], error)
 	Await(context.Context, *connect.Request[v1.Future]) (*connect.Response[v1.AwaitResponse], error)
 	Forget(context.Context, *connect.Request[v1.Future]) (*connect.Response[v1.ForgetResponse], error)
+	Bootstrap(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[emptypb.Empty], error)
 }
 
 // NewAdminServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -436,6 +451,11 @@ func NewAdminServiceHandler(svc AdminServiceHandler, opts ...connect.HandlerOpti
 		svc.Forget,
 		opts...,
 	)
+	adminServiceBootstrapHandler := connect.NewUnaryHandler(
+		AdminServiceBootstrapProcedure,
+		svc.Bootstrap,
+		opts...,
+	)
 	return "/admin.v1.AdminService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case AdminServiceAddNonvoterProcedure:
@@ -474,6 +494,8 @@ func NewAdminServiceHandler(svc AdminServiceHandler, opts ...connect.HandlerOpti
 			adminServiceAwaitHandler.ServeHTTP(w, r)
 		case AdminServiceForgetProcedure:
 			adminServiceForgetHandler.ServeHTTP(w, r)
+		case AdminServiceBootstrapProcedure:
+			adminServiceBootstrapHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -553,4 +575,8 @@ func (UnimplementedAdminServiceHandler) Await(context.Context, *connect.Request[
 
 func (UnimplementedAdminServiceHandler) Forget(context.Context, *connect.Request[v1.Future]) (*connect.Response[v1.ForgetResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("admin.v1.AdminService.Forget is not implemented"))
+}
+
+func (UnimplementedAdminServiceHandler) Bootstrap(context.Context, *connect.Request[emptypb.Empty]) (*connect.Response[emptypb.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("admin.v1.AdminService.Bootstrap is not implemented"))
 }
