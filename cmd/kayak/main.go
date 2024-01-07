@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/glebarez/sqlite"
 	"github.com/lmittmann/tint"
 	"github.com/urfave/cli/v2"
 	"github.com/urfave/cli/v2/altsrc"
@@ -21,7 +22,6 @@ import (
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.21.0"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"log/slog"
 
