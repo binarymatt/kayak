@@ -41,8 +41,8 @@ func main() {
 				Name: "admin",
 				Subcommands: []*cli.Command{
 					{
-						Name:   "setup_cluster",
-						Action: internal.SetupCluster,
+						Name:   "setup_nomad_cluster",
+						Action: internal.SetupNomadCluster,
 						Flags: []cli.Flag{
 							&cli.StringFlag{
 								Name:     "nomad_address",
