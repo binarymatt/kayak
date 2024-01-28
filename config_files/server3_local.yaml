@@ -1,0 +1,8 @@
+---
+id: server3
+dir: data/
+port: 8083
+serf_port: 9003
+host: localhost
+peers:
+  - localhost:9001
