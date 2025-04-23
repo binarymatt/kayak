@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package kayak.v1;
+
+// import "buf/validate/validate.proto";
+import "google/protobuf/empty.proto";
+// import "google/protobuf/struct.proto";
+// import "google/protobuf/timestamp.proto";
+import "kayak/v1/model.proto";
+
+option go_package = "github.com/binarymatt/kayak/gen/kayak/v1;kayakv1";
+
+service KayakService {
+  // Record Operations
+  // PutRecords adds records to the stream
+  rpc PutRecords(PutRecordsRequest) returns (google.protobuf.Empty) {}
+  rpc GetRecords(GetRecordsRequest) returns (GetRecordsResponse) {}
+  rpc FetchRecords(FetchRecordsRequest) returns (FetchRecordsResponse) {}
+  rpc CommitRecord(CommitRecordRequest) returns (google.protobuf.Empty) {}
+
+  // Worker Operations
+  rpc RegisterWorker(RegisterWorkerRequest) returns (RegisterWorkerResponse) {}
+  rpc DeregisterWorker(DeregisterWorkerRequest) returns (google.protobuf.Empty) {}
+
+  // Stream Operations
+  rpc CreateStream(CreateStreamRequest) returns (google.protobuf.Empty) {}
+}
+
+message PutRecordsRequest {
+  string stream_name = 1;
+  repeated Record records = 2;
+  string idempotency_key = 3;
+}
+message GetRecordsRequest {
+  string stream_name = 1;
+  int64 partition = 2;
+  string start_id = 3;
+  int64 limit = 4;
+}
+message GetRecordsResponse {
+  repeated Record records = 1;
+}
+message FetchRecordsRequest {
+  string stream_name = 1;
+  Worker worker = 2;
+  int64 limit = 4;
+}
+message FetchRecordsResponse {
+  repeated Record records = 1;
+}
+message CommitRecordRequest {
+  Worker worker = 1;
+  Record record = 2;
+}
+message RegisterWorkerRequest {
+  string stream_name = 1;
+  string group = 2;
+  string id = 3;
+}
+message PartitionAssignment {
+  string id = 1;
+  int64 partition = 2;
+  int64 expires = 3;
+}
+message RegisterWorkerResponse {
+  Worker worker = 1;
+}
+message DeregisterWorkerRequest {
+  Worker worker = 1;
+}
+message CreateStreamRequest {
+  string name = 1;
+  int64 partition_count = 2;
+  int64 ttl = 3;
+}
