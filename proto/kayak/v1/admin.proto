@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package kayak.v1;
+
+option go_package = "github.com/binarymatt/kayak/gen/kayak/v1;kayakv1";
+
+service AdminService {
+  rpc AddVoter(AddVoterRequest) returns (AddVoterResponse) {}
+  rpc Stats(StatsRequest) returns (StatsResponse) {}
+  rpc Leader(LeaderRequest) returns (LeaderResponse) {}
+}
+
+message AddVoterRequest {
+  string id = 1;
+  string address = 2;
+}
+
+message AddVoterResponse {}
+
+message StatsRequest {}
+message StatsResponse {
+  map<string, string> stats = 1;
+}
+
+message LeaderRequest {}
+message LeaderResponse {
+  string address = 1;
+  string id = 2;
+}

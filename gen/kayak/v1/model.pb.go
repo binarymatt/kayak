@@ -82,6 +82,82 @@ func (x *Stream) GetTtl() int64 {
 	return 0
 }
 
+type PartitionAssignment struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StreamName    string                 `protobuf:"bytes,1,opt,name=stream_name,json=streamName,proto3" json:"stream_name,omitempty"`
+	GroupName     string                 `protobuf:"bytes,2,opt,name=group_name,json=groupName,proto3" json:"group_name,omitempty"`
+	Partition     int64                  `protobuf:"varint,3,opt,name=partition,proto3" json:"partition,omitempty"`
+	WorkerId      string                 `protobuf:"bytes,4,opt,name=worker_id,json=workerId,proto3" json:"worker_id,omitempty"`
+	ExpiresAt     int64                  `protobuf:"varint,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PartitionAssignment) Reset() {
+	*x = PartitionAssignment{}
+	mi := &file_kayak_v1_model_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PartitionAssignment) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PartitionAssignment) ProtoMessage() {}
+
+func (x *PartitionAssignment) ProtoReflect() protoreflect.Message {
+	mi := &file_kayak_v1_model_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PartitionAssignment.ProtoReflect.Descriptor instead.
+func (*PartitionAssignment) Descriptor() ([]byte, []int) {
+	return file_kayak_v1_model_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *PartitionAssignment) GetStreamName() string {
+	if x != nil {
+		return x.StreamName
+	}
+	return ""
+}
+
+func (x *PartitionAssignment) GetGroupName() string {
+	if x != nil {
+		return x.GroupName
+	}
+	return ""
+}
+
+func (x *PartitionAssignment) GetPartition() int64 {
+	if x != nil {
+		return x.Partition
+	}
+	return 0
+}
+
+func (x *PartitionAssignment) GetWorkerId() string {
+	if x != nil {
+		return x.WorkerId
+	}
+	return ""
+}
+
+func (x *PartitionAssignment) GetExpiresAt() int64 {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return 0
+}
+
 type Worker struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
 	StreamName          string                 `protobuf:"bytes,1,opt,name=stream_name,json=streamName,proto3" json:"stream_name,omitempty"`
@@ -96,7 +172,7 @@ type Worker struct {
 
 func (x *Worker) Reset() {
 	*x = Worker{}
-	mi := &file_kayak_v1_model_proto_msgTypes[1]
+	mi := &file_kayak_v1_model_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -108,7 +184,7 @@ func (x *Worker) String() string {
 func (*Worker) ProtoMessage() {}
 
 func (x *Worker) ProtoReflect() protoreflect.Message {
-	mi := &file_kayak_v1_model_proto_msgTypes[1]
+	mi := &file_kayak_v1_model_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -121,7 +197,7 @@ func (x *Worker) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Worker.ProtoReflect.Descriptor instead.
 func (*Worker) Descriptor() ([]byte, []int) {
-	return file_kayak_v1_model_proto_rawDescGZIP(), []int{1}
+	return file_kayak_v1_model_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *Worker) GetStreamName() string {
@@ -173,7 +249,7 @@ type Record struct {
 	// id is used to hashed and used for partition assignment, can be set by client.
 	Id []byte `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
 	// internal id is used as identifier in partition stream
-	InternalId    []byte            `protobuf:"bytes,4,opt,name=internal_id,json=internalId,proto3" json:"internal_id,omitempty"`
+	InternalId    string            `protobuf:"bytes,4,opt,name=internal_id,json=internalId,proto3" json:"internal_id,omitempty"`
 	Headers       map[string]string `protobuf:"bytes,5,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Payload       []byte            `protobuf:"bytes,6,opt,name=payload,proto3" json:"payload,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -182,7 +258,7 @@ type Record struct {
 
 func (x *Record) Reset() {
 	*x = Record{}
-	mi := &file_kayak_v1_model_proto_msgTypes[2]
+	mi := &file_kayak_v1_model_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -194,7 +270,7 @@ func (x *Record) String() string {
 func (*Record) ProtoMessage() {}
 
 func (x *Record) ProtoReflect() protoreflect.Message {
-	mi := &file_kayak_v1_model_proto_msgTypes[2]
+	mi := &file_kayak_v1_model_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -207,7 +283,7 @@ func (x *Record) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Record.ProtoReflect.Descriptor instead.
 func (*Record) Descriptor() ([]byte, []int) {
-	return file_kayak_v1_model_proto_rawDescGZIP(), []int{2}
+	return file_kayak_v1_model_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Record) GetStreamName() string {
@@ -231,11 +307,11 @@ func (x *Record) GetId() []byte {
 	return nil
 }
 
-func (x *Record) GetInternalId() []byte {
+func (x *Record) GetInternalId() string {
 	if x != nil {
 		return x.InternalId
 	}
-	return nil
+	return ""
 }
 
 func (x *Record) GetHeaders() map[string]string {
@@ -260,7 +336,16 @@ const file_kayak_v1_model_proto_rawDesc = "" +
 	"\x06Stream\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12'\n" +
 	"\x0fpartition_count\x18\x02 \x01(\x03R\x0epartitionCount\x12\x10\n" +
-	"\x03ttl\x18\x03 \x01(\x03R\x03ttl\"\xcc\x01\n" +
+	"\x03ttl\x18\x03 \x01(\x03R\x03ttl\"\xaf\x01\n" +
+	"\x13PartitionAssignment\x12\x1f\n" +
+	"\vstream_name\x18\x01 \x01(\tR\n" +
+	"streamName\x12\x1d\n" +
+	"\n" +
+	"group_name\x18\x02 \x01(\tR\tgroupName\x12\x1c\n" +
+	"\tpartition\x18\x03 \x01(\x03R\tpartition\x12\x1b\n" +
+	"\tworker_id\x18\x04 \x01(\tR\bworkerId\x12\x1d\n" +
+	"\n" +
+	"expires_at\x18\x05 \x01(\x03R\texpiresAt\"\xcc\x01\n" +
 	"\x06Worker\x12\x1f\n" +
 	"\vstream_name\x18\x01 \x01(\tR\n" +
 	"streamName\x12\x1d\n" +
@@ -275,7 +360,7 @@ const file_kayak_v1_model_proto_rawDesc = "" +
 	"streamName\x12\x1c\n" +
 	"\tpartition\x18\x02 \x01(\x03R\tpartition\x12\x0e\n" +
 	"\x02id\x18\x03 \x01(\fR\x02id\x12\x1f\n" +
-	"\vinternal_id\x18\x04 \x01(\fR\n" +
+	"\vinternal_id\x18\x04 \x01(\tR\n" +
 	"internalId\x127\n" +
 	"\aheaders\x18\x05 \x03(\v2\x1d.kayak.v1.Record.HeadersEntryR\aheaders\x12 \n" +
 	"\apayload\x18\x06 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\apayload\x1a:\n" +
@@ -297,15 +382,16 @@ func file_kayak_v1_model_proto_rawDescGZIP() []byte {
 	return file_kayak_v1_model_proto_rawDescData
 }
 
-var file_kayak_v1_model_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_kayak_v1_model_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_kayak_v1_model_proto_goTypes = []any{
-	(*Stream)(nil), // 0: kayak.v1.Stream
-	(*Worker)(nil), // 1: kayak.v1.Worker
-	(*Record)(nil), // 2: kayak.v1.Record
-	nil,            // 3: kayak.v1.Record.HeadersEntry
+	(*Stream)(nil),              // 0: kayak.v1.Stream
+	(*PartitionAssignment)(nil), // 1: kayak.v1.PartitionAssignment
+	(*Worker)(nil),              // 2: kayak.v1.Worker
+	(*Record)(nil),              // 3: kayak.v1.Record
+	nil,                         // 4: kayak.v1.Record.HeadersEntry
 }
 var file_kayak_v1_model_proto_depIdxs = []int32{
-	3, // 0: kayak.v1.Record.headers:type_name -> kayak.v1.Record.HeadersEntry
+	4, // 0: kayak.v1.Record.headers:type_name -> kayak.v1.Record.HeadersEntry
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
@@ -324,7 +410,7 @@ func file_kayak_v1_model_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_kayak_v1_model_proto_rawDesc), len(file_kayak_v1_model_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

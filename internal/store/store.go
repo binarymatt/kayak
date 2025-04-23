@@ -2,11 +2,15 @@ package store
 
 import (
 	"errors"
+	"fmt"
+	"io"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
+	"github.com/hashicorp/raft"
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/proto"
 
@@ -19,12 +23,19 @@ type Store interface {
 	PutRecords(streamName string, records ...*kayakv1.Record) error
 	GetRecords(streamName string, partition int64, startPosition string, limit int) ([]*kayakv1.Record, error)
 
+	// GetLease()
 	ExtendLease(worker *kayakv1.Worker, expires time.Duration) error
 	RemoveLease(worker *kayakv1.Worker) error
-	GetWorkerPosition(worker *kayakv1.Worker) (string, error)
-	CommitWorkerPosition(worker *kayakv1.Worker) error
-	PartitionAssignment(stream, group string, partition int64) (string, error)
-	GetPartitionAssignments(stream, group string) (map[int64]string, error)
+	HasLease(worker *kayakv1.Worker) error
+	GetGroupPosition(stream, group string, partition int64) (string, error)
+	CommitGroupPosition(stream, group string, parition int64, position string) error
+	GetPartitionAssignment(stream, group string, partition int64) (string, error)
+	GetPartitionAssignments(stream, group string) (map[int64]*kayakv1.PartitionAssignment, error)
+
+	// raft FSM
+	Apply(l *raft.Log) any
+	Snapshot() (raft.FSMSnapshot, error)
+	Restore(snapshot io.ReadCloser) error
 }
 
 var _ Store = (*store)(nil)
@@ -56,23 +67,24 @@ func (s *store) GetStream(name string) (*kayakv1.Stream, error) {
 		return nil, err
 	}
 
-	var stream *kayakv1.Stream
-	if err := proto.Unmarshal(rawData, stream); err != nil {
+	var stream kayakv1.Stream
+	if err := proto.Unmarshal(rawData, &stream); err != nil {
 		return nil, err
 	}
-	return stream, nil
+	return &stream, nil
 }
 
 func (s *store) PutRecords(streamName string, records ...*kayakv1.Record) error {
 	stream, err := s.GetStream(streamName)
 	if err != nil {
-		return err
+		return fmt.Errorf("missing stream %v: %w", streamName, err)
 	}
 	txn := s.db.NewTransaction(true)
 	defer txn.Discard()
 
 	// batch := s.db.NewBatchWithSize(len(records))
 	for _, record := range records {
+		record.StreamName = streamName
 		marshalledData, err := proto.Marshal(record)
 		if err != nil {
 			return err
@@ -99,41 +111,49 @@ func (s *store) GetRecords(streamName string, partition int64, startPosition str
 	defer txn.Discard()
 
 	prefix := recordPrefixKey(streamName, partition)
-	start := recordKey(streamName, partition, startPosition)
-	if startPosition == "" {
-		start = nil
+	p := prefix
+	if startPosition != "" {
+		p = recordKey(streamName, partition, startPosition)
 	}
 	options := badger.IteratorOptions{
 		PrefetchValues: true,
-		PrefetchSize:   limit,
-		Reverse:        false,
-		AllVersions:    false,
+		// PrefetchSize:   limit,
+		Reverse:     false,
+		AllVersions: false,
 	}
 	it := txn.NewIterator(options)
 	defer it.Close()
 	records := []*kayakv1.Record{}
-	for it.Seek(start); it.ValidForPrefix(prefix); it.Next() {
-
+	i := 0
+	for it.Seek(p); it.ValidForPrefix(p); it.Next() {
+		p = prefix
 		item := it.Item()
 		val, err := item.ValueCopy(nil)
 		if err != nil {
 			return nil, err
 		}
-		r := &kayakv1.Record{}
-		if err := proto.Unmarshal(val, r); err != nil {
+		var r kayakv1.Record
+		if err := proto.Unmarshal(val, &r); err != nil {
 			return nil, err
 		}
-		records = append(records, r)
+		records = append(records, &r)
+		i++
+		if i >= limit {
+			break
+		}
 	}
 	return records, nil
 }
 
-func (s *store) GetWorkerPosition(worker *kayakv1.Worker) (string, error) {
+func (s *store) GetGroupPosition(stream, group string, partition int64) (string, error) {
 	txn := s.db.NewTransaction(false)
 	defer txn.Discard()
-	positionKey := workerPositionKey(worker.StreamName, worker.GroupName, worker.Id)
+	positionKey := groupPositionKey(stream, group, partition)
 	item, err := txn.Get(positionKey)
 	if err != nil {
+		if errors.Is(err, badger.ErrKeyNotFound) {
+			return "", nil
+		}
 		return "", err
 	}
 	payload, err := item.ValueCopy(nil)
@@ -143,16 +163,40 @@ func (s *store) GetWorkerPosition(worker *kayakv1.Worker) (string, error) {
 	return string(payload), nil
 }
 
-func (s *store) CommitWorkerPosition(worker *kayakv1.Worker) error {
+var ErrNewerPositionCommitted = errors.New("a newer position has already been commited")
+
+func (s *store) CommitGroupPosition(stream, group string, partition int64, position string) error {
+	// only commit if the current position is lower
+	new, err := ulid.Parse(position)
+	if err != nil {
+		return err
+	}
 	return s.db.Update(func(tx *badger.Txn) error {
-		positionKey := workerPositionKey(worker.StreamName, worker.GroupName, worker.Id)
-		position := worker.Position
+		positionKey := groupPositionKey(stream, group, partition)
+		item, err := tx.Get(positionKey)
+		if err != nil && !errors.Is(err, badger.ErrKeyNotFound) {
+			slog.Error("error getting group positiong during commit", "error", err)
+			return err
+		}
+		if item != nil {
+			val, err := item.ValueCopy(nil)
+			if err != nil {
+				return err
+			}
+			existing, err := ulid.Parse(string(val))
+			if err != nil {
+				return err
+			}
+			if new.Compare(existing) < 1 {
+				return ErrNewerPositionCommitted
+			}
+		}
 
 		return tx.Set(positionKey, []byte(position))
 	})
 }
 
-func (s *store) PartitionAssignment(stream, group string, partition int64) (string, error) {
+func (s *store) GetPartitionAssignment(stream, group string, partition int64) (string, error) {
 	assignedId := ""
 	err := s.db.View(func(tx *badger.Txn) error {
 		item, err := tx.Get(partitionAssignmentKey(stream, group, partition))
@@ -173,9 +217,20 @@ func (s *store) PartitionAssignment(stream, group string, partition int64) (stri
 }
 
 var ErrAlreadyRegistered = errors.New("partition is alreay registered")
+var ErrInvalidLease = errors.New("invalid lease")
 
+func (s *store) HasLease(worker *kayakv1.Worker) error {
+	assignedId, err := s.GetPartitionAssignment(worker.StreamName, worker.GroupName, worker.PartitionAssignment)
+	if err != nil {
+		return err
+	}
+	if assignedId != worker.Id {
+		return ErrInvalidLease
+	}
+	return nil
+}
 func (s *store) ExtendLease(worker *kayakv1.Worker, expires time.Duration) error {
-	assignedId, err := s.PartitionAssignment(worker.StreamName, worker.GroupName, worker.PartitionAssignment)
+	assignedId, err := s.GetPartitionAssignment(worker.StreamName, worker.GroupName, worker.PartitionAssignment)
 	if err != nil {
 		return err
 	}
@@ -185,12 +240,12 @@ func (s *store) ExtendLease(worker *kayakv1.Worker, expires time.Duration) error
 
 	return s.db.Update(func(tx *badger.Txn) error {
 		key := partitionAssignmentKey(worker.StreamName, worker.GroupName, worker.PartitionAssignment)
-		entry := badger.NewEntry(key, nil).WithTTL(expires)
+		entry := badger.NewEntry(key, []byte(worker.Id)).WithTTL(expires)
 		return tx.SetEntry(entry)
 	})
 }
 func (s *store) RemoveLease(worker *kayakv1.Worker) error {
-	assignedId, err := s.PartitionAssignment(worker.StreamName, worker.GroupName, worker.PartitionAssignment)
+	assignedId, err := s.GetPartitionAssignment(worker.StreamName, worker.GroupName, worker.PartitionAssignment)
 	if err != nil {
 		return err
 	}
@@ -204,7 +259,7 @@ func (s *store) RemoveLease(worker *kayakv1.Worker) error {
 	})
 }
 
-func (s *store) GetPartitionAssignments(stream, group string) (map[int64]string, error) {
+func (s *store) GetPartitionAssignments(stream, group string) (map[int64]*kayakv1.PartitionAssignment, error) {
 	txn := s.db.NewTransaction(false)
 	defer txn.Discard()
 
@@ -212,7 +267,7 @@ func (s *store) GetPartitionAssignments(stream, group string) (map[int64]string,
 
 	it := txn.NewIterator(badger.DefaultIteratorOptions)
 	defer it.Close()
-	assignments := map[int64]string{}
+	assignments := map[int64]*kayakv1.PartitionAssignment{}
 	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 		item := it.Item()
 		k := item.Key()
@@ -222,17 +277,24 @@ func (s *store) GetPartitionAssignments(stream, group string) (map[int64]string,
 		if err != nil {
 			return nil, err
 		}
+		assignment := &kayakv1.PartitionAssignment{
+			StreamName: stream,
+			GroupName:  group,
+			Partition:  n,
+			ExpiresAt:  int64(item.ExpiresAt()),
+		}
 		if err := item.Value(func(v []byte) error {
-			assignments[n] = string(v)
+			assignment.WorkerId = string(v)
 			return nil
 		}); err != nil {
 			return nil, err
 		}
+		assignments[n] = assignment
 	}
 
 	return assignments, nil
 }
 
 func New(db *badger.DB) *store {
-	return &store{db}
+	return &store{db: db}
 }

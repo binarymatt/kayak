@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package kayak.v1;
 
-// import "buf/validate/validate.proto";
+import "buf/validate/validate.proto";
 import "google/protobuf/empty.proto";
 // import "google/protobuf/struct.proto";
 // import "google/protobuf/timestamp.proto";
@@ -14,8 +14,11 @@ service KayakService {
   // Record Operations
   // PutRecords adds records to the stream
   rpc PutRecords(PutRecordsRequest) returns (google.protobuf.Empty) {}
+  // GetRecords retrieves from a stream
   rpc GetRecords(GetRecordsRequest) returns (GetRecordsResponse) {}
+  // FetchRecords retrieves from a stream for a group worker
   rpc FetchRecords(FetchRecordsRequest) returns (FetchRecordsResponse) {}
+  // CommitRecord commits the position of a worker in the stream.
   rpc CommitRecord(CommitRecordRequest) returns (google.protobuf.Empty) {}
 
   // Worker Operations
@@ -24,6 +27,7 @@ service KayakService {
 
   // Stream Operations
   rpc CreateStream(CreateStreamRequest) returns (google.protobuf.Empty) {}
+  rpc GetStream(GetStreamRequest) returns (GetStreamResponse) {}
 }
 
 message PutRecordsRequest {
@@ -57,11 +61,6 @@ message RegisterWorkerRequest {
   string group = 2;
   string id = 3;
 }
-message PartitionAssignment {
-  string id = 1;
-  int64 partition = 2;
-  int64 expires = 3;
-}
 message RegisterWorkerResponse {
   Worker worker = 1;
 }
@@ -72,4 +71,11 @@ message CreateStreamRequest {
   string name = 1;
   int64 partition_count = 2;
   int64 ttl = 3;
+}
+
+message GetStreamRequest {
+  string name = 1 [(buf.validate.field).required = true];
+}
+message GetStreamResponse {
+  Stream stream = 1;
 }

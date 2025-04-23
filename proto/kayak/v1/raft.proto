@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package kayak.v1;
+
+import "kayak/v1/model.proto";
+
+option go_package = "github.com/binarymatt/kayak/gen/kayak/v1;kayakv1";
+enum Operation {
+  OPERATION_UNSPECIFIED = 0;
+  OPERATION_PUT_STREAM = 1;
+  OPERATION_PUT_RECORDS = 2;
+  OPERATION_EXTEND_LEASE = 3;
+  OPERATION_REMOVE_LEASE = 4;
+  OPERATION_COMMIT_GROUP_POSITION = 5;
+}
+message RaftCommand {
+  Operation operation = 1;
+  oneof payload {
+    PutStream put_stream = 2;
+    PutRecords put_records = 3;
+    ExtendLease extend_lease = 4;
+    RemoveLease remove_lease = 5;
+    CommitGroupPosition commit_group_position = 6;
+  }
+}
+
+message PutStream {
+  Stream stream = 1;
+}
+message PutRecords {
+  string stream_name = 1;
+  repeated Record records = 2;
+}
+message ExtendLease {
+  Worker worker = 1;
+  int64 expires_ms = 2;
+}
+message RemoveLease {
+  Worker worker = 1;
+}
+message CommitGroupPosition {
+  string stream_name = 1;
+  string group_name = 2;
+  int64 partition = 3;
+  string position = 4;
+}

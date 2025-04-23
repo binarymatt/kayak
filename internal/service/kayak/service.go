@@ -3,53 +3,159 @@ package kayak
 import (
 	"context"
 	"errors"
+	"fmt"
+	"log/slog"
 	"time"
 
 	"connectrpc.com/connect"
 	"github.com/dgraph-io/badger/v4"
+	"github.com/hashicorp/raft"
 	"github.com/oklog/ulid/v2"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	v1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
 	"github.com/binarymatt/kayak/internal/store"
 )
 
-var _ kayakv1connect.KayakServiceHandler = (*service)(nil)
+var (
+	_            kayakv1connect.KayakServiceHandler = (*service)(nil)
+	ErrNotLeader                                    = errors.New("node is not the leader")
+)
 
 type service struct {
-	// kayakv1connect.UnimplementedKayakServiceHandler
 	idGenerator      func() ulid.ULID
 	store            store.Store
 	workerExpiration time.Duration
+	logger           *slog.Logger
+	raft             *raft.Raft
 }
 
+func (s *service) applyCommand(command *kayakv1.RaftCommand) error {
+	data, err := proto.Marshal(command)
+	if err != nil {
+		return err
+	}
+	slog.Debug("apply to raft members")
+	applyFuture := s.raft.Apply(data, 10*time.Millisecond)
+	if err := applyFuture.Error(); err != nil {
+		s.logger.Error("could not apply command to raft", "error", err)
+		//	return nil, connect.NewError(connect.CodeInternal, err)
+		return err
+	}
+	resp := applyFuture.Response()
+	fmt.Println("APPLY RESPONSE", resp)
+	if resp != nil {
+		as := resp.(*store.ApplyResponse)
+		return as.Error
+	}
+	return errors.New("not sure why we are here")
+
+}
 func (s *service) PutRecords(ctx context.Context, req *connect.Request[v1.PutRecordsRequest]) (*connect.Response[emptypb.Empty], error) {
+	s.logger.Info("put records request", "count", len(req.Msg.Records), "raft", s.raft)
+	if s.raft.State() != raft.Leader {
+		// sa := s.raft.Leader() Need to figure out how to translate to grpc address.
+		//client := kayakv1connect.NewKayakServiceClient()
+		//return client.PutRecords(ctx, req)
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrNotLeader)
+	}
+
 	stream, err := s.store.GetStream(req.Msg.StreamName)
 	if err != nil {
+		slog.Error("could not get stream info", "error", err)
 		return nil, err
 	}
 	for _, r := range req.Msg.Records {
 		id := s.idGenerator()
-		r.InternalId = id.Bytes()
+		r.InternalId = id.String()
 		if r.Id == nil {
 			r.Id = id.Bytes()
 		}
-		r.Partition = balancer(string(r.Id), stream.PartitionCount)
+		r.Partition = balancer(r.Id, stream.PartitionCount)
 	}
-	err = s.store.PutRecords(req.Msg.StreamName, req.Msg.GetRecords()...)
+
+	//err = s.store.PutRecords(req.Msg.StreamName, req.Msg.GetRecords()...)
+	err = s.applyCommand(&v1.RaftCommand{
+		Payload: &v1.RaftCommand_PutRecords{
+			PutRecords: &v1.PutRecords{
+				Records:    req.Msg.GetRecords(),
+				StreamName: req.Msg.StreamName,
+			},
+		},
+	})
 	return connect.NewResponse(&emptypb.Empty{}), err
 }
+
 func (s *service) CommitRecord(ctx context.Context, req *connect.Request[v1.CommitRecordRequest]) (*connect.Response[emptypb.Empty], error) {
+	if s.raft.State() != raft.Leader {
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrNotLeader)
+	}
+
 	// extend lease of worker
-	return nil, nil
-}
-func (s *service) FetchRecords(ctx context.Context, req *connect.Request[v1.FetchRecordsRequest]) (*connect.Response[v1.FetchRecordsResponse], error) {
-	// is worker registered?
+	if err := s.store.HasLease(req.Msg.Worker); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
 	// if so, extend lease
-	// if not, return error
+	err := s.applyCommand(&v1.RaftCommand{
+		Payload: &v1.RaftCommand_ExtendLease{
+			ExtendLease: &v1.ExtendLease{
+				Worker:    req.Msg.Worker,
+				ExpiresMs: time.Now().Add(s.workerExpiration).UnixMilli(),
+			},
+		},
+	})
+	if err != nil {
+		// if err := s.store.ExtendLease(req.Msg.Worker, s.workerExpiration); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	worker := req.Msg.GetWorker()
+	id, err := ulid.Parse(req.Msg.Record.InternalId)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	position := id.String()
+	err = s.applyCommand(&v1.RaftCommand{
+		Payload: &v1.RaftCommand_CommitGroupPosition{
+			CommitGroupPosition: &v1.CommitGroupPosition{
+				StreamName: worker.StreamName,
+				GroupName:  worker.GroupName,
+				Partition:  worker.PartitionAssignment,
+				Position:   position,
+			},
+		},
+	})
+	if err != nil {
+		//if err := s.store.CommitGroupPosition(worker.StreamName, worker.GroupName, worker.PartitionAssignment, position); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(&emptypb.Empty{}), nil
+}
+
+func (s *service) FetchRecords(ctx context.Context, req *connect.Request[v1.FetchRecordsRequest]) (*connect.Response[v1.FetchRecordsResponse], error) {
+	worker := req.Msg.Worker
+	// is worker registered?
+	if err := s.store.HasLease(worker); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+	// if so, extend lease (commented out for now)
+	//if err := s.store.ExtendLease(worker, s.workerExpiration); err != nil {
+	//	return nil, connect.NewError(connect.CodeInternal, err)
+	//}
+	// TODO: cache position in worker client and  use if not too old
+	position, err := s.store.GetGroupPosition(req.Msg.StreamName, worker.GroupName, worker.PartitionAssignment)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	records, err := s.store.GetRecords(req.Msg.StreamName, worker.PartitionAssignment, position, int(req.Msg.Limit))
+
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
 	// Get records based on worker info
-	return nil, nil
+	return connect.NewResponse(&v1.FetchRecordsResponse{Records: records}), nil
 }
 
 func (s *service) GetRecords(ctx context.Context, req *connect.Request[v1.GetRecordsRequest]) (*connect.Response[v1.GetRecordsResponse], error) {
@@ -63,19 +169,44 @@ func (s *service) GetRecords(ctx context.Context, req *connect.Request[v1.GetRec
 }
 
 func (s *service) CreateStream(ctx context.Context, req *connect.Request[v1.CreateStreamRequest]) (*connect.Response[emptypb.Empty], error) {
+	if s.raft.State() != raft.Leader {
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrNotLeader)
+	}
+	s.logger.Info("creating stream", "name", req.Msg.Name, "partitions", req.Msg.PartitionCount)
 	// TODO: validate request
 	stream := &v1.Stream{
 		Name:           req.Msg.Name,
 		PartitionCount: req.Msg.PartitionCount,
 		Ttl:            req.Msg.Ttl,
 	}
-	if err := s.store.PutStream(stream); err != nil {
-		return nil, err
+	cmd := &v1.RaftCommand{
+		Payload: &v1.RaftCommand_PutStream{
+			PutStream: &v1.PutStream{
+				Stream: stream,
+			},
+		},
+	}
+	if err := s.applyCommand(cmd); err != nil {
+		slog.Error("could not create stream", "error", err)
+		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(&emptypb.Empty{}), nil
 }
 
+func (s *service) GetStream(ctx context.Context, req *connect.Request[v1.GetStreamRequest]) (*connect.Response[v1.GetStreamResponse], error) {
+	stream, err := s.store.GetStream(req.Msg.Name)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(&v1.GetStreamResponse{
+		Stream: stream,
+	}), nil
+}
+
 func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.RegisterWorkerRequest]) (*connect.Response[v1.RegisterWorkerResponse], error) {
+	if s.raft.State() != raft.Leader {
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrNotLeader)
+	}
 	worker := &v1.Worker{
 		StreamName: req.Msg.StreamName,
 		GroupName:  req.Msg.Group,
@@ -106,7 +237,16 @@ func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.Re
 	}
 	n := time.Now().Add(s.workerExpiration)
 	worker.LeaseExpires = n.UnixMilli()
-	if err := s.store.ExtendLease(worker, s.workerExpiration); err != nil {
+	cmd := &v1.RaftCommand{
+		Payload: &v1.RaftCommand_ExtendLease{
+			ExtendLease: &v1.ExtendLease{
+				Worker:    worker,
+				ExpiresMs: worker.LeaseExpires,
+			},
+		},
+	}
+	if err := s.applyCommand(cmd); err != nil {
+		//if err := s.store.ExtendLease(worker, s.workerExpiration); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	resp := &v1.RegisterWorkerResponse{
@@ -116,12 +256,29 @@ func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.Re
 }
 
 func (s *service) DeregisterWorker(ctx context.Context, req *connect.Request[v1.DeregisterWorkerRequest]) (*connect.Response[emptypb.Empty], error) {
-	return nil, nil
+	if s.raft.State() != raft.Leader {
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrNotLeader)
+	}
+	cmd := &v1.RaftCommand{
+		Payload: &v1.RaftCommand_RemoveLease{
+			RemoveLease: &v1.RemoveLease{
+				Worker: req.Msg.GetWorker(),
+			},
+		},
+	}
+	if err := s.applyCommand(cmd); err != nil {
+		//if err := s.store.RemoveLease(req.Msg.Worker); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(&emptypb.Empty{}), nil
 }
 
-func New() *service {
+func New(st store.Store, ra *raft.Raft) *service {
 	return &service{
+		raft:             ra,
 		idGenerator:      ulid.Make,
 		workerExpiration: 60 * time.Second,
+		store:            st,
+		logger:           slog.Default().With("service", "kayak"),
 	}
 }

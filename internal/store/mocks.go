@@ -5,7 +5,11 @@
 package store
 
 import (
+	"io"
+	"time"
+
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
+	"github.com/hashicorp/raft"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -36,9 +40,378 @@ func (_m *MockStore) EXPECT() *MockStore_Expecter {
 	return &MockStore_Expecter{mock: &_m.Mock}
 }
 
+// Apply provides a mock function for the type MockStore
+func (_mock *MockStore) Apply(l *raft.Log) any {
+	ret := _mock.Called(l)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Apply")
+	}
+
+	var r0 any
+	if returnFunc, ok := ret.Get(0).(func(*raft.Log) any); ok {
+		r0 = returnFunc(l)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(any)
+		}
+	}
+	return r0
+}
+
+// MockStore_Apply_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Apply'
+type MockStore_Apply_Call struct {
+	*mock.Call
+}
+
+// Apply is a helper method to define mock.On call
+//   - l
+func (_e *MockStore_Expecter) Apply(l interface{}) *MockStore_Apply_Call {
+	return &MockStore_Apply_Call{Call: _e.mock.On("Apply", l)}
+}
+
+func (_c *MockStore_Apply_Call) Run(run func(l *raft.Log)) *MockStore_Apply_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*raft.Log))
+	})
+	return _c
+}
+
+func (_c *MockStore_Apply_Call) Return(v any) *MockStore_Apply_Call {
+	_c.Call.Return(v)
+	return _c
+}
+
+func (_c *MockStore_Apply_Call) RunAndReturn(run func(l *raft.Log) any) *MockStore_Apply_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CommitGroupPosition provides a mock function for the type MockStore
+func (_mock *MockStore) CommitGroupPosition(stream string, group string, parition int64, position string) error {
+	ret := _mock.Called(stream, group, parition, position)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CommitGroupPosition")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(string, string, int64, string) error); ok {
+		r0 = returnFunc(stream, group, parition, position)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockStore_CommitGroupPosition_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CommitGroupPosition'
+type MockStore_CommitGroupPosition_Call struct {
+	*mock.Call
+}
+
+// CommitGroupPosition is a helper method to define mock.On call
+//   - stream
+//   - group
+//   - parition
+//   - position
+func (_e *MockStore_Expecter) CommitGroupPosition(stream interface{}, group interface{}, parition interface{}, position interface{}) *MockStore_CommitGroupPosition_Call {
+	return &MockStore_CommitGroupPosition_Call{Call: _e.mock.On("CommitGroupPosition", stream, group, parition, position)}
+}
+
+func (_c *MockStore_CommitGroupPosition_Call) Run(run func(stream string, group string, parition int64, position string)) *MockStore_CommitGroupPosition_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].(int64), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockStore_CommitGroupPosition_Call) Return(err error) *MockStore_CommitGroupPosition_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockStore_CommitGroupPosition_Call) RunAndReturn(run func(stream string, group string, parition int64, position string) error) *MockStore_CommitGroupPosition_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ExtendLease provides a mock function for the type MockStore
+func (_mock *MockStore) ExtendLease(worker *kayakv1.Worker, expires time.Duration) error {
+	ret := _mock.Called(worker, expires)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ExtendLease")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(*kayakv1.Worker, time.Duration) error); ok {
+		r0 = returnFunc(worker, expires)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockStore_ExtendLease_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ExtendLease'
+type MockStore_ExtendLease_Call struct {
+	*mock.Call
+}
+
+// ExtendLease is a helper method to define mock.On call
+//   - worker
+//   - expires
+func (_e *MockStore_Expecter) ExtendLease(worker interface{}, expires interface{}) *MockStore_ExtendLease_Call {
+	return &MockStore_ExtendLease_Call{Call: _e.mock.On("ExtendLease", worker, expires)}
+}
+
+func (_c *MockStore_ExtendLease_Call) Run(run func(worker *kayakv1.Worker, expires time.Duration)) *MockStore_ExtendLease_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*kayakv1.Worker), args[1].(time.Duration))
+	})
+	return _c
+}
+
+func (_c *MockStore_ExtendLease_Call) Return(err error) *MockStore_ExtendLease_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockStore_ExtendLease_Call) RunAndReturn(run func(worker *kayakv1.Worker, expires time.Duration) error) *MockStore_ExtendLease_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetGroupPosition provides a mock function for the type MockStore
+func (_mock *MockStore) GetGroupPosition(stream string, group string, partition int64) (string, error) {
+	ret := _mock.Called(stream, group, partition)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetGroupPosition")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(string, string, int64) (string, error)); ok {
+		return returnFunc(stream, group, partition)
+	}
+	if returnFunc, ok := ret.Get(0).(func(string, string, int64) string); ok {
+		r0 = returnFunc(stream, group, partition)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(string, string, int64) error); ok {
+		r1 = returnFunc(stream, group, partition)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockStore_GetGroupPosition_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGroupPosition'
+type MockStore_GetGroupPosition_Call struct {
+	*mock.Call
+}
+
+// GetGroupPosition is a helper method to define mock.On call
+//   - stream
+//   - group
+//   - partition
+func (_e *MockStore_Expecter) GetGroupPosition(stream interface{}, group interface{}, partition interface{}) *MockStore_GetGroupPosition_Call {
+	return &MockStore_GetGroupPosition_Call{Call: _e.mock.On("GetGroupPosition", stream, group, partition)}
+}
+
+func (_c *MockStore_GetGroupPosition_Call) Run(run func(stream string, group string, partition int64)) *MockStore_GetGroupPosition_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].(int64))
+	})
+	return _c
+}
+
+func (_c *MockStore_GetGroupPosition_Call) Return(s string, err error) *MockStore_GetGroupPosition_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *MockStore_GetGroupPosition_Call) RunAndReturn(run func(stream string, group string, partition int64) (string, error)) *MockStore_GetGroupPosition_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetPartitionAssignment provides a mock function for the type MockStore
+func (_mock *MockStore) GetPartitionAssignment(stream string, group string, partition int64) (string, error) {
+	ret := _mock.Called(stream, group, partition)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPartitionAssignment")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(string, string, int64) (string, error)); ok {
+		return returnFunc(stream, group, partition)
+	}
+	if returnFunc, ok := ret.Get(0).(func(string, string, int64) string); ok {
+		r0 = returnFunc(stream, group, partition)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(string, string, int64) error); ok {
+		r1 = returnFunc(stream, group, partition)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockStore_GetPartitionAssignment_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPartitionAssignment'
+type MockStore_GetPartitionAssignment_Call struct {
+	*mock.Call
+}
+
+// GetPartitionAssignment is a helper method to define mock.On call
+//   - stream
+//   - group
+//   - partition
+func (_e *MockStore_Expecter) GetPartitionAssignment(stream interface{}, group interface{}, partition interface{}) *MockStore_GetPartitionAssignment_Call {
+	return &MockStore_GetPartitionAssignment_Call{Call: _e.mock.On("GetPartitionAssignment", stream, group, partition)}
+}
+
+func (_c *MockStore_GetPartitionAssignment_Call) Run(run func(stream string, group string, partition int64)) *MockStore_GetPartitionAssignment_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string), args[2].(int64))
+	})
+	return _c
+}
+
+func (_c *MockStore_GetPartitionAssignment_Call) Return(s string, err error) *MockStore_GetPartitionAssignment_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *MockStore_GetPartitionAssignment_Call) RunAndReturn(run func(stream string, group string, partition int64) (string, error)) *MockStore_GetPartitionAssignment_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetPartitionAssignments provides a mock function for the type MockStore
+func (_mock *MockStore) GetPartitionAssignments(stream string, group string) (map[int64]*kayakv1.PartitionAssignment, error) {
+	ret := _mock.Called(stream, group)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPartitionAssignments")
+	}
+
+	var r0 map[int64]*kayakv1.PartitionAssignment
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(string, string) (map[int64]*kayakv1.PartitionAssignment, error)); ok {
+		return returnFunc(stream, group)
+	}
+	if returnFunc, ok := ret.Get(0).(func(string, string) map[int64]*kayakv1.PartitionAssignment); ok {
+		r0 = returnFunc(stream, group)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[int64]*kayakv1.PartitionAssignment)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = returnFunc(stream, group)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockStore_GetPartitionAssignments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetPartitionAssignments'
+type MockStore_GetPartitionAssignments_Call struct {
+	*mock.Call
+}
+
+// GetPartitionAssignments is a helper method to define mock.On call
+//   - stream
+//   - group
+func (_e *MockStore_Expecter) GetPartitionAssignments(stream interface{}, group interface{}) *MockStore_GetPartitionAssignments_Call {
+	return &MockStore_GetPartitionAssignments_Call{Call: _e.mock.On("GetPartitionAssignments", stream, group)}
+}
+
+func (_c *MockStore_GetPartitionAssignments_Call) Run(run func(stream string, group string)) *MockStore_GetPartitionAssignments_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockStore_GetPartitionAssignments_Call) Return(int64ToPartitionAssignment map[int64]*kayakv1.PartitionAssignment, err error) *MockStore_GetPartitionAssignments_Call {
+	_c.Call.Return(int64ToPartitionAssignment, err)
+	return _c
+}
+
+func (_c *MockStore_GetPartitionAssignments_Call) RunAndReturn(run func(stream string, group string) (map[int64]*kayakv1.PartitionAssignment, error)) *MockStore_GetPartitionAssignments_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetRecords provides a mock function for the type MockStore
+func (_mock *MockStore) GetRecords(streamName string, partition int64, startPosition string, limit int) ([]*kayakv1.Record, error) {
+	ret := _mock.Called(streamName, partition, startPosition, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRecords")
+	}
+
+	var r0 []*kayakv1.Record
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(string, int64, string, int) ([]*kayakv1.Record, error)); ok {
+		return returnFunc(streamName, partition, startPosition, limit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(string, int64, string, int) []*kayakv1.Record); ok {
+		r0 = returnFunc(streamName, partition, startPosition, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*kayakv1.Record)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(string, int64, string, int) error); ok {
+		r1 = returnFunc(streamName, partition, startPosition, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockStore_GetRecords_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRecords'
+type MockStore_GetRecords_Call struct {
+	*mock.Call
+}
+
+// GetRecords is a helper method to define mock.On call
+//   - streamName
+//   - partition
+//   - startPosition
+//   - limit
+func (_e *MockStore_Expecter) GetRecords(streamName interface{}, partition interface{}, startPosition interface{}, limit interface{}) *MockStore_GetRecords_Call {
+	return &MockStore_GetRecords_Call{Call: _e.mock.On("GetRecords", streamName, partition, startPosition, limit)}
+}
+
+func (_c *MockStore_GetRecords_Call) Run(run func(streamName string, partition int64, startPosition string, limit int)) *MockStore_GetRecords_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(int64), args[2].(string), args[3].(int))
+	})
+	return _c
+}
+
+func (_c *MockStore_GetRecords_Call) Return(records []*kayakv1.Record, err error) *MockStore_GetRecords_Call {
+	_c.Call.Return(records, err)
+	return _c
+}
+
+func (_c *MockStore_GetRecords_Call) RunAndReturn(run func(streamName string, partition int64, startPosition string, limit int) ([]*kayakv1.Record, error)) *MockStore_GetRecords_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetStream provides a mock function for the type MockStore
-func (_mock *MockStore) GetStream(stream string) (*kayakv1.Stream, error) {
-	ret := _mock.Called(stream)
+func (_mock *MockStore) GetStream(name string) (*kayakv1.Stream, error) {
+	ret := _mock.Called(name)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetStream")
@@ -47,17 +420,17 @@ func (_mock *MockStore) GetStream(stream string) (*kayakv1.Stream, error) {
 	var r0 *kayakv1.Stream
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(string) (*kayakv1.Stream, error)); ok {
-		return returnFunc(stream)
+		return returnFunc(name)
 	}
 	if returnFunc, ok := ret.Get(0).(func(string) *kayakv1.Stream); ok {
-		r0 = returnFunc(stream)
+		r0 = returnFunc(name)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*kayakv1.Stream)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(string) error); ok {
-		r1 = returnFunc(stream)
+		r1 = returnFunc(name)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -70,35 +443,80 @@ type MockStore_GetStream_Call struct {
 }
 
 // GetStream is a helper method to define mock.On call
-//   - stream
-func (_e *MockStore_Expecter) GetStream(stream interface{}) *MockStore_GetStream_Call {
-	return &MockStore_GetStream_Call{Call: _e.mock.On("GetStream", stream)}
+//   - name
+func (_e *MockStore_Expecter) GetStream(name interface{}) *MockStore_GetStream_Call {
+	return &MockStore_GetStream_Call{Call: _e.mock.On("GetStream", name)}
 }
 
-func (_c *MockStore_GetStream_Call) Run(run func(stream string)) *MockStore_GetStream_Call {
+func (_c *MockStore_GetStream_Call) Run(run func(name string)) *MockStore_GetStream_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(string))
 	})
 	return _c
 }
 
-func (_c *MockStore_GetStream_Call) Return(stream1 *kayakv1.Stream, err error) *MockStore_GetStream_Call {
-	_c.Call.Return(stream1, err)
+func (_c *MockStore_GetStream_Call) Return(stream *kayakv1.Stream, err error) *MockStore_GetStream_Call {
+	_c.Call.Return(stream, err)
 	return _c
 }
 
-func (_c *MockStore_GetStream_Call) RunAndReturn(run func(stream string) (*kayakv1.Stream, error)) *MockStore_GetStream_Call {
+func (_c *MockStore_GetStream_Call) RunAndReturn(run func(name string) (*kayakv1.Stream, error)) *MockStore_GetStream_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// HasLease provides a mock function for the type MockStore
+func (_mock *MockStore) HasLease(worker *kayakv1.Worker) error {
+	ret := _mock.Called(worker)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HasLease")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(*kayakv1.Worker) error); ok {
+		r0 = returnFunc(worker)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockStore_HasLease_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasLease'
+type MockStore_HasLease_Call struct {
+	*mock.Call
+}
+
+// HasLease is a helper method to define mock.On call
+//   - worker
+func (_e *MockStore_Expecter) HasLease(worker interface{}) *MockStore_HasLease_Call {
+	return &MockStore_HasLease_Call{Call: _e.mock.On("HasLease", worker)}
+}
+
+func (_c *MockStore_HasLease_Call) Run(run func(worker *kayakv1.Worker)) *MockStore_HasLease_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*kayakv1.Worker))
+	})
+	return _c
+}
+
+func (_c *MockStore_HasLease_Call) Return(err error) *MockStore_HasLease_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockStore_HasLease_Call) RunAndReturn(run func(worker *kayakv1.Worker) error) *MockStore_HasLease_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // PutRecords provides a mock function for the type MockStore
-func (_mock *MockStore) PutRecords(stream string, records ...*kayakv1.Record) error {
+func (_mock *MockStore) PutRecords(streamName string, records ...*kayakv1.Record) error {
 	var tmpRet mock.Arguments
 	if len(records) > 0 {
-		tmpRet = _mock.Called(stream, records)
+		tmpRet = _mock.Called(streamName, records)
 	} else {
-		tmpRet = _mock.Called(stream)
+		tmpRet = _mock.Called(streamName)
 	}
 	ret := tmpRet
 
@@ -108,7 +526,7 @@ func (_mock *MockStore) PutRecords(stream string, records ...*kayakv1.Record) er
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(string, ...*kayakv1.Record) error); ok {
-		r0 = returnFunc(stream, records...)
+		r0 = returnFunc(streamName, records...)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -121,14 +539,14 @@ type MockStore_PutRecords_Call struct {
 }
 
 // PutRecords is a helper method to define mock.On call
-//   - stream
+//   - streamName
 //   - records
-func (_e *MockStore_Expecter) PutRecords(stream interface{}, records ...interface{}) *MockStore_PutRecords_Call {
+func (_e *MockStore_Expecter) PutRecords(streamName interface{}, records ...interface{}) *MockStore_PutRecords_Call {
 	return &MockStore_PutRecords_Call{Call: _e.mock.On("PutRecords",
-		append([]interface{}{stream}, records...)...)}
+		append([]interface{}{streamName}, records...)...)}
 }
 
-func (_c *MockStore_PutRecords_Call) Run(run func(stream string, records ...*kayakv1.Record)) *MockStore_PutRecords_Call {
+func (_c *MockStore_PutRecords_Call) Run(run func(streamName string, records ...*kayakv1.Record)) *MockStore_PutRecords_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		variadicArgs := make([]*kayakv1.Record, len(args)-1)
 		for i, a := range args[1:] {
@@ -146,7 +564,197 @@ func (_c *MockStore_PutRecords_Call) Return(err error) *MockStore_PutRecords_Cal
 	return _c
 }
 
-func (_c *MockStore_PutRecords_Call) RunAndReturn(run func(stream string, records ...*kayakv1.Record) error) *MockStore_PutRecords_Call {
+func (_c *MockStore_PutRecords_Call) RunAndReturn(run func(streamName string, records ...*kayakv1.Record) error) *MockStore_PutRecords_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PutStream provides a mock function for the type MockStore
+func (_mock *MockStore) PutStream(stream *kayakv1.Stream) error {
+	ret := _mock.Called(stream)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PutStream")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(*kayakv1.Stream) error); ok {
+		r0 = returnFunc(stream)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockStore_PutStream_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PutStream'
+type MockStore_PutStream_Call struct {
+	*mock.Call
+}
+
+// PutStream is a helper method to define mock.On call
+//   - stream
+func (_e *MockStore_Expecter) PutStream(stream interface{}) *MockStore_PutStream_Call {
+	return &MockStore_PutStream_Call{Call: _e.mock.On("PutStream", stream)}
+}
+
+func (_c *MockStore_PutStream_Call) Run(run func(stream *kayakv1.Stream)) *MockStore_PutStream_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*kayakv1.Stream))
+	})
+	return _c
+}
+
+func (_c *MockStore_PutStream_Call) Return(err error) *MockStore_PutStream_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockStore_PutStream_Call) RunAndReturn(run func(stream *kayakv1.Stream) error) *MockStore_PutStream_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveLease provides a mock function for the type MockStore
+func (_mock *MockStore) RemoveLease(worker *kayakv1.Worker) error {
+	ret := _mock.Called(worker)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveLease")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(*kayakv1.Worker) error); ok {
+		r0 = returnFunc(worker)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockStore_RemoveLease_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveLease'
+type MockStore_RemoveLease_Call struct {
+	*mock.Call
+}
+
+// RemoveLease is a helper method to define mock.On call
+//   - worker
+func (_e *MockStore_Expecter) RemoveLease(worker interface{}) *MockStore_RemoveLease_Call {
+	return &MockStore_RemoveLease_Call{Call: _e.mock.On("RemoveLease", worker)}
+}
+
+func (_c *MockStore_RemoveLease_Call) Run(run func(worker *kayakv1.Worker)) *MockStore_RemoveLease_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*kayakv1.Worker))
+	})
+	return _c
+}
+
+func (_c *MockStore_RemoveLease_Call) Return(err error) *MockStore_RemoveLease_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockStore_RemoveLease_Call) RunAndReturn(run func(worker *kayakv1.Worker) error) *MockStore_RemoveLease_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Restore provides a mock function for the type MockStore
+func (_mock *MockStore) Restore(snapshot io.ReadCloser) error {
+	ret := _mock.Called(snapshot)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Restore")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(io.ReadCloser) error); ok {
+		r0 = returnFunc(snapshot)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockStore_Restore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Restore'
+type MockStore_Restore_Call struct {
+	*mock.Call
+}
+
+// Restore is a helper method to define mock.On call
+//   - snapshot
+func (_e *MockStore_Expecter) Restore(snapshot interface{}) *MockStore_Restore_Call {
+	return &MockStore_Restore_Call{Call: _e.mock.On("Restore", snapshot)}
+}
+
+func (_c *MockStore_Restore_Call) Run(run func(snapshot io.ReadCloser)) *MockStore_Restore_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(io.ReadCloser))
+	})
+	return _c
+}
+
+func (_c *MockStore_Restore_Call) Return(err error) *MockStore_Restore_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockStore_Restore_Call) RunAndReturn(run func(snapshot io.ReadCloser) error) *MockStore_Restore_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Snapshot provides a mock function for the type MockStore
+func (_mock *MockStore) Snapshot() (raft.FSMSnapshot, error) {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Snapshot")
+	}
+
+	var r0 raft.FSMSnapshot
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func() (raft.FSMSnapshot, error)); ok {
+		return returnFunc()
+	}
+	if returnFunc, ok := ret.Get(0).(func() raft.FSMSnapshot); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(raft.FSMSnapshot)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func() error); ok {
+		r1 = returnFunc()
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockStore_Snapshot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Snapshot'
+type MockStore_Snapshot_Call struct {
+	*mock.Call
+}
+
+// Snapshot is a helper method to define mock.On call
+func (_e *MockStore_Expecter) Snapshot() *MockStore_Snapshot_Call {
+	return &MockStore_Snapshot_Call{Call: _e.mock.On("Snapshot")}
+}
+
+func (_c *MockStore_Snapshot_Call) Run(run func()) *MockStore_Snapshot_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockStore_Snapshot_Call) Return(fSMSnapshot raft.FSMSnapshot, err error) *MockStore_Snapshot_Call {
+	_c.Call.Return(fSMSnapshot, err)
+	return _c
+}
+
+func (_c *MockStore_Snapshot_Call) RunAndReturn(run func() (raft.FSMSnapshot, error)) *MockStore_Snapshot_Call {
 	_c.Call.Return(run)
 	return _c
 }
