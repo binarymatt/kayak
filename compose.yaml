@@ -1,0 +1,56 @@
+services:
+  kayak1:
+    build: .
+    image: kayak
+    command:
+      [
+        "--node_id",
+        "server1",
+        "--data_dir",
+        "/data",
+        "--raft_data_dir",
+        "/raft_data",
+        "--raft_address",
+        "kayak1:1200",
+      ]
+    ports:
+      - "8080:8080"
+      - "1200:1200"
+  kayak2:
+    depends_on:
+      - kayak1
+    image: kayak
+    ports:
+      - "8081:8080"
+      - "1201:1200"
+    command:
+      [
+        "--node_id",
+        "server2",
+        "--data_dir",
+        "/data",
+        "--raft_data_dir",
+        "/raft_data",
+        "--join_addr=kayak1:8080",
+        "--raft_address",
+        "kayak2:1200",
+      ]
+  kayak3:
+    depends_on:
+      - kayak1
+    image: kayak
+    ports:
+      - "8082:8080"
+      - "1202:1200"
+    command:
+      [
+        "--node_id",
+        "server3",
+        "--data_dir",
+        "/data",
+        "--raft_data_dir",
+        "/raft_data",
+        "--join_addr=kayak1:8080",
+        "--raft_address",
+        "kayak3:1200",
+      ]

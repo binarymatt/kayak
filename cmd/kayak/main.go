@@ -65,7 +65,7 @@ type config struct {
 
 func parseConfig() (*config, error) {
 	pflag.String("node_id", "", "")
-	pflag.String("raft_address", "0.0.0.0:1200", "ip:port to use for raft communication")
+	pflag.String("raft_address", "127.0.0.1:1200", "ip:port to use for raft communication")
 	pflag.String("listen_address", "0.0.0.0:8080", "ip:port to use for kayak service")
 	pflag.String("raft_data_dir", "./raft_data", "")
 	pflag.String("data_dir", "./data", "")
@@ -169,6 +169,8 @@ func main() {
 	if cfg.JoinAddr != "" {
 		g.Go(func() error {
 			// create client
+			time.Sleep(5 * time.Second)
+			slog.Info("trying to join", "address", cfg.JoinAddr)
 			leader := fmt.Sprintf("http://%s", cfg.JoinAddr)
 			client := kayakv1connect.NewAdminServiceClient(http.DefaultClient, leader)
 			_, err := client.AddVoter(ctx, connect.NewRequest(&kayakv1.AddVoterRequest{
@@ -227,14 +229,16 @@ func setupRaft(nodeId, listenAddr, raftDir string, st store.Store, inMemory, boo
 	if err != nil {
 		return nil, err
 	}
-	configuration := raft.Configuration{
-		Servers: []raft.Server{
-			{
-				ID:      config.LocalID,
-				Address: transport.LocalAddr(),
+	if bootstrap {
+		configuration := raft.Configuration{
+			Servers: []raft.Server{
+				{
+					ID:      config.LocalID,
+					Address: transport.LocalAddr(),
+				},
 			},
-		},
+		}
+		ra.BootstrapCluster(configuration)
 	}
-	ra.BootstrapCluster(configuration)
 	return ra, nil
 }
