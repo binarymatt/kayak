@@ -7,6 +7,7 @@ import "google/protobuf/empty.proto";
 // import "google/protobuf/struct.proto";
 // import "google/protobuf/timestamp.proto";
 import "kayak/v1/model.proto";
+import "kayak/v1/raft.proto";
 
 option go_package = "github.com/binarymatt/kayak/gen/kayak/v1;kayakv1";
 
@@ -28,6 +29,9 @@ service KayakService {
   // Stream Operations
   rpc CreateStream(CreateStreamRequest) returns (google.protobuf.Empty) {}
   rpc GetStream(GetStreamRequest) returns (GetStreamResponse) {}
+
+  // Raft Specific
+  rpc Apply(ApplyRequest) returns (ApplyResponse) {}
 }
 
 message PutRecordsRequest {
@@ -79,3 +83,9 @@ message GetStreamRequest {
 message GetStreamResponse {
   Stream stream = 1;
 }
+
+message ApplyRequest {
+  RaftCommand command = 1;
+}
+
+message ApplyResponse {}

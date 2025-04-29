@@ -55,6 +55,8 @@ const (
 	KayakServiceCreateStreamProcedure = "/kayak.v1.KayakService/CreateStream"
 	// KayakServiceGetStreamProcedure is the fully-qualified name of the KayakService's GetStream RPC.
 	KayakServiceGetStreamProcedure = "/kayak.v1.KayakService/GetStream"
+	// KayakServiceApplyProcedure is the fully-qualified name of the KayakService's Apply RPC.
+	KayakServiceApplyProcedure = "/kayak.v1.KayakService/Apply"
 )
 
 // KayakServiceClient is a client for the kayak.v1.KayakService service.
@@ -74,6 +76,8 @@ type KayakServiceClient interface {
 	// Stream Operations
 	CreateStream(context.Context, *connect.Request[v1.CreateStreamRequest]) (*connect.Response[emptypb.Empty], error)
 	GetStream(context.Context, *connect.Request[v1.GetStreamRequest]) (*connect.Response[v1.GetStreamResponse], error)
+	// Raft Specific
+	Apply(context.Context, *connect.Request[v1.ApplyRequest]) (*connect.Response[v1.ApplyResponse], error)
 }
 
 // NewKayakServiceClient constructs a client for the kayak.v1.KayakService service. By default, it
@@ -135,6 +139,12 @@ func NewKayakServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(kayakServiceMethods.ByName("GetStream")),
 			connect.WithClientOptions(opts...),
 		),
+		apply: connect.NewClient[v1.ApplyRequest, v1.ApplyResponse](
+			httpClient,
+			baseURL+KayakServiceApplyProcedure,
+			connect.WithSchema(kayakServiceMethods.ByName("Apply")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -148,6 +158,7 @@ type kayakServiceClient struct {
 	deregisterWorker *connect.Client[v1.DeregisterWorkerRequest, emptypb.Empty]
 	createStream     *connect.Client[v1.CreateStreamRequest, emptypb.Empty]
 	getStream        *connect.Client[v1.GetStreamRequest, v1.GetStreamResponse]
+	apply            *connect.Client[v1.ApplyRequest, v1.ApplyResponse]
 }
 
 // PutRecords calls kayak.v1.KayakService.PutRecords.
@@ -190,6 +201,11 @@ func (c *kayakServiceClient) GetStream(ctx context.Context, req *connect.Request
 	return c.getStream.CallUnary(ctx, req)
 }
 
+// Apply calls kayak.v1.KayakService.Apply.
+func (c *kayakServiceClient) Apply(ctx context.Context, req *connect.Request[v1.ApplyRequest]) (*connect.Response[v1.ApplyResponse], error) {
+	return c.apply.CallUnary(ctx, req)
+}
+
 // KayakServiceHandler is an implementation of the kayak.v1.KayakService service.
 type KayakServiceHandler interface {
 	// Record Operations
@@ -207,6 +223,8 @@ type KayakServiceHandler interface {
 	// Stream Operations
 	CreateStream(context.Context, *connect.Request[v1.CreateStreamRequest]) (*connect.Response[emptypb.Empty], error)
 	GetStream(context.Context, *connect.Request[v1.GetStreamRequest]) (*connect.Response[v1.GetStreamResponse], error)
+	// Raft Specific
+	Apply(context.Context, *connect.Request[v1.ApplyRequest]) (*connect.Response[v1.ApplyResponse], error)
 }
 
 // NewKayakServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -264,6 +282,12 @@ func NewKayakServiceHandler(svc KayakServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(kayakServiceMethods.ByName("GetStream")),
 		connect.WithHandlerOptions(opts...),
 	)
+	kayakServiceApplyHandler := connect.NewUnaryHandler(
+		KayakServiceApplyProcedure,
+		svc.Apply,
+		connect.WithSchema(kayakServiceMethods.ByName("Apply")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/kayak.v1.KayakService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case KayakServicePutRecordsProcedure:
@@ -282,6 +306,8 @@ func NewKayakServiceHandler(svc KayakServiceHandler, opts ...connect.HandlerOpti
 			kayakServiceCreateStreamHandler.ServeHTTP(w, r)
 		case KayakServiceGetStreamProcedure:
 			kayakServiceGetStreamHandler.ServeHTTP(w, r)
+		case KayakServiceApplyProcedure:
+			kayakServiceApplyHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -321,4 +347,8 @@ func (UnimplementedKayakServiceHandler) CreateStream(context.Context, *connect.R
 
 func (UnimplementedKayakServiceHandler) GetStream(context.Context, *connect.Request[v1.GetStreamRequest]) (*connect.Response[v1.GetStreamResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kayak.v1.KayakService.GetStream is not implemented"))
+}
+
+func (UnimplementedKayakServiceHandler) Apply(context.Context, *connect.Request[v1.ApplyRequest]) (*connect.Response[v1.ApplyResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kayak.v1.KayakService.Apply is not implemented"))
 }
