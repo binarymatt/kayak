@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"time"
 
 	"connectrpc.com/connect"
@@ -25,16 +26,31 @@ var (
 	ErrNotLeader                                    = errors.New("node is not the leader")
 )
 
+type RaftInterface interface {
+	Apply(cmd []byte, timeout time.Duration) raft.ApplyFuture
+	State() raft.RaftState
+	Leader() raft.ServerAddress
+}
 type service struct {
 	idGenerator      func() ulid.ULID
 	store            store.Store
 	workerExpiration time.Duration
 	logger           *slog.Logger
-	raft             *raft.Raft
+	raft             RaftInterface
+	testLeaderClient kayakv1connect.KayakServiceClient
 }
 
-func (s *service) applyCommand(command *kayakv1.RaftCommand) error {
-	data, err := proto.Marshal(command)
+func (s *service) applyCommand(ctx context.Context, cmd *kayakv1.RaftCommand) error {
+	if s.raft.State() != raft.Leader {
+		slog.Info("sending apply to leader")
+		client := s.getLeaderClient()
+		if _, err := client.Apply(ctx, connect.NewRequest(&v1.ApplyRequest{Command: cmd})); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	data, err := proto.Marshal(cmd)
 	if err != nil {
 		return err
 	}
@@ -46,7 +62,6 @@ func (s *service) applyCommand(command *kayakv1.RaftCommand) error {
 		return err
 	}
 	resp := applyFuture.Response()
-	fmt.Println("APPLY RESPONSE", resp)
 	if resp != nil {
 		as := resp.(*store.ApplyResponse)
 		return as.Error
@@ -56,12 +71,6 @@ func (s *service) applyCommand(command *kayakv1.RaftCommand) error {
 }
 func (s *service) PutRecords(ctx context.Context, req *connect.Request[v1.PutRecordsRequest]) (*connect.Response[emptypb.Empty], error) {
 	s.logger.Info("put records request", "count", len(req.Msg.Records), "raft", s.raft)
-	if s.raft.State() != raft.Leader {
-		// sa := s.raft.Leader() Need to figure out how to translate to grpc address.
-		//client := kayakv1connect.NewKayakServiceClient()
-		//return client.PutRecords(ctx, req)
-		return nil, connect.NewError(connect.CodeInvalidArgument, ErrNotLeader)
-	}
 
 	stream, err := s.store.GetStream(req.Msg.StreamName)
 	if err != nil {
@@ -78,28 +87,25 @@ func (s *service) PutRecords(ctx context.Context, req *connect.Request[v1.PutRec
 	}
 
 	//err = s.store.PutRecords(req.Msg.StreamName, req.Msg.GetRecords()...)
-	err = s.applyCommand(&v1.RaftCommand{
+	cmd := &v1.RaftCommand{
 		Payload: &v1.RaftCommand_PutRecords{
 			PutRecords: &v1.PutRecords{
 				Records:    req.Msg.GetRecords(),
 				StreamName: req.Msg.StreamName,
 			},
 		},
-	})
+	}
+
+	err = s.applyCommand(ctx, cmd)
 	return connect.NewResponse(&emptypb.Empty{}), err
 }
 
 func (s *service) CommitRecord(ctx context.Context, req *connect.Request[v1.CommitRecordRequest]) (*connect.Response[emptypb.Empty], error) {
-	if s.raft.State() != raft.Leader {
-		return nil, connect.NewError(connect.CodeInvalidArgument, ErrNotLeader)
-	}
-
-	// extend lease of worker
+	// check worker lease
 	if err := s.store.HasLease(req.Msg.Worker); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
-	// if so, extend lease
-	err := s.applyCommand(&v1.RaftCommand{
+	err := s.applyCommand(ctx, &v1.RaftCommand{
 		Payload: &v1.RaftCommand_ExtendLease{
 			ExtendLease: &v1.ExtendLease{
 				Worker:    req.Msg.Worker,
@@ -117,7 +123,7 @@ func (s *service) CommitRecord(ctx context.Context, req *connect.Request[v1.Comm
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	position := id.String()
-	err = s.applyCommand(&v1.RaftCommand{
+	err = s.applyCommand(ctx, &v1.RaftCommand{
 		Payload: &v1.RaftCommand_CommitGroupPosition{
 			CommitGroupPosition: &v1.CommitGroupPosition{
 				StreamName: worker.StreamName,
@@ -140,10 +146,7 @@ func (s *service) FetchRecords(ctx context.Context, req *connect.Request[v1.Fetc
 	if err := s.store.HasLease(worker); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
-	// if so, extend lease (commented out for now)
-	//if err := s.store.ExtendLease(worker, s.workerExpiration); err != nil {
-	//	return nil, connect.NewError(connect.CodeInternal, err)
-	//}
+
 	// TODO: cache position in worker client and  use if not too old
 	position, err := s.store.GetGroupPosition(req.Msg.StreamName, worker.GroupName, worker.PartitionAssignment)
 	if err != nil {
@@ -169,9 +172,6 @@ func (s *service) GetRecords(ctx context.Context, req *connect.Request[v1.GetRec
 }
 
 func (s *service) CreateStream(ctx context.Context, req *connect.Request[v1.CreateStreamRequest]) (*connect.Response[emptypb.Empty], error) {
-	if s.raft.State() != raft.Leader {
-		return nil, connect.NewError(connect.CodeInvalidArgument, ErrNotLeader)
-	}
 	s.logger.Info("creating stream", "name", req.Msg.Name, "partitions", req.Msg.PartitionCount)
 	// TODO: validate request
 	stream := &v1.Stream{
@@ -186,7 +186,7 @@ func (s *service) CreateStream(ctx context.Context, req *connect.Request[v1.Crea
 			},
 		},
 	}
-	if err := s.applyCommand(cmd); err != nil {
+	if err := s.applyCommand(ctx, cmd); err != nil {
 		slog.Error("could not create stream", "error", err)
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -204,9 +204,6 @@ func (s *service) GetStream(ctx context.Context, req *connect.Request[v1.GetStre
 }
 
 func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.RegisterWorkerRequest]) (*connect.Response[v1.RegisterWorkerResponse], error) {
-	if s.raft.State() != raft.Leader {
-		return nil, connect.NewError(connect.CodeInvalidArgument, ErrNotLeader)
-	}
 	worker := &v1.Worker{
 		StreamName: req.Msg.StreamName,
 		GroupName:  req.Msg.Group,
@@ -245,7 +242,14 @@ func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.Re
 			},
 		},
 	}
-	if err := s.applyCommand(cmd); err != nil {
+	if s.raft.State() != raft.Leader {
+		client := s.getLeaderClient()
+		if _, err := client.Apply(ctx, connect.NewRequest(&v1.ApplyRequest{Command: cmd})); err != nil {
+			return nil, connect.NewError(connect.CodeInternal, err)
+		}
+	}
+
+	if err := s.applyCommand(ctx, cmd); err != nil {
 		//if err := s.store.ExtendLease(worker, s.workerExpiration); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -256,9 +260,6 @@ func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.Re
 }
 
 func (s *service) DeregisterWorker(ctx context.Context, req *connect.Request[v1.DeregisterWorkerRequest]) (*connect.Response[emptypb.Empty], error) {
-	if s.raft.State() != raft.Leader {
-		return nil, connect.NewError(connect.CodeInvalidArgument, ErrNotLeader)
-	}
 	cmd := &v1.RaftCommand{
 		Payload: &v1.RaftCommand_RemoveLease{
 			RemoveLease: &v1.RemoveLease{
@@ -266,11 +267,26 @@ func (s *service) DeregisterWorker(ctx context.Context, req *connect.Request[v1.
 			},
 		},
 	}
-	if err := s.applyCommand(cmd); err != nil {
-		//if err := s.store.RemoveLease(req.Msg.Worker); err != nil {
+	if err := s.applyCommand(ctx, cmd); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(&emptypb.Empty{}), nil
+}
+
+func (s *service) Apply(ctx context.Context, req *connect.Request[v1.ApplyRequest]) (*connect.Response[v1.ApplyResponse], error) {
+	if err := s.applyCommand(ctx, req.Msg.GetCommand()); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(&v1.ApplyResponse{}), nil
+}
+
+func (s *service) getLeaderClient() kayakv1connect.KayakServiceClient {
+	if s.testLeaderClient != nil {
+		return s.testLeaderClient
+	}
+	leader := fmt.Sprintf("http://%s", s.raft.Leader())
+	client := kayakv1connect.NewKayakServiceClient(http.DefaultClient, leader)
+	return client
 }
 
 func New(st store.Store, ra *raft.Raft) *service {

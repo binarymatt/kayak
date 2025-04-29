@@ -14,3 +14,10 @@ packages:
   github.com/binarymatt/kayak/internal/store:
     config:
       all: true
+  github.com/binarymatt/kayak/internal/service/kayak:
+    config:
+      all: true
+  github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect:
+    config:
+    interfaces:
+      KayakServiceClient:
