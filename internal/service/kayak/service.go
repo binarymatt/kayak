@@ -25,12 +25,17 @@ var (
 	ErrNotLeader                                    = errors.New("node is not the leader")
 )
 
+type RaftInterface interface {
+	Apply(cmd []byte, timeout time.Duration) raft.ApplyFuture
+	State() raft.RaftState
+	Leader() raft.ServerAddress
+}
 type service struct {
 	idGenerator      func() ulid.ULID
 	store            store.Store
 	workerExpiration time.Duration
 	logger           *slog.Logger
-	raft             *raft.Raft
+	raft             RaftInterface
 }
 
 func (s *service) applyCommand(command *kayakv1.RaftCommand) error {
