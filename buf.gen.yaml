@@ -7,5 +7,13 @@ plugins:
   - local: protoc-gen-connect-go
     out: gen
     opt: paths=source_relative
+  - local: protoc-gen-openapiv2
+    out: gen/openapi
+    opt: 
+      - logtostderr=true
+      - allow_merge=true
+      - merge_file_name=api
+      - allow_repeated_fields_in_body=true
+      - generate_unbound_methods=true      
 managed:
   enabled: true

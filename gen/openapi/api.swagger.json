@@ -1,0 +1,819 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Kayak Service API",
+    "description": "Kayak service API",
+    "version": "1.0"
+  },
+  "tags": [
+    {
+      "name": "KayakService"
+    },
+    {
+      "name": "AdminService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/kayak.v1.AdminService/AddVoter": {
+      "post": {
+        "operationId": "AdminService_AddVoter",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1AddVoterResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1AddVoterRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AdminService"
+        ]
+      }
+    },
+    "/kayak.v1.AdminService/Leader": {
+      "post": {
+        "operationId": "AdminService_Leader",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1LeaderResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1LeaderRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AdminService"
+        ]
+      }
+    },
+    "/kayak.v1.AdminService/Stats": {
+      "post": {
+        "operationId": "AdminService_Stats",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1StatsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1StatsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "AdminService"
+        ]
+      }
+    },
+    "/kayak.v1.KayakService/Apply": {
+      "post": {
+        "summary": "Raft Specific",
+        "operationId": "KayakService_Apply",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ApplyResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1ApplyRequest"
+            }
+          }
+        ],
+        "tags": [
+          "KayakService"
+        ]
+      }
+    },
+    "/kayak.v1.KayakService/CommitRecord": {
+      "post": {
+        "summary": "CommitRecord commits the position of a worker in the stream.",
+        "operationId": "KayakService_CommitRecord",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CommitRecordRequest"
+            }
+          }
+        ],
+        "tags": [
+          "KayakService"
+        ]
+      }
+    },
+    "/kayak.v1.KayakService/CreateStream": {
+      "post": {
+        "summary": "Stream Operations",
+        "operationId": "KayakService_CreateStream",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1CreateStreamRequest"
+            }
+          }
+        ],
+        "tags": [
+          "KayakService"
+        ]
+      }
+    },
+    "/kayak.v1.KayakService/DeregisterWorker": {
+      "post": {
+        "operationId": "KayakService_DeregisterWorker",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1DeregisterWorkerRequest"
+            }
+          }
+        ],
+        "tags": [
+          "KayakService"
+        ]
+      }
+    },
+    "/kayak.v1.KayakService/FetchRecords": {
+      "post": {
+        "summary": "FetchRecords retrieves from a stream for a group worker",
+        "operationId": "KayakService_FetchRecords",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1FetchRecordsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1FetchRecordsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "KayakService"
+        ]
+      }
+    },
+    "/kayak.v1.KayakService/GetRecords": {
+      "post": {
+        "summary": "GetRecords retrieves from a stream",
+        "operationId": "KayakService_GetRecords",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetRecordsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1GetRecordsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "KayakService"
+        ]
+      }
+    },
+    "/kayak.v1.KayakService/GetStream": {
+      "post": {
+        "operationId": "KayakService_GetStream",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetStreamResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1GetStreamRequest"
+            }
+          }
+        ],
+        "tags": [
+          "KayakService"
+        ]
+      }
+    },
+    "/kayak.v1.KayakService/PutRecords": {
+      "post": {
+        "summary": "Record Operations\nPutRecords adds records to the stream",
+        "operationId": "KayakService_PutRecords",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "type": "object",
+              "properties": {}
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1PutRecordsRequest"
+            }
+          }
+        ],
+        "tags": [
+          "KayakService"
+        ]
+      }
+    },
+    "/kayak.v1.KayakService/RegisterWorker": {
+      "post": {
+        "summary": "Worker Operations",
+        "operationId": "KayakService_RegisterWorker",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1RegisterWorkerResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/v1RegisterWorkerRequest"
+            }
+          }
+        ],
+        "tags": [
+          "KayakService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "kayakv1Operation": {
+      "type": "string",
+      "enum": [
+        "OPERATION_UNSPECIFIED",
+        "OPERATION_PUT_STREAM",
+        "OPERATION_PUT_RECORDS",
+        "OPERATION_EXTEND_LEASE",
+        "OPERATION_REMOVE_LEASE",
+        "OPERATION_COMMIT_GROUP_POSITION"
+      ],
+      "default": "OPERATION_UNSPECIFIED"
+    },
+    "kayakv1PutRecords": {
+      "type": "object",
+      "properties": {
+        "streamName": {
+          "type": "string"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Record"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1AddVoterRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "address": {
+          "type": "string"
+        }
+      }
+    },
+    "v1AddVoterResponse": {
+      "type": "object"
+    },
+    "v1ApplyRequest": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "$ref": "#/definitions/v1RaftCommand"
+        }
+      }
+    },
+    "v1ApplyResponse": {
+      "type": "object"
+    },
+    "v1CommitGroupPosition": {
+      "type": "object",
+      "properties": {
+        "streamName": {
+          "type": "string"
+        },
+        "groupName": {
+          "type": "string"
+        },
+        "partition": {
+          "type": "string",
+          "format": "int64"
+        },
+        "position": {
+          "type": "string"
+        }
+      }
+    },
+    "v1CommitRecordRequest": {
+      "type": "object",
+      "properties": {
+        "worker": {
+          "$ref": "#/definitions/v1Worker"
+        },
+        "record": {
+          "$ref": "#/definitions/v1Record"
+        }
+      }
+    },
+    "v1CreateStreamRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "partitionCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "ttl": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "v1DeregisterWorkerRequest": {
+      "type": "object",
+      "properties": {
+        "worker": {
+          "$ref": "#/definitions/v1Worker"
+        }
+      }
+    },
+    "v1ExtendLease": {
+      "type": "object",
+      "properties": {
+        "worker": {
+          "$ref": "#/definitions/v1Worker"
+        },
+        "expiresMs": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "v1FetchRecordsRequest": {
+      "type": "object",
+      "properties": {
+        "streamName": {
+          "type": "string"
+        },
+        "worker": {
+          "$ref": "#/definitions/v1Worker"
+        },
+        "limit": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "v1FetchRecordsResponse": {
+      "type": "object",
+      "properties": {
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Record"
+          }
+        }
+      }
+    },
+    "v1GetRecordsRequest": {
+      "type": "object",
+      "properties": {
+        "streamName": {
+          "type": "string"
+        },
+        "partition": {
+          "type": "string",
+          "format": "int64"
+        },
+        "startId": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "v1GetRecordsResponse": {
+      "type": "object",
+      "properties": {
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Record"
+          }
+        }
+      }
+    },
+    "v1GetStreamRequest": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        }
+      }
+    },
+    "v1GetStreamResponse": {
+      "type": "object",
+      "properties": {
+        "stream": {
+          "$ref": "#/definitions/v1Stream"
+        }
+      }
+    },
+    "v1LeaderRequest": {
+      "type": "object"
+    },
+    "v1LeaderResponse": {
+      "type": "object",
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "v1PutRecordsRequest": {
+      "type": "object",
+      "properties": {
+        "streamName": {
+          "type": "string"
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Record"
+          }
+        },
+        "idempotencyKey": {
+          "type": "string"
+        }
+      }
+    },
+    "v1PutStream": {
+      "type": "object",
+      "properties": {
+        "stream": {
+          "$ref": "#/definitions/v1Stream"
+        }
+      }
+    },
+    "v1RaftCommand": {
+      "type": "object",
+      "properties": {
+        "operation": {
+          "$ref": "#/definitions/kayakv1Operation"
+        },
+        "putStream": {
+          "$ref": "#/definitions/v1PutStream"
+        },
+        "putRecords": {
+          "$ref": "#/definitions/kayakv1PutRecords"
+        },
+        "extendLease": {
+          "$ref": "#/definitions/v1ExtendLease"
+        },
+        "removeLease": {
+          "$ref": "#/definitions/v1RemoveLease"
+        },
+        "commitGroupPosition": {
+          "$ref": "#/definitions/v1CommitGroupPosition"
+        }
+      }
+    },
+    "v1Record": {
+      "type": "object",
+      "properties": {
+        "streamName": {
+          "type": "string"
+        },
+        "partition": {
+          "type": "string",
+          "format": "int64"
+        },
+        "id": {
+          "type": "string",
+          "format": "byte",
+          "description": "id is used to hashed and used for partition assignment, can be set by client."
+        },
+        "internalId": {
+          "type": "string",
+          "title": "internal id is used as identifier in partition stream"
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "payload": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "v1RegisterWorkerRequest": {
+      "type": "object",
+      "properties": {
+        "streamName": {
+          "type": "string"
+        },
+        "group": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      }
+    },
+    "v1RegisterWorkerResponse": {
+      "type": "object",
+      "properties": {
+        "worker": {
+          "$ref": "#/definitions/v1Worker"
+        }
+      }
+    },
+    "v1RemoveLease": {
+      "type": "object",
+      "properties": {
+        "worker": {
+          "$ref": "#/definitions/v1Worker"
+        }
+      }
+    },
+    "v1StatsRequest": {
+      "type": "object"
+    },
+    "v1StatsResponse": {
+      "type": "object",
+      "properties": {
+        "stats": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "v1Stream": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "partitionCount": {
+          "type": "string",
+          "format": "int64"
+        },
+        "ttl": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "v1Worker": {
+      "type": "object",
+      "properties": {
+        "streamName": {
+          "type": "string"
+        },
+        "groupName": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "partitionAssignment": {
+          "type": "string",
+          "format": "int64"
+        },
+        "position": {
+          "type": "string"
+        },
+        "leaseExpires": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    }
+  }
+}

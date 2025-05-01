@@ -8,6 +8,15 @@ import "google/protobuf/empty.proto";
 // import "google/protobuf/timestamp.proto";
 import "kayak/v1/model.proto";
 import "kayak/v1/raft.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "Kayak Service API";
+    version: "1.0";
+    description: "Kayak service API";
+  }
+};
 
 option go_package = "github.com/binarymatt/kayak/gen/kayak/v1;kayakv1";
 

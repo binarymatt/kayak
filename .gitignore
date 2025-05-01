@@ -1,2 +1,6 @@
 data/
 raft_data/
+.DS_Store
+.vscode/
+.idea/
+.env

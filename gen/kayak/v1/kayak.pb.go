@@ -8,6 +8,7 @@ package kayakv1
 
 import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
+	_ "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	emptypb "google.golang.org/protobuf/types/known/emptypb"
@@ -731,7 +732,7 @@ var File_kayak_v1_kayak_proto protoreflect.FileDescriptor
 
 const file_kayak_v1_kayak_proto_rawDesc = "" +
 	"\n" +
-	"\x14kayak/v1/kayak.proto\x12\bkayak.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x14kayak/v1/model.proto\x1a\x13kayak/v1/raft.proto\"\x89\x01\n" +
+	"\x14kayak/v1/kayak.proto\x12\bkayak.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x14kayak/v1/model.proto\x1a\x13kayak/v1/raft.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\"\x89\x01\n" +
 	"\x11PutRecordsRequest\x12\x1f\n" +
 	"\vstream_name\x18\x01 \x01(\tR\n" +
 	"streamName\x12*\n" +
@@ -786,7 +787,8 @@ const file_kayak_v1_kayak_proto_rawDesc = "" +
 	"\x10DeregisterWorker\x12!.kayak.v1.DeregisterWorkerRequest\x1a\x16.google.protobuf.Empty\"\x00\x12G\n" +
 	"\fCreateStream\x12\x1d.kayak.v1.CreateStreamRequest\x1a\x16.google.protobuf.Empty\"\x00\x12F\n" +
 	"\tGetStream\x12\x1a.kayak.v1.GetStreamRequest\x1a\x1b.kayak.v1.GetStreamResponse\"\x00\x12:\n" +
-	"\x05Apply\x12\x16.kayak.v1.ApplyRequest\x1a\x17.kayak.v1.ApplyResponse\"\x00B\x8d\x01\n" +
+	"\x05Apply\x12\x16.kayak.v1.ApplyRequest\x1a\x17.kayak.v1.ApplyResponse\"\x00B\xbd\x01\x92A-\x12+\n" +
+	"\x11Kayak Service API\x12\x11Kayak service API2\x031.0\n" +
 	"\fcom.kayak.v1B\n" +
 	"KayakProtoP\x01Z0github.com/binarymatt/kayak/gen/kayak/v1;kayakv1\xa2\x02\x03KXX\xaa\x02\bKayak.V1\xca\x02\bKayak\\V1\xe2\x02\x14Kayak\\V1\\GPBMetadata\xea\x02\tKayak::V1b\x06proto3"
 
