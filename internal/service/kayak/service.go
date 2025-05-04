@@ -242,13 +242,6 @@ func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.Re
 			},
 		},
 	}
-	if s.raft.State() != raft.Leader {
-		client := s.getLeaderClient()
-		if _, err := client.Apply(ctx, connect.NewRequest(&v1.ApplyRequest{Command: cmd})); err != nil {
-			return nil, connect.NewError(connect.CodeInternal, err)
-		}
-	}
-
 	if err := s.applyCommand(ctx, cmd); err != nil {
 		//if err := s.store.ExtendLease(worker, s.workerExpiration); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
@@ -284,7 +277,9 @@ func (s *service) getLeaderClient() kayakv1connect.KayakServiceClient {
 	if s.testLeaderClient != nil {
 		return s.testLeaderClient
 	}
+
 	leader := fmt.Sprintf("http://%s", s.raft.Leader())
+	fmt.Println(leader)
 	client := kayakv1connect.NewKayakServiceClient(http.DefaultClient, leader)
 	return client
 }
