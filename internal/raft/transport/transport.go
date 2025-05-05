@@ -86,6 +86,7 @@ func (rt *raftTransport) AppendEntriesPipeline(id raft.ServerID, target raft.Ser
 		cancel:     cancel,
 		inflightCh: make(chan *appendFuture, 20),
 		doneCh:     make(chan raft.AppendFuture, 20),
+		ctx:        ctx,
 	}
 	go pipeline.receiver()
 	return pipeline, nil

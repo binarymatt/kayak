@@ -289,7 +289,7 @@ func TestGetRecords(t *testing.T) {
 		{
 			name:      "use position",
 			limit:     5,
-			postition: secondId,
+			postition: firstId,
 			records: []*kayakv1.Record{
 				{
 					Partition:  0,
@@ -315,9 +315,8 @@ func TestGetRecords(t *testing.T) {
 			},
 		},
 		{
-			name:      "only correct partition",
-			limit:     5,
-			postition: secondId,
+			name:  "only correct partition",
+			limit: 5,
 			records: []*kayakv1.Record{
 				{
 					Partition:  1,

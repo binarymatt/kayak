@@ -20,6 +20,7 @@ import (
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb/v2"
 	"github.com/lmittmann/tint"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
@@ -47,7 +48,9 @@ import (
 
 func setupTracing(ctx context.Context) (func(), error) {
 	client := otlptracegrpc.NewClient()
-	exp, err := otlptrace.New(ctx, client)
+	var err error
+	var exp trace.SpanExporter
+	exp, err = otlptrace.New(ctx, client)
 	if err != nil {
 		slog.Error("Error initializing trace", "error", err)
 		return func() {}, err
@@ -63,6 +66,7 @@ func setupTracing(ctx context.Context) (func(), error) {
 		slog.Error("Error creating trace resource", "error", err)
 		return func() {}, err
 	}
+
 	tp := trace.NewTracerProvider(
 		trace.WithBatcher(exp),
 		trace.WithResource(r),
@@ -98,21 +102,23 @@ func setupMetrics() error {
 }
 
 type config struct {
-	NodeId         string
-	ListenAddress  string
-	RaftDataDir    string
-	KayakDataDir   string
-	Bootstrap      bool
-	InMemory       bool
-	JoinAddr       string
-	ConsoleLogging bool
-	LogLevel       string
+	NodeId           string
+	ListenAddress    string
+	AdvertiseAddress string
+	RaftDataDir      string
+	KayakDataDir     string
+	Bootstrap        bool
+	InMemory         bool
+	JoinAddr         string
+	ConsoleLogging   bool
+	LogLevel         string
 }
 
 func parseConfig() (*config, error) {
 	pflag.String("node_id", "", "")
 	pflag.String("raft_address", "127.0.0.1:1200", "ip:port to use for raft communication")
 	pflag.String("listen_address", "0.0.0.0:8080", "ip:port to use for kayak service")
+	pflag.String("advertise_address", "", "ip:port to use for kayak service")
 	pflag.String("raft_data_dir", "./raft_data", "")
 	pflag.String("data_dir", "./data", "")
 	pflag.Bool("in_memory", true, "")
@@ -127,16 +133,21 @@ func parseConfig() (*config, error) {
 	if nodeId == "" {
 		nodeId = viper.GetString("raft_address")
 	}
+	advertise := viper.GetString("advertise_address")
+	if advertise == "" {
+		advertise = viper.GetString("listen_address")
+	}
 	return &config{
-		NodeId:         nodeId,
-		ListenAddress:  viper.GetString("listen_address"),
-		RaftDataDir:    viper.GetString("raft_data_dir"),
-		KayakDataDir:   viper.GetString("data_dir"),
-		Bootstrap:      viper.GetString("join_addr") == "",
-		InMemory:       viper.GetBool("in_memory"),
-		JoinAddr:       viper.GetString("join_addr"),
-		ConsoleLogging: viper.GetBool("console"),
-		LogLevel:       viper.GetString("log_level"),
+		NodeId:           nodeId,
+		ListenAddress:    viper.GetString("listen_address"),
+		AdvertiseAddress: advertise,
+		RaftDataDir:      viper.GetString("raft_data_dir"),
+		KayakDataDir:     viper.GetString("data_dir"),
+		Bootstrap:        viper.GetString("join_addr") == "",
+		InMemory:         viper.GetBool("in_memory"),
+		JoinAddr:         viper.GetString("join_addr"),
+		ConsoleLogging:   viper.GetBool("console"),
+		LogLevel:         viper.GetString("log_level"),
 	}, nil
 }
 
@@ -167,7 +178,7 @@ func main() {
 	}
 
 	ctx, cancel := signal.NotifyContext(
-		context.Background(),
+		ctx,
 		syscall.SIGINT,
 		syscall.SIGTERM,
 		syscall.SIGQUIT,
@@ -178,6 +189,7 @@ func main() {
 
 	g := new(errgroup.Group)
 	mux := http.NewServeMux()
+	mux.Handle("/metrics", promhttp.Handler())
 	opts := badger.DefaultOptions(cfg.KayakDataDir).WithLogger(nil)
 	db, err := badger.Open(opts)
 	if err != nil {
@@ -186,7 +198,7 @@ func main() {
 	}
 	store := store.New(db)
 
-	tr, ts := transport.New(raft.ServerAddress(cfg.ListenAddress), nil)
+	tr, ts := transport.New(raft.ServerAddress(cfg.AdvertiseAddress), nil)
 
 	mux.Handle(transportv1connect.NewRaftTransportHandler(
 		ts,
@@ -251,13 +263,13 @@ func main() {
 	if cfg.JoinAddr != "" {
 		g.Go(func() error {
 			// create client
-			time.Sleep(1 * time.Second)
-			slog.Info("trying to join", "address", cfg.JoinAddr)
+			time.Sleep(5 * time.Second)
+			slog.Info("trying to join", "address", cfg.JoinAddr, "advertise_address", cfg.AdvertiseAddress, "id", cfg.NodeId)
 			leader := fmt.Sprintf("http://%s", cfg.JoinAddr)
 			client := kayakv1connect.NewAdminServiceClient(http.DefaultClient, leader)
 			_, err := client.AddVoter(ctx, connect.NewRequest(&kayakv1.AddVoterRequest{
 				Id:      cfg.NodeId,
-				Address: cfg.ListenAddress,
+				Address: cfg.AdvertiseAddress,
 			}))
 			if err != nil {
 				slog.Error("could not join cluster", "error", err)

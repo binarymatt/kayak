@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"context"
 	"errors"
 	"io"
 	"log/slog"
@@ -21,6 +22,7 @@ type appendPipeline struct {
 	inflightCh    chan *appendFuture
 	cancel        func()
 	doneCh        chan raft.AppendFuture
+	ctx           context.Context
 }
 
 func (ap *appendPipeline) AppendEntries(req *raft.AppendEntriesRequest, res *raft.AppendEntriesResponse) (raft.AppendFuture, error) {
@@ -33,13 +35,20 @@ func (ap *appendPipeline) AppendEntries(req *raft.AppendEntriesRequest, res *raf
 		slog.Debug("appendPipeline: AppendEntries failure", "error", err)
 		if errors.Is(err, io.EOF) {
 			_, err := ap.stream.Receive()
-			slog.Error("failure during send", "error", err)
+			slog.Error("failure during send", "error", err, "errorType", errors.Is(err, context.DeadlineExceeded))
+			if !errors.Is(err, context.DeadlineExceeded) {
+				return nil, err
+			}
+		} else {
 			return nil, err
 		}
-		return nil, err
 	}
 	ap.inflightChMtx.Lock()
-	ap.inflightCh <- af
+	select {
+	case <-ap.ctx.Done():
+	default:
+		ap.inflightCh <- af
+	}
 	ap.inflightChMtx.Unlock()
 	return af, nil
 }
@@ -61,7 +70,6 @@ func (ap *appendPipeline) receiver() {
 	for af := range ap.inflightCh {
 		msg, err := ap.stream.Receive()
 		if err != nil {
-			slog.Error("error during receive", "error", err)
 			if !errors.Is(err, io.EOF) {
 				af.err = err
 			}

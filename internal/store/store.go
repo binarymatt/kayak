@@ -38,7 +38,9 @@ type Store interface {
 	Restore(snapshot io.ReadCloser) error
 }
 
-var _ Store = (*store)(nil)
+var (
+	_ Store = (*store)(nil)
+)
 
 type store struct {
 	db *badger.DB
@@ -135,6 +137,9 @@ func (s *store) GetRecords(streamName string, partition int64, startPosition str
 		var r kayakv1.Record
 		if err := proto.Unmarshal(val, &r); err != nil {
 			return nil, err
+		}
+		if r.InternalId == startPosition {
+			continue
 		}
 		records = append(records, &r)
 		i++

@@ -56,10 +56,10 @@ func (ts *transportService) AppendEntriesPipeline(ctx context.Context, req *conn
 	for {
 		msg, err := req.Receive()
 		if err != nil {
-			if errors.Is(err, io.EOF) {
+			slog.Error("error from receive in transportService", "error", err, "eof", errors.Is(err, io.EOF), "cancelled", errors.Is(err, context.Canceled))
+			if errors.Is(err, context.Canceled) {
 				return nil
 			}
-			slog.Error("error from receive in transportService", "error", err)
 			return err
 		}
 		resp, err := ts.handleRPC(decodeAppendEntriesRequest(msg), nil)

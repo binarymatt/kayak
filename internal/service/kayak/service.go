@@ -162,6 +162,7 @@ func (s *service) FetchRecords(ctx context.Context, req *connect.Request[v1.Fetc
 }
 
 func (s *service) GetRecords(ctx context.Context, req *connect.Request[v1.GetRecordsRequest]) (*connect.Response[v1.GetRecordsResponse], error) {
+	slog.Info("getting records", "partitio", req.Msg.Partition, "start", req.Msg.StartId, "stream", req.Msg.StreamName, "limit", req.Msg.Limit)
 	records, err := s.store.GetRecords(req.Msg.StreamName, req.Msg.Partition, req.Msg.StartId, int(req.Msg.Limit))
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
@@ -196,6 +197,9 @@ func (s *service) CreateStream(ctx context.Context, req *connect.Request[v1.Crea
 func (s *service) GetStream(ctx context.Context, req *connect.Request[v1.GetStreamRequest]) (*connect.Response[v1.GetStreamResponse], error) {
 	stream, err := s.store.GetStream(req.Msg.Name)
 	if err != nil {
+		if errors.Is(err, badger.ErrKeyNotFound) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		}
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(&v1.GetStreamResponse{
