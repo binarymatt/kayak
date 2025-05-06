@@ -12,7 +12,7 @@ type badgerFsmSnapshot struct {
 }
 
 func (fs *badgerFsmSnapshot) Persist(sink raft.SnapshotSink) error {
-	defer sink.Close()
+	defer sink.Close() //nolint: errcheck
 	_, err := fs.db.Backup(sink, 0)
 	return err
 }

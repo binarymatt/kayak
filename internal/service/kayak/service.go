@@ -15,7 +15,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	v1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
 	"github.com/binarymatt/kayak/internal/store"
@@ -40,7 +39,7 @@ type service struct {
 	testLeaderClient kayakv1connect.KayakServiceClient
 }
 
-func (s *service) applyCommand(ctx context.Context, cmd *kayakv1.RaftCommand) error {
+func (s *service) applyCommand(ctx context.Context, cmd *v1.RaftCommand) error {
 	if s.raft.State() != raft.Leader {
 		slog.Info("sending apply to leader")
 		client := s.getLeaderClient()

@@ -25,7 +25,7 @@ func setupTest(t *testing.T) *testContainer {
 	db, err := badger.Open(opts)
 	must.NoError(t, err)
 	t.Cleanup(func() {
-		db.Close()
+		db.Close() //nolint: errcheck
 	})
 	store := New(db)
 	return &testContainer{
