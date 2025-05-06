@@ -439,6 +439,63 @@ func (_c *MockKayakServiceClient_GetStream_Call) RunAndReturn(run func(context1 
 	return _c
 }
 
+// GetStreams provides a mock function for the type MockKayakServiceClient
+func (_mock *MockKayakServiceClient) GetStreams(context1 context.Context, request *connect.Request[kayakv1.GetStreamsRequest]) (*connect.Response[kayakv1.GetStreamsResponse], error) {
+	ret := _mock.Called(context1, request)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetStreams")
+	}
+
+	var r0 *connect.Response[kayakv1.GetStreamsResponse]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *connect.Request[kayakv1.GetStreamsRequest]) (*connect.Response[kayakv1.GetStreamsResponse], error)); ok {
+		return returnFunc(context1, request)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *connect.Request[kayakv1.GetStreamsRequest]) *connect.Response[kayakv1.GetStreamsResponse]); ok {
+		r0 = returnFunc(context1, request)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*connect.Response[kayakv1.GetStreamsResponse])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *connect.Request[kayakv1.GetStreamsRequest]) error); ok {
+		r1 = returnFunc(context1, request)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockKayakServiceClient_GetStreams_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetStreams'
+type MockKayakServiceClient_GetStreams_Call struct {
+	*mock.Call
+}
+
+// GetStreams is a helper method to define mock.On call
+//   - context1
+//   - request
+func (_e *MockKayakServiceClient_Expecter) GetStreams(context1 interface{}, request interface{}) *MockKayakServiceClient_GetStreams_Call {
+	return &MockKayakServiceClient_GetStreams_Call{Call: _e.mock.On("GetStreams", context1, request)}
+}
+
+func (_c *MockKayakServiceClient_GetStreams_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.GetStreamsRequest])) *MockKayakServiceClient_GetStreams_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*connect.Request[kayakv1.GetStreamsRequest]))
+	})
+	return _c
+}
+
+func (_c *MockKayakServiceClient_GetStreams_Call) Return(response *connect.Response[kayakv1.GetStreamsResponse], err error) *MockKayakServiceClient_GetStreams_Call {
+	_c.Call.Return(response, err)
+	return _c
+}
+
+func (_c *MockKayakServiceClient_GetStreams_Call) RunAndReturn(run func(context1 context.Context, request *connect.Request[kayakv1.GetStreamsRequest]) (*connect.Response[kayakv1.GetStreamsResponse], error)) *MockKayakServiceClient_GetStreams_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // PutRecords provides a mock function for the type MockKayakServiceClient
 func (_mock *MockKayakServiceClient) PutRecords(context1 context.Context, request *connect.Request[kayakv1.PutRecordsRequest]) (*connect.Response[emptypb.Empty], error) {
 	ret := _mock.Called(context1, request)

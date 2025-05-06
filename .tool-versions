@@ -2,3 +2,4 @@ buf 1.52.1
 golang 1.24.2
 mockery 3.2.3
 k6 0.58.0
+golangci-lint 2.1.6

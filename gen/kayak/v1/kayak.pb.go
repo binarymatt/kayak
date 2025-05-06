@@ -647,6 +647,86 @@ func (x *GetStreamResponse) GetStream() *Stream {
 	return nil
 }
 
+type GetStreamsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetStreamsRequest) Reset() {
+	*x = GetStreamsRequest{}
+	mi := &file_kayak_v1_kayak_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetStreamsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetStreamsRequest) ProtoMessage() {}
+
+func (x *GetStreamsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_kayak_v1_kayak_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetStreamsRequest.ProtoReflect.Descriptor instead.
+func (*GetStreamsRequest) Descriptor() ([]byte, []int) {
+	return file_kayak_v1_kayak_proto_rawDescGZIP(), []int{12}
+}
+
+type GetStreamsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Streams       []*Stream              `protobuf:"bytes,1,rep,name=streams,proto3" json:"streams,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetStreamsResponse) Reset() {
+	*x = GetStreamsResponse{}
+	mi := &file_kayak_v1_kayak_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetStreamsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetStreamsResponse) ProtoMessage() {}
+
+func (x *GetStreamsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_kayak_v1_kayak_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetStreamsResponse.ProtoReflect.Descriptor instead.
+func (*GetStreamsResponse) Descriptor() ([]byte, []int) {
+	return file_kayak_v1_kayak_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *GetStreamsResponse) GetStreams() []*Stream {
+	if x != nil {
+		return x.Streams
+	}
+	return nil
+}
+
 type ApplyRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Command       *RaftCommand           `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
@@ -656,7 +736,7 @@ type ApplyRequest struct {
 
 func (x *ApplyRequest) Reset() {
 	*x = ApplyRequest{}
-	mi := &file_kayak_v1_kayak_proto_msgTypes[12]
+	mi := &file_kayak_v1_kayak_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -668,7 +748,7 @@ func (x *ApplyRequest) String() string {
 func (*ApplyRequest) ProtoMessage() {}
 
 func (x *ApplyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_kayak_v1_kayak_proto_msgTypes[12]
+	mi := &file_kayak_v1_kayak_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -681,7 +761,7 @@ func (x *ApplyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApplyRequest.ProtoReflect.Descriptor instead.
 func (*ApplyRequest) Descriptor() ([]byte, []int) {
-	return file_kayak_v1_kayak_proto_rawDescGZIP(), []int{12}
+	return file_kayak_v1_kayak_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ApplyRequest) GetCommand() *RaftCommand {
@@ -699,7 +779,7 @@ type ApplyResponse struct {
 
 func (x *ApplyResponse) Reset() {
 	*x = ApplyResponse{}
-	mi := &file_kayak_v1_kayak_proto_msgTypes[13]
+	mi := &file_kayak_v1_kayak_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -711,7 +791,7 @@ func (x *ApplyResponse) String() string {
 func (*ApplyResponse) ProtoMessage() {}
 
 func (x *ApplyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_kayak_v1_kayak_proto_msgTypes[13]
+	mi := &file_kayak_v1_kayak_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -724,7 +804,7 @@ func (x *ApplyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ApplyResponse.ProtoReflect.Descriptor instead.
 func (*ApplyResponse) Descriptor() ([]byte, []int) {
-	return file_kayak_v1_kayak_proto_rawDescGZIP(), []int{13}
+	return file_kayak_v1_kayak_proto_rawDescGZIP(), []int{15}
 }
 
 var File_kayak_v1_kayak_proto protoreflect.FileDescriptor
@@ -771,10 +851,13 @@ const file_kayak_v1_kayak_proto_rawDesc = "" +
 	"\x10GetStreamRequest\x12\x1a\n" +
 	"\x04name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\"=\n" +
 	"\x11GetStreamResponse\x12(\n" +
-	"\x06stream\x18\x01 \x01(\v2\x10.kayak.v1.StreamR\x06stream\"?\n" +
+	"\x06stream\x18\x01 \x01(\v2\x10.kayak.v1.StreamR\x06stream\"\x13\n" +
+	"\x11GetStreamsRequest\"@\n" +
+	"\x12GetStreamsResponse\x12*\n" +
+	"\astreams\x18\x01 \x03(\v2\x10.kayak.v1.StreamR\astreams\"?\n" +
 	"\fApplyRequest\x12/\n" +
 	"\acommand\x18\x01 \x01(\v2\x15.kayak.v1.RaftCommandR\acommand\"\x0f\n" +
-	"\rApplyResponse2\xad\x05\n" +
+	"\rApplyResponse2\xf8\x05\n" +
 	"\fKayakService\x12C\n" +
 	"\n" +
 	"PutRecords\x12\x1b.kayak.v1.PutRecordsRequest\x1a\x16.google.protobuf.Empty\"\x00\x12I\n" +
@@ -785,7 +868,9 @@ const file_kayak_v1_kayak_proto_rawDesc = "" +
 	"\x0eRegisterWorker\x12\x1f.kayak.v1.RegisterWorkerRequest\x1a .kayak.v1.RegisterWorkerResponse\"\x00\x12O\n" +
 	"\x10DeregisterWorker\x12!.kayak.v1.DeregisterWorkerRequest\x1a\x16.google.protobuf.Empty\"\x00\x12G\n" +
 	"\fCreateStream\x12\x1d.kayak.v1.CreateStreamRequest\x1a\x16.google.protobuf.Empty\"\x00\x12F\n" +
-	"\tGetStream\x12\x1a.kayak.v1.GetStreamRequest\x1a\x1b.kayak.v1.GetStreamResponse\"\x00\x12:\n" +
+	"\tGetStream\x12\x1a.kayak.v1.GetStreamRequest\x1a\x1b.kayak.v1.GetStreamResponse\"\x00\x12I\n" +
+	"\n" +
+	"GetStreams\x12\x1b.kayak.v1.GetStreamsRequest\x1a\x1c.kayak.v1.GetStreamsResponse\"\x00\x12:\n" +
 	"\x05Apply\x12\x16.kayak.v1.ApplyRequest\x1a\x17.kayak.v1.ApplyResponse\"\x00B\x8d\x01\n" +
 	"\fcom.kayak.v1B\n" +
 	"KayakProtoP\x01Z0github.com/binarymatt/kayak/gen/kayak/v1;kayakv1\xa2\x02\x03KXX\xaa\x02\bKayak.V1\xca\x02\bKayak\\V1\xe2\x02\x14Kayak\\V1\\GPBMetadata\xea\x02\tKayak::V1b\x06proto3"
@@ -802,7 +887,7 @@ func file_kayak_v1_kayak_proto_rawDescGZIP() []byte {
 	return file_kayak_v1_kayak_proto_rawDescData
 }
 
-var file_kayak_v1_kayak_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
+var file_kayak_v1_kayak_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_kayak_v1_kayak_proto_goTypes = []any{
 	(*PutRecordsRequest)(nil),       // 0: kayak.v1.PutRecordsRequest
 	(*GetRecordsRequest)(nil),       // 1: kayak.v1.GetRecordsRequest
@@ -816,48 +901,53 @@ var file_kayak_v1_kayak_proto_goTypes = []any{
 	(*CreateStreamRequest)(nil),     // 9: kayak.v1.CreateStreamRequest
 	(*GetStreamRequest)(nil),        // 10: kayak.v1.GetStreamRequest
 	(*GetStreamResponse)(nil),       // 11: kayak.v1.GetStreamResponse
-	(*ApplyRequest)(nil),            // 12: kayak.v1.ApplyRequest
-	(*ApplyResponse)(nil),           // 13: kayak.v1.ApplyResponse
-	(*Record)(nil),                  // 14: kayak.v1.Record
-	(*Worker)(nil),                  // 15: kayak.v1.Worker
-	(*Stream)(nil),                  // 16: kayak.v1.Stream
-	(*RaftCommand)(nil),             // 17: kayak.v1.RaftCommand
-	(*emptypb.Empty)(nil),           // 18: google.protobuf.Empty
+	(*GetStreamsRequest)(nil),       // 12: kayak.v1.GetStreamsRequest
+	(*GetStreamsResponse)(nil),      // 13: kayak.v1.GetStreamsResponse
+	(*ApplyRequest)(nil),            // 14: kayak.v1.ApplyRequest
+	(*ApplyResponse)(nil),           // 15: kayak.v1.ApplyResponse
+	(*Record)(nil),                  // 16: kayak.v1.Record
+	(*Worker)(nil),                  // 17: kayak.v1.Worker
+	(*Stream)(nil),                  // 18: kayak.v1.Stream
+	(*RaftCommand)(nil),             // 19: kayak.v1.RaftCommand
+	(*emptypb.Empty)(nil),           // 20: google.protobuf.Empty
 }
 var file_kayak_v1_kayak_proto_depIdxs = []int32{
-	14, // 0: kayak.v1.PutRecordsRequest.records:type_name -> kayak.v1.Record
-	14, // 1: kayak.v1.GetRecordsResponse.records:type_name -> kayak.v1.Record
-	15, // 2: kayak.v1.FetchRecordsRequest.worker:type_name -> kayak.v1.Worker
-	14, // 3: kayak.v1.FetchRecordsResponse.records:type_name -> kayak.v1.Record
-	15, // 4: kayak.v1.CommitRecordRequest.worker:type_name -> kayak.v1.Worker
-	14, // 5: kayak.v1.CommitRecordRequest.record:type_name -> kayak.v1.Record
-	15, // 6: kayak.v1.RegisterWorkerResponse.worker:type_name -> kayak.v1.Worker
-	15, // 7: kayak.v1.DeregisterWorkerRequest.worker:type_name -> kayak.v1.Worker
-	16, // 8: kayak.v1.GetStreamResponse.stream:type_name -> kayak.v1.Stream
-	17, // 9: kayak.v1.ApplyRequest.command:type_name -> kayak.v1.RaftCommand
-	0,  // 10: kayak.v1.KayakService.PutRecords:input_type -> kayak.v1.PutRecordsRequest
-	1,  // 11: kayak.v1.KayakService.GetRecords:input_type -> kayak.v1.GetRecordsRequest
-	3,  // 12: kayak.v1.KayakService.FetchRecords:input_type -> kayak.v1.FetchRecordsRequest
-	5,  // 13: kayak.v1.KayakService.CommitRecord:input_type -> kayak.v1.CommitRecordRequest
-	6,  // 14: kayak.v1.KayakService.RegisterWorker:input_type -> kayak.v1.RegisterWorkerRequest
-	8,  // 15: kayak.v1.KayakService.DeregisterWorker:input_type -> kayak.v1.DeregisterWorkerRequest
-	9,  // 16: kayak.v1.KayakService.CreateStream:input_type -> kayak.v1.CreateStreamRequest
-	10, // 17: kayak.v1.KayakService.GetStream:input_type -> kayak.v1.GetStreamRequest
-	12, // 18: kayak.v1.KayakService.Apply:input_type -> kayak.v1.ApplyRequest
-	18, // 19: kayak.v1.KayakService.PutRecords:output_type -> google.protobuf.Empty
-	2,  // 20: kayak.v1.KayakService.GetRecords:output_type -> kayak.v1.GetRecordsResponse
-	4,  // 21: kayak.v1.KayakService.FetchRecords:output_type -> kayak.v1.FetchRecordsResponse
-	18, // 22: kayak.v1.KayakService.CommitRecord:output_type -> google.protobuf.Empty
-	7,  // 23: kayak.v1.KayakService.RegisterWorker:output_type -> kayak.v1.RegisterWorkerResponse
-	18, // 24: kayak.v1.KayakService.DeregisterWorker:output_type -> google.protobuf.Empty
-	18, // 25: kayak.v1.KayakService.CreateStream:output_type -> google.protobuf.Empty
-	11, // 26: kayak.v1.KayakService.GetStream:output_type -> kayak.v1.GetStreamResponse
-	13, // 27: kayak.v1.KayakService.Apply:output_type -> kayak.v1.ApplyResponse
-	19, // [19:28] is the sub-list for method output_type
-	10, // [10:19] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	16, // 0: kayak.v1.PutRecordsRequest.records:type_name -> kayak.v1.Record
+	16, // 1: kayak.v1.GetRecordsResponse.records:type_name -> kayak.v1.Record
+	17, // 2: kayak.v1.FetchRecordsRequest.worker:type_name -> kayak.v1.Worker
+	16, // 3: kayak.v1.FetchRecordsResponse.records:type_name -> kayak.v1.Record
+	17, // 4: kayak.v1.CommitRecordRequest.worker:type_name -> kayak.v1.Worker
+	16, // 5: kayak.v1.CommitRecordRequest.record:type_name -> kayak.v1.Record
+	17, // 6: kayak.v1.RegisterWorkerResponse.worker:type_name -> kayak.v1.Worker
+	17, // 7: kayak.v1.DeregisterWorkerRequest.worker:type_name -> kayak.v1.Worker
+	18, // 8: kayak.v1.GetStreamResponse.stream:type_name -> kayak.v1.Stream
+	18, // 9: kayak.v1.GetStreamsResponse.streams:type_name -> kayak.v1.Stream
+	19, // 10: kayak.v1.ApplyRequest.command:type_name -> kayak.v1.RaftCommand
+	0,  // 11: kayak.v1.KayakService.PutRecords:input_type -> kayak.v1.PutRecordsRequest
+	1,  // 12: kayak.v1.KayakService.GetRecords:input_type -> kayak.v1.GetRecordsRequest
+	3,  // 13: kayak.v1.KayakService.FetchRecords:input_type -> kayak.v1.FetchRecordsRequest
+	5,  // 14: kayak.v1.KayakService.CommitRecord:input_type -> kayak.v1.CommitRecordRequest
+	6,  // 15: kayak.v1.KayakService.RegisterWorker:input_type -> kayak.v1.RegisterWorkerRequest
+	8,  // 16: kayak.v1.KayakService.DeregisterWorker:input_type -> kayak.v1.DeregisterWorkerRequest
+	9,  // 17: kayak.v1.KayakService.CreateStream:input_type -> kayak.v1.CreateStreamRequest
+	10, // 18: kayak.v1.KayakService.GetStream:input_type -> kayak.v1.GetStreamRequest
+	12, // 19: kayak.v1.KayakService.GetStreams:input_type -> kayak.v1.GetStreamsRequest
+	14, // 20: kayak.v1.KayakService.Apply:input_type -> kayak.v1.ApplyRequest
+	20, // 21: kayak.v1.KayakService.PutRecords:output_type -> google.protobuf.Empty
+	2,  // 22: kayak.v1.KayakService.GetRecords:output_type -> kayak.v1.GetRecordsResponse
+	4,  // 23: kayak.v1.KayakService.FetchRecords:output_type -> kayak.v1.FetchRecordsResponse
+	20, // 24: kayak.v1.KayakService.CommitRecord:output_type -> google.protobuf.Empty
+	7,  // 25: kayak.v1.KayakService.RegisterWorker:output_type -> kayak.v1.RegisterWorkerResponse
+	20, // 26: kayak.v1.KayakService.DeregisterWorker:output_type -> google.protobuf.Empty
+	20, // 27: kayak.v1.KayakService.CreateStream:output_type -> google.protobuf.Empty
+	11, // 28: kayak.v1.KayakService.GetStream:output_type -> kayak.v1.GetStreamResponse
+	13, // 29: kayak.v1.KayakService.GetStreams:output_type -> kayak.v1.GetStreamsResponse
+	15, // 30: kayak.v1.KayakService.Apply:output_type -> kayak.v1.ApplyResponse
+	21, // [21:31] is the sub-list for method output_type
+	11, // [11:21] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_kayak_v1_kayak_proto_init() }
@@ -873,7 +963,7 @@ func file_kayak_v1_kayak_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_kayak_v1_kayak_proto_rawDesc), len(file_kayak_v1_kayak_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   14,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

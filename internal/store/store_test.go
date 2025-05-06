@@ -25,7 +25,7 @@ func setupTest(t *testing.T) *testContainer {
 	db, err := badger.Open(opts)
 	must.NoError(t, err)
 	t.Cleanup(func() {
-		db.Close()
+		db.Close() //nolint: errcheck
 	})
 	store := New(db)
 	return &testContainer{
@@ -289,7 +289,7 @@ func TestGetRecords(t *testing.T) {
 		{
 			name:      "use position",
 			limit:     5,
-			postition: secondId,
+			postition: firstId,
 			records: []*kayakv1.Record{
 				{
 					Partition:  0,
@@ -315,9 +315,8 @@ func TestGetRecords(t *testing.T) {
 			},
 		},
 		{
-			name:      "only correct partition",
-			limit:     5,
-			postition: secondId,
+			name:  "only correct partition",
+			limit: 5,
 			records: []*kayakv1.Record{
 				{
 					Partition:  1,

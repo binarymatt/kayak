@@ -42,3 +42,8 @@ server2:
 	go run cmd/kayak/main.go --node_id=server2 --listen_address=localhost:8081 --raft_address=localhost:1201 --data_dir=./data/server2 --raft_data_dir=./raft_data/raft_data2 --join_addr=localhost:8080
 server3:
 	go run cmd/kayak/main.go --node_id=server3 --listen_address=localhost:8082 --raft_address=localhost:1202 --data_dir=./data/server3 --raft_data_dir=./raft_data/raft_data3 --join_addr=localhost:8080
+
+docker:
+	docker build . -t kayak
+docker-compose:
+	docker compose -f compose/compose.yaml up

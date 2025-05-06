@@ -15,7 +15,6 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	v1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
 	"github.com/binarymatt/kayak/internal/store"
@@ -40,7 +39,7 @@ type service struct {
 	testLeaderClient kayakv1connect.KayakServiceClient
 }
 
-func (s *service) applyCommand(ctx context.Context, cmd *kayakv1.RaftCommand) error {
+func (s *service) applyCommand(ctx context.Context, cmd *v1.RaftCommand) error {
 	if s.raft.State() != raft.Leader {
 		slog.Info("sending apply to leader")
 		client := s.getLeaderClient()
@@ -162,6 +161,7 @@ func (s *service) FetchRecords(ctx context.Context, req *connect.Request[v1.Fetc
 }
 
 func (s *service) GetRecords(ctx context.Context, req *connect.Request[v1.GetRecordsRequest]) (*connect.Response[v1.GetRecordsResponse], error) {
+	slog.Info("getting records", "partitio", req.Msg.Partition, "start", req.Msg.StartId, "stream", req.Msg.StreamName, "limit", req.Msg.Limit)
 	records, err := s.store.GetRecords(req.Msg.StreamName, req.Msg.Partition, req.Msg.StartId, int(req.Msg.Limit))
 	if err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
@@ -196,11 +196,25 @@ func (s *service) CreateStream(ctx context.Context, req *connect.Request[v1.Crea
 func (s *service) GetStream(ctx context.Context, req *connect.Request[v1.GetStreamRequest]) (*connect.Response[v1.GetStreamResponse], error) {
 	stream, err := s.store.GetStream(req.Msg.Name)
 	if err != nil {
+		if errors.Is(err, badger.ErrKeyNotFound) {
+			return nil, connect.NewError(connect.CodeInvalidArgument, err)
+		}
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	return connect.NewResponse(&v1.GetStreamResponse{
 		Stream: stream,
 	}), nil
+}
+
+func (s *service) GetStreams(ctx context.Context, req *connect.Request[v1.GetStreamsRequest]) (*connect.Response[v1.GetStreamsResponse], error) {
+	streams, err := s.store.GetStreams()
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	resp := &v1.GetStreamsResponse{
+		Streams: streams,
+	}
+	return connect.NewResponse(resp), nil
 }
 
 func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.RegisterWorkerRequest]) (*connect.Response[v1.RegisterWorkerResponse], error) {
@@ -242,13 +256,6 @@ func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.Re
 			},
 		},
 	}
-	if s.raft.State() != raft.Leader {
-		client := s.getLeaderClient()
-		if _, err := client.Apply(ctx, connect.NewRequest(&v1.ApplyRequest{Command: cmd})); err != nil {
-			return nil, connect.NewError(connect.CodeInternal, err)
-		}
-	}
-
 	if err := s.applyCommand(ctx, cmd); err != nil {
 		//if err := s.store.ExtendLease(worker, s.workerExpiration); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
@@ -284,7 +291,9 @@ func (s *service) getLeaderClient() kayakv1connect.KayakServiceClient {
 	if s.testLeaderClient != nil {
 		return s.testLeaderClient
 	}
+
 	leader := fmt.Sprintf("http://%s", s.raft.Leader())
+	fmt.Println(leader)
 	client := kayakv1connect.NewKayakServiceClient(http.DefaultClient, leader)
 	return client
 }
