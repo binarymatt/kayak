@@ -465,6 +465,61 @@ func (_c *MockStore_GetStream_Call) RunAndReturn(run func(name string) (*kayakv1
 	return _c
 }
 
+// GetStreams provides a mock function for the type MockStore
+func (_mock *MockStore) GetStreams() ([]*kayakv1.Stream, error) {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetStreams")
+	}
+
+	var r0 []*kayakv1.Stream
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func() ([]*kayakv1.Stream, error)); ok {
+		return returnFunc()
+	}
+	if returnFunc, ok := ret.Get(0).(func() []*kayakv1.Stream); ok {
+		r0 = returnFunc()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*kayakv1.Stream)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func() error); ok {
+		r1 = returnFunc()
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockStore_GetStreams_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetStreams'
+type MockStore_GetStreams_Call struct {
+	*mock.Call
+}
+
+// GetStreams is a helper method to define mock.On call
+func (_e *MockStore_Expecter) GetStreams() *MockStore_GetStreams_Call {
+	return &MockStore_GetStreams_Call{Call: _e.mock.On("GetStreams")}
+}
+
+func (_c *MockStore_GetStreams_Call) Run(run func()) *MockStore_GetStreams_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockStore_GetStreams_Call) Return(streams []*kayakv1.Stream, err error) *MockStore_GetStreams_Call {
+	_c.Call.Return(streams, err)
+	return _c
+}
+
+func (_c *MockStore_GetStreams_Call) RunAndReturn(run func() ([]*kayakv1.Stream, error)) *MockStore_GetStreams_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // HasLease provides a mock function for the type MockStore
 func (_mock *MockStore) HasLease(worker *kayakv1.Worker) error {
 	ret := _mock.Called(worker)

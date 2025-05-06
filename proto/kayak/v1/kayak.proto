@@ -29,6 +29,7 @@ service KayakService {
   // Stream Operations
   rpc CreateStream(CreateStreamRequest) returns (google.protobuf.Empty) {}
   rpc GetStream(GetStreamRequest) returns (GetStreamResponse) {}
+  rpc GetStreams(GetStreamsRequest) returns (GetStreamsResponse) {}
 
   // Raft Specific
   rpc Apply(ApplyRequest) returns (ApplyResponse) {}
@@ -82,6 +83,10 @@ message GetStreamRequest {
 }
 message GetStreamResponse {
   Stream stream = 1;
+}
+message GetStreamsRequest {}
+message GetStreamsResponse {
+  repeated Stream streams = 1;
 }
 
 message ApplyRequest {

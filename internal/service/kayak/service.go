@@ -207,6 +207,17 @@ func (s *service) GetStream(ctx context.Context, req *connect.Request[v1.GetStre
 	}), nil
 }
 
+func (s *service) GetStreams(ctx context.Context, req *connect.Request[v1.GetStreamsRequest]) (*connect.Response[v1.GetStreamsResponse], error) {
+	streams, err := s.store.GetStreams()
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	resp := &v1.GetStreamsResponse{
+		Streams: streams,
+	}
+	return connect.NewResponse(resp), nil
+}
+
 func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.RegisterWorkerRequest]) (*connect.Response[v1.RegisterWorkerResponse], error) {
 	worker := &v1.Worker{
 		StreamName: req.Msg.StreamName,

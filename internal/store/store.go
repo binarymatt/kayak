@@ -20,6 +20,7 @@ import (
 type Store interface {
 	PutStream(stream *kayakv1.Stream) error
 	GetStream(name string) (*kayakv1.Stream, error)
+	GetStreams() ([]*kayakv1.Stream, error)
 	PutRecords(streamName string, records ...*kayakv1.Record) error
 	GetRecords(streamName string, partition int64, startPosition string, limit int) ([]*kayakv1.Record, error)
 
@@ -74,6 +75,29 @@ func (s *store) GetStream(name string) (*kayakv1.Stream, error) {
 		return nil, err
 	}
 	return &stream, nil
+}
+
+func (s *store) GetStreams() ([]*kayakv1.Stream, error) {
+	txn := s.db.NewTransaction(false)
+	defer txn.Discard()
+	it := txn.NewIterator(badger.DefaultIteratorOptions)
+	defer it.Close()
+	streams := []*kayakv1.Stream{}
+	prefix := []byte("streams:")
+	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+		item := it.Item()
+		val, err := item.ValueCopy(nil)
+		if err != nil {
+			return nil, err
+		}
+
+		var stream kayakv1.Stream
+		if err := proto.Unmarshal(val, &stream); err != nil {
+			return nil, err
+		}
+		streams = append(streams, &stream)
+	}
+	return streams, nil
 }
 
 func (s *store) PutRecords(streamName string, records ...*kayakv1.Record) error {
