@@ -1,0 +1,219 @@
+openapi: 3.1.0
+info:
+  title: kayak.v1
+paths: {}
+components:
+  schemas:
+    kayak.v1.Operation:
+      type: string
+      title: Operation
+      enum:
+        - OPERATION_UNSPECIFIED
+        - OPERATION_PUT_STREAM
+        - OPERATION_PUT_RECORDS
+        - OPERATION_EXTEND_LEASE
+        - OPERATION_REMOVE_LEASE
+        - OPERATION_COMMIT_GROUP_POSITION
+    kayak.v1.CommitGroupPosition:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        groupName:
+          type: string
+          title: group_name
+        partition:
+          type:
+            - integer
+            - string
+          title: partition
+          format: int64
+        position:
+          type: string
+          title: position
+      title: CommitGroupPosition
+      additionalProperties: false
+    kayak.v1.ExtendLease:
+      type: object
+      properties:
+        worker:
+          title: worker
+          $ref: '#/components/schemas/kayak.v1.Worker'
+        expiresMs:
+          type:
+            - integer
+            - string
+          title: expires_ms
+          format: int64
+      title: ExtendLease
+      additionalProperties: false
+    kayak.v1.PutRecords:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/kayak.v1.Record'
+          title: records
+      title: PutRecords
+      additionalProperties: false
+    kayak.v1.PutStream:
+      type: object
+      properties:
+        stream:
+          title: stream
+          $ref: '#/components/schemas/kayak.v1.Stream'
+      title: PutStream
+      additionalProperties: false
+    kayak.v1.RaftCommand:
+      type: object
+      oneOf:
+        - properties:
+            commitGroupPosition:
+              title: commit_group_position
+              $ref: '#/components/schemas/kayak.v1.CommitGroupPosition'
+          title: commit_group_position
+          required:
+            - commitGroupPosition
+        - properties:
+            extendLease:
+              title: extend_lease
+              $ref: '#/components/schemas/kayak.v1.ExtendLease'
+          title: extend_lease
+          required:
+            - extendLease
+        - properties:
+            putRecords:
+              title: put_records
+              $ref: '#/components/schemas/kayak.v1.PutRecords'
+          title: put_records
+          required:
+            - putRecords
+        - properties:
+            putStream:
+              title: put_stream
+              $ref: '#/components/schemas/kayak.v1.PutStream'
+          title: put_stream
+          required:
+            - putStream
+        - properties:
+            removeLease:
+              title: remove_lease
+              $ref: '#/components/schemas/kayak.v1.RemoveLease'
+          title: remove_lease
+          required:
+            - removeLease
+      properties:
+        operation:
+          title: operation
+          $ref: '#/components/schemas/kayak.v1.Operation'
+      title: RaftCommand
+      additionalProperties: false
+    kayak.v1.Record:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        partition:
+          type:
+            - integer
+            - string
+          title: partition
+          format: int64
+        id:
+          type: string
+          title: id
+          format: byte
+          description: id is used to hashed and used for partition assignment, can be set by client.
+        internalId:
+          type: string
+          title: internal_id
+          description: internal id is used as identifier in partition stream
+        headers:
+          type: object
+          title: headers
+          additionalProperties:
+            type: string
+            title: value
+        payload:
+          type: string
+          title: payload
+          format: byte
+      title: Record
+      required:
+        - payload
+      additionalProperties: false
+    kayak.v1.Record.HeadersEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: HeadersEntry
+      additionalProperties: false
+    kayak.v1.RemoveLease:
+      type: object
+      properties:
+        worker:
+          title: worker
+          $ref: '#/components/schemas/kayak.v1.Worker'
+      title: RemoveLease
+      additionalProperties: false
+    kayak.v1.Stream:
+      type: object
+      properties:
+        name:
+          type: string
+          title: name
+        partitionCount:
+          type:
+            - integer
+            - string
+          title: partition_count
+          format: int64
+        ttl:
+          type:
+            - integer
+            - string
+          title: ttl
+          format: int64
+      title: Stream
+      additionalProperties: false
+    kayak.v1.Worker:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        groupName:
+          type: string
+          title: group_name
+        id:
+          type: string
+          title: id
+        partitionAssignment:
+          type:
+            - integer
+            - string
+          title: partition_assignment
+          format: int64
+        position:
+          type: string
+          title: position
+        leaseExpires:
+          type:
+            - integer
+            - string
+          title: lease_expires
+          format: int64
+      title: Worker
+      additionalProperties: false
+security: []

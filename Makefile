@@ -1,6 +1,8 @@
 .PHONY: proto
 proto:
+	buf dep update
 	buf generate
+	$(MAKE) mocks
 
 .PHONY: test
 test:
