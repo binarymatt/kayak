@@ -1,0 +1,128 @@
+openapi: 3.1.0
+info:
+  title: kayak.v1
+paths: {}
+components:
+  schemas:
+    kayak.v1.PartitionAssignment:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        groupName:
+          type: string
+          title: group_name
+        partition:
+          type:
+            - integer
+            - string
+          title: partition
+          format: int64
+        workerId:
+          type: string
+          title: worker_id
+        expiresAt:
+          type:
+            - integer
+            - string
+          title: expires_at
+          format: int64
+      title: PartitionAssignment
+      additionalProperties: false
+    kayak.v1.Record:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        partition:
+          type:
+            - integer
+            - string
+          title: partition
+          format: int64
+        id:
+          type: string
+          title: id
+          format: byte
+          description: id is used to hashed and used for partition assignment, can be set by client.
+        internalId:
+          type: string
+          title: internal_id
+          description: internal id is used as identifier in partition stream
+        headers:
+          type: object
+          title: headers
+          additionalProperties:
+            type: string
+            title: value
+        payload:
+          type: string
+          title: payload
+          format: byte
+      title: Record
+      required:
+        - payload
+      additionalProperties: false
+    kayak.v1.Record.HeadersEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: HeadersEntry
+      additionalProperties: false
+    kayak.v1.Stream:
+      type: object
+      properties:
+        name:
+          type: string
+          title: name
+        partitionCount:
+          type:
+            - integer
+            - string
+          title: partition_count
+          format: int64
+        ttl:
+          type:
+            - integer
+            - string
+          title: ttl
+          format: int64
+      title: Stream
+      additionalProperties: false
+    kayak.v1.Worker:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        groupName:
+          type: string
+          title: group_name
+        id:
+          type: string
+          title: id
+        partitionAssignment:
+          type:
+            - integer
+            - string
+          title: partition_assignment
+          format: int64
+        position:
+          type: string
+          title: position
+        leaseExpires:
+          type:
+            - integer
+            - string
+          title: lease_expires
+          format: int64
+      title: Worker
+      additionalProperties: false
+security: []

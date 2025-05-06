@@ -1,0 +1,828 @@
+openapi: 3.1.0
+info:
+  title: kayak.v1
+paths:
+  /kayak.v1.KayakService/PutRecords:
+    post:
+      tags:
+        - kayak.v1.KayakService
+      summary: PutRecords
+      description: |-
+        Record Operations
+         PutRecords adds records to the stream
+      operationId: kayak.v1.KayakService.PutRecords
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/kayak.v1.PutRecordsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/google.protobuf.Empty'
+  /kayak.v1.KayakService/GetRecords:
+    post:
+      tags:
+        - kayak.v1.KayakService
+      summary: GetRecords
+      description: GetRecords retrieves from a stream
+      operationId: kayak.v1.KayakService.GetRecords
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/kayak.v1.GetRecordsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/kayak.v1.GetRecordsResponse'
+  /kayak.v1.KayakService/FetchRecords:
+    post:
+      tags:
+        - kayak.v1.KayakService
+      summary: FetchRecords
+      description: FetchRecords retrieves from a stream for a group worker
+      operationId: kayak.v1.KayakService.FetchRecords
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/kayak.v1.FetchRecordsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/kayak.v1.FetchRecordsResponse'
+  /kayak.v1.KayakService/CommitRecord:
+    post:
+      tags:
+        - kayak.v1.KayakService
+      summary: CommitRecord
+      description: CommitRecord commits the position of a worker in the stream.
+      operationId: kayak.v1.KayakService.CommitRecord
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/kayak.v1.CommitRecordRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/google.protobuf.Empty'
+  /kayak.v1.KayakService/RegisterWorker:
+    post:
+      tags:
+        - kayak.v1.KayakService
+      summary: RegisterWorker
+      description: Worker Operations
+      operationId: kayak.v1.KayakService.RegisterWorker
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/kayak.v1.RegisterWorkerRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/kayak.v1.RegisterWorkerResponse'
+  /kayak.v1.KayakService/DeregisterWorker:
+    post:
+      tags:
+        - kayak.v1.KayakService
+      summary: DeregisterWorker
+      operationId: kayak.v1.KayakService.DeregisterWorker
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/kayak.v1.DeregisterWorkerRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/google.protobuf.Empty'
+  /kayak.v1.KayakService/CreateStream:
+    post:
+      tags:
+        - kayak.v1.KayakService
+      summary: CreateStream
+      description: Stream Operations
+      operationId: kayak.v1.KayakService.CreateStream
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/kayak.v1.CreateStreamRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/google.protobuf.Empty'
+  /kayak.v1.KayakService/GetStream:
+    post:
+      tags:
+        - kayak.v1.KayakService
+      summary: GetStream
+      operationId: kayak.v1.KayakService.GetStream
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/kayak.v1.GetStreamRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/kayak.v1.GetStreamResponse'
+  /kayak.v1.KayakService/GetStreams:
+    post:
+      tags:
+        - kayak.v1.KayakService
+      summary: GetStreams
+      operationId: kayak.v1.KayakService.GetStreams
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/kayak.v1.GetStreamsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/kayak.v1.GetStreamsResponse'
+  /kayak.v1.KayakService/Apply:
+    post:
+      tags:
+        - kayak.v1.KayakService
+      summary: Apply
+      description: Raft Specific
+      operationId: kayak.v1.KayakService.Apply
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/kayak.v1.ApplyRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/kayak.v1.ApplyResponse'
+components:
+  schemas:
+    kayak.v1.Operation:
+      type: string
+      title: Operation
+      enum:
+        - OPERATION_UNSPECIFIED
+        - OPERATION_PUT_STREAM
+        - OPERATION_PUT_RECORDS
+        - OPERATION_EXTEND_LEASE
+        - OPERATION_REMOVE_LEASE
+        - OPERATION_COMMIT_GROUP_POSITION
+    google.protobuf.Empty:
+      type: object
+      description: |-
+        A generic empty message that you can re-use to avoid defining duplicated
+         empty messages in your APIs. A typical example is to use it as the request
+         or the response type of an API method. For instance:
+
+             service Foo {
+               rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);
+             }
+    kayak.v1.ApplyRequest:
+      type: object
+      properties:
+        command:
+          title: command
+          $ref: '#/components/schemas/kayak.v1.RaftCommand'
+      title: ApplyRequest
+      additionalProperties: false
+    kayak.v1.ApplyResponse:
+      type: object
+      title: ApplyResponse
+      additionalProperties: false
+    kayak.v1.CommitGroupPosition:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        groupName:
+          type: string
+          title: group_name
+        partition:
+          type:
+            - integer
+            - string
+          title: partition
+          format: int64
+        position:
+          type: string
+          title: position
+      title: CommitGroupPosition
+      additionalProperties: false
+    kayak.v1.CommitRecordRequest:
+      type: object
+      properties:
+        worker:
+          title: worker
+          $ref: '#/components/schemas/kayak.v1.Worker'
+        record:
+          title: record
+          $ref: '#/components/schemas/kayak.v1.Record'
+      title: CommitRecordRequest
+      additionalProperties: false
+    kayak.v1.CreateStreamRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          title: name
+        partitionCount:
+          type:
+            - integer
+            - string
+          title: partition_count
+          format: int64
+        ttl:
+          type:
+            - integer
+            - string
+          title: ttl
+          format: int64
+      title: CreateStreamRequest
+      additionalProperties: false
+    kayak.v1.DeregisterWorkerRequest:
+      type: object
+      properties:
+        worker:
+          title: worker
+          $ref: '#/components/schemas/kayak.v1.Worker'
+      title: DeregisterWorkerRequest
+      additionalProperties: false
+    kayak.v1.ExtendLease:
+      type: object
+      properties:
+        worker:
+          title: worker
+          $ref: '#/components/schemas/kayak.v1.Worker'
+        expiresMs:
+          type:
+            - integer
+            - string
+          title: expires_ms
+          format: int64
+      title: ExtendLease
+      additionalProperties: false
+    kayak.v1.FetchRecordsRequest:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        worker:
+          title: worker
+          $ref: '#/components/schemas/kayak.v1.Worker'
+        limit:
+          type:
+            - integer
+            - string
+          title: limit
+          format: int64
+      title: FetchRecordsRequest
+      additionalProperties: false
+    kayak.v1.FetchRecordsResponse:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/kayak.v1.Record'
+          title: records
+      title: FetchRecordsResponse
+      additionalProperties: false
+    kayak.v1.GetRecordsRequest:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        partition:
+          type:
+            - integer
+            - string
+          title: partition
+          format: int64
+        startId:
+          type: string
+          title: start_id
+        limit:
+          type:
+            - integer
+            - string
+          title: limit
+          format: int64
+      title: GetRecordsRequest
+      additionalProperties: false
+    kayak.v1.GetRecordsResponse:
+      type: object
+      properties:
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/kayak.v1.Record'
+          title: records
+      title: GetRecordsResponse
+      additionalProperties: false
+    kayak.v1.GetStreamRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          title: name
+      title: GetStreamRequest
+      required:
+        - name
+      additionalProperties: false
+    kayak.v1.GetStreamResponse:
+      type: object
+      properties:
+        stream:
+          title: stream
+          $ref: '#/components/schemas/kayak.v1.Stream'
+      title: GetStreamResponse
+      additionalProperties: false
+    kayak.v1.GetStreamsRequest:
+      type: object
+      title: GetStreamsRequest
+      additionalProperties: false
+    kayak.v1.GetStreamsResponse:
+      type: object
+      properties:
+        streams:
+          type: array
+          items:
+            $ref: '#/components/schemas/kayak.v1.Stream'
+          title: streams
+      title: GetStreamsResponse
+      additionalProperties: false
+    kayak.v1.PutRecords:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/kayak.v1.Record'
+          title: records
+      title: PutRecords
+      additionalProperties: false
+    kayak.v1.PutRecordsRequest:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        records:
+          type: array
+          items:
+            $ref: '#/components/schemas/kayak.v1.Record'
+          title: records
+        idempotencyKey:
+          type: string
+          title: idempotency_key
+      title: PutRecordsRequest
+      additionalProperties: false
+    kayak.v1.PutStream:
+      type: object
+      properties:
+        stream:
+          title: stream
+          $ref: '#/components/schemas/kayak.v1.Stream'
+      title: PutStream
+      additionalProperties: false
+    kayak.v1.RaftCommand:
+      type: object
+      oneOf:
+        - properties:
+            commitGroupPosition:
+              title: commit_group_position
+              $ref: '#/components/schemas/kayak.v1.CommitGroupPosition'
+          title: commit_group_position
+          required:
+            - commitGroupPosition
+        - properties:
+            extendLease:
+              title: extend_lease
+              $ref: '#/components/schemas/kayak.v1.ExtendLease'
+          title: extend_lease
+          required:
+            - extendLease
+        - properties:
+            putRecords:
+              title: put_records
+              $ref: '#/components/schemas/kayak.v1.PutRecords'
+          title: put_records
+          required:
+            - putRecords
+        - properties:
+            putStream:
+              title: put_stream
+              $ref: '#/components/schemas/kayak.v1.PutStream'
+          title: put_stream
+          required:
+            - putStream
+        - properties:
+            removeLease:
+              title: remove_lease
+              $ref: '#/components/schemas/kayak.v1.RemoveLease'
+          title: remove_lease
+          required:
+            - removeLease
+      properties:
+        operation:
+          title: operation
+          $ref: '#/components/schemas/kayak.v1.Operation'
+      title: RaftCommand
+      additionalProperties: false
+    kayak.v1.Record:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        partition:
+          type:
+            - integer
+            - string
+          title: partition
+          format: int64
+        id:
+          type: string
+          title: id
+          format: byte
+          description: id is used to hashed and used for partition assignment, can be set by client.
+        internalId:
+          type: string
+          title: internal_id
+          description: internal id is used as identifier in partition stream
+        headers:
+          type: object
+          title: headers
+          additionalProperties:
+            type: string
+            title: value
+        payload:
+          type: string
+          title: payload
+          format: byte
+      title: Record
+      required:
+        - payload
+      additionalProperties: false
+    kayak.v1.Record.HeadersEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: HeadersEntry
+      additionalProperties: false
+    kayak.v1.RegisterWorkerRequest:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        group:
+          type: string
+          title: group
+        id:
+          type: string
+          title: id
+      title: RegisterWorkerRequest
+      additionalProperties: false
+    kayak.v1.RegisterWorkerResponse:
+      type: object
+      properties:
+        worker:
+          title: worker
+          $ref: '#/components/schemas/kayak.v1.Worker'
+      title: RegisterWorkerResponse
+      additionalProperties: false
+    kayak.v1.RemoveLease:
+      type: object
+      properties:
+        worker:
+          title: worker
+          $ref: '#/components/schemas/kayak.v1.Worker'
+      title: RemoveLease
+      additionalProperties: false
+    kayak.v1.Stream:
+      type: object
+      properties:
+        name:
+          type: string
+          title: name
+        partitionCount:
+          type:
+            - integer
+            - string
+          title: partition_count
+          format: int64
+        ttl:
+          type:
+            - integer
+            - string
+          title: ttl
+          format: int64
+      title: Stream
+      additionalProperties: false
+    kayak.v1.Worker:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        groupName:
+          type: string
+          title: group_name
+        id:
+          type: string
+          title: id
+        partitionAssignment:
+          type:
+            - integer
+            - string
+          title: partition_assignment
+          format: int64
+        position:
+          type: string
+          title: position
+        leaseExpires:
+          type:
+            - integer
+            - string
+          title: lease_expires
+          format: int64
+      title: Worker
+      additionalProperties: false
+    connect-protocol-version:
+      type: number
+      title: Connect-Protocol-Version
+      enum:
+        - 1
+      description: Define the version of the Connect protocol
+      const: 1
+    connect-timeout-header:
+      type: number
+      title: Connect-Timeout-Ms
+      description: Define the timeout, in ms
+    connect.error:
+      type: object
+      properties:
+        code:
+          type: string
+          examples:
+            - not_found
+          enum:
+            - canceled
+            - unknown
+            - invalid_argument
+            - deadline_exceeded
+            - not_found
+            - already_exists
+            - permission_denied
+            - resource_exhausted
+            - failed_precondition
+            - aborted
+            - out_of_range
+            - unimplemented
+            - internal
+            - unavailable
+            - data_loss
+            - unauthenticated
+          description: The status code, which should be an enum value of [google.rpc.Code][google.rpc.Code].
+        message:
+          type: string
+          description: A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the [google.rpc.Status.details][google.rpc.Status.details] field, or localized by the client.
+        detail:
+          $ref: '#/components/schemas/google.protobuf.Any'
+      title: Connect Error
+      additionalProperties: true
+      description: 'Error type returned by Connect: https://connectrpc.com/docs/go/errors/#http-representation'
+    google.protobuf.Any:
+      type: object
+      properties:
+        type:
+          type: string
+        value:
+          type: string
+          format: binary
+        debug:
+          type: object
+          additionalProperties: true
+      additionalProperties: true
+      description: Contains an arbitrary serialized message along with a @type that describes the type of the serialized message.
+security: []
+tags:
+  - name: kayak.v1.KayakService

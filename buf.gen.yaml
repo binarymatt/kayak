@@ -7,5 +7,7 @@ plugins:
   - local: protoc-gen-connect-go
     out: gen
     opt: paths=source_relative
+  - local: protoc-gen-connect-openapi # https://github.com/sudorandom/protoc-gen-connect-openapi/tree/main
+    out: swagger
 managed:
   enabled: true
