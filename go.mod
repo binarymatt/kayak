@@ -5,6 +5,7 @@ go 1.24.2
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.6-20250425153114-8976f5be98c1.1
 	connectrpc.com/connect v1.18.1
+	connectrpc.com/cors v0.1.0
 	connectrpc.com/otelconnect v0.7.2
 	github.com/ValerySidorin/shclog v0.0.1
 	github.com/dgraph-io/badger/v4 v4.7.0
@@ -13,6 +14,7 @@ require (
 	github.com/lmittmann/tint v1.0.7
 	github.com/oklog/ulid/v2 v2.1.0
 	github.com/prometheus/client_golang v1.20.5
+	github.com/rs/cors v1.11.1
 	github.com/shoenig/test v1.12.1
 	github.com/spaolacci/murmur3 v1.1.0
 	github.com/spf13/pflag v1.0.6

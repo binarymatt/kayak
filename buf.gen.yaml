@@ -9,5 +9,9 @@ plugins:
     opt: paths=source_relative
   - local: protoc-gen-connect-openapi # https://github.com/sudorandom/protoc-gen-connect-openapi/tree/main
     out: swagger
+  - local: node_modules/.bin/protoc-gen-es
+    out: src/gen
+    include_imports: true
+    opt: target=ts
 managed:
   enabled: true
