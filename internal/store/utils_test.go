@@ -32,6 +32,6 @@ func TestRecordPrefixKey(t *testing.T) {
 }
 
 func TestGroupPositionKey(t *testing.T) {
-	res := groupPositionKey("test", "group1", 1)
-	must.Eq(t, "test:group1:1", string(res))
+	res := groupPositionKey("testStream", "testGroup", 1)
+	must.Eq(t, "groups:testStream:testGroup:1", string(res))
 }

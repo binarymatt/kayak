@@ -29,8 +29,18 @@ func recordPrefixKey(stream string, partition int64) []byte {
 	return []byte(key)
 }
 
-// stream_name:group_name:partition
+// groups:stream_name:group_name:partition
 func groupPositionKey(stream, group string, partition int64) []byte {
-	key := fmt.Sprintf("%s:%s:%d", stream, group, partition)
+	prefix := groupPrefix(stream)
+	key := fmt.Sprintf("%s:%s:%d", prefix, group, partition)
+	return []byte(key)
+}
+
+func groupPrefix(streamName string) string {
+	return fmt.Sprintf("groups:%s", streamName)
+}
+
+func streamMetadataKey(stream string) []byte {
+	key := fmt.Sprintf("meta:%s", stream)
 	return []byte(key)
 }
