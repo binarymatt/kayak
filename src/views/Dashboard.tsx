@@ -1,6 +1,7 @@
 import { batch, Component, createSignal, For, JSX } from "solid-js";
 import { clusters, setClusters, removeIndex } from "../stores";
 import { VsTrash } from "solid-icons/vs";
+import { getKayakClient } from "../client";
 
 export const Dashboard: Component = () => {
   const [name, setName] = createSignal("");
@@ -8,6 +9,7 @@ export const Dashboard: Component = () => {
   const addCluster = (event: SubmitEvent) => {
     event.preventDefault();
     // setAddress(event.target.elements["address"].value);
+
     batch(() => {
       setClusters(clusters.length, {
         name: name(),
@@ -87,4 +89,3 @@ export const Dashboard: Component = () => {
     </div>
   );
 };
-

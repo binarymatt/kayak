@@ -49,3 +49,7 @@ docker:
 	docker build . -t kayak
 docker-compose:
 	docker compose -f compose/compose.yaml up
+
+.PHONY: ui/start
+ui/start:
+	npm start
