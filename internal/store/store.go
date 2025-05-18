@@ -32,6 +32,8 @@ type Store interface {
 	CommitGroupPosition(stream, group string, parition int64, position string) error
 	GetPartitionAssignment(stream, group string, partition int64) (string, error)
 	GetPartitionAssignments(stream, group string) (map[int64]*kayakv1.PartitionAssignment, error)
+	GetGroupInformation(streamName, groupName string) (*kayakv1.Group, error)
+	GetStreamStats(name string) (*kayakv1.StreamStats, error)
 
 	// raft FSM
 	Apply(l *raft.Log) any
@@ -323,7 +325,108 @@ func (s *store) GetPartitionAssignments(stream, group string) (map[int64]*kayakv
 
 	return assignments, nil
 }
+func (s *store) getPartitionCounts(stream string) (map[int64]int64, error) {
 
+	txn := s.db.NewTransaction(false)
+	defer txn.Discard()
+	prefix := []byte(stream)
+	opts := badger.DefaultIteratorOptions
+	opts.PrefetchValues = false
+	it := txn.NewIterator(opts)
+	defer it.Close()
+
+	partitionMapping := map[int64]int64{}
+	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+		item := it.Item()
+		key := item.Key()
+		parts := strings.Split(string(key), ":")
+		partitionStr := parts[1]
+		partition, err := strconv.ParseInt(partitionStr, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		partitionMapping[partition]++
+		// split key by
+	}
+	return partitionMapping, nil
+}
+func (s *store) GetStreamStats(name string) (*kayakv1.StreamStats, error) {
+	m, err := s.getPartitionCounts(name)
+	if err != nil {
+		return nil, err
+	}
+	groups, err := s.getStreamGroups(name)
+	if err != nil {
+		return nil, err
+	}
+	stats := &kayakv1.StreamStats{
+		PartitionCounts: m,
+		Groups:          groups,
+	}
+	return stats, nil
+}
+func (s *store) getStreamGroups(streamName string) ([]*kayakv1.Group, error) {
+	prefix := []byte(groupPrefix(streamName))
+
+	txn := s.db.NewTransaction(false)
+	defer txn.Discard()
+	opts := badger.DefaultIteratorOptions
+	// opts.PrefetchValues = false
+	it := txn.NewIterator(opts)
+	defer it.Close()
+
+	container := map[string]*kayakv1.Group{}
+	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+		item := it.Item()
+		key := item.Key()
+		parts := strings.Split(string(key), ":")
+		groupName := parts[2]
+		partitionStr := parts[3]
+		partitionNumber, err := strconv.ParseInt(partitionStr, 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		val, err := item.ValueCopy(nil)
+		if err != nil {
+			return nil, err
+		}
+		position := string(val)
+		group, ok := container[groupName]
+		if !ok {
+			group = &kayakv1.Group{
+				StreamName:         streamName,
+				Name:               groupName,
+				PartitionPositions: map[int64]string{},
+			}
+		}
+		group.PartitionPositions[partitionNumber] = position
+		container[groupName] = group
+	}
+	groups := []*kayakv1.Group{}
+	for _, v := range container {
+		groups = append(groups, v)
+	}
+	return groups, nil
+}
+func (s store) GetGroupInformation(streamName, groupName string) (*kayakv1.Group, error) {
+	stream, err := s.GetStream(streamName)
+	if err != nil {
+		return nil, err
+	}
+	group := &kayakv1.Group{
+		StreamName:         stream.Name,
+		Name:               groupName,
+		PartitionPositions: map[int64]string{},
+	}
+	for i := range stream.PartitionCount {
+		position, err := s.GetGroupPosition(stream.Name, groupName, i)
+		if err != nil {
+			return nil, err
+		}
+		group.PartitionPositions[i] = position
+	}
+	return group, nil
+}
 func New(db *badger.DB) *store {
 	return &store{db: db}
 }
