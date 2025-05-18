@@ -51,6 +51,9 @@ components:
     kayak.v1.Group:
       type: object
       properties:
+        streamName:
+          type: string
+          title: stream_name
         name:
           type: string
           title: name
@@ -222,6 +225,15 @@ components:
     kayak.v1.StreamStats:
       type: object
       properties:
+        partitionCounts:
+          type: object
+          title: partition_counts
+          additionalProperties:
+            type:
+              - integer
+              - string
+            title: value
+            format: int64
         recordCount:
           type:
             - integer
@@ -234,6 +246,23 @@ components:
             $ref: '#/components/schemas/kayak.v1.Group'
           title: groups
       title: StreamStats
+      additionalProperties: false
+    kayak.v1.StreamStats.PartitionCountsEntry:
+      type: object
+      properties:
+        key:
+          type:
+            - integer
+            - string
+          title: key
+          format: int64
+        value:
+          type:
+            - integer
+            - string
+          title: value
+          format: int64
+      title: PartitionCountsEntry
       additionalProperties: false
     kayak.v1.Worker:
       type: object

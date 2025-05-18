@@ -11,7 +11,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file kayak/v1/model.proto.
  */
 export const file_kayak_v1_model: GenFile = /*@__PURE__*/
-  fileDesc("ChRrYXlhay92MS9tb2RlbC5wcm90bxIIa2F5YWsudjEicQoGU3RyZWFtEgwKBG5hbWUYASABKAkSFwoPcGFydGl0aW9uX2NvdW50GAIgASgDEgsKA3R0bBgDIAEoAxIpCgVzdGF0cxgEIAEoCzIVLmtheWFrLnYxLlN0cmVhbVN0YXRzSACIAQFCCAoGX3N0YXRzIkQKC1N0cmVhbVN0YXRzEhQKDHJlY29yZF9jb3VudBgBIAEoAxIfCgZncm91cHMYAiADKAsyDy5rYXlhay52MS5Hcm91cCKWAQoFR3JvdXASDAoEbmFtZRgBIAEoCRJEChNwYXJ0aXRpb25fcG9zaXRpb25zGAIgAygLMicua2F5YWsudjEuR3JvdXAuUGFydGl0aW9uUG9zaXRpb25zRW50cnkaOQoXUGFydGl0aW9uUG9zaXRpb25zRW50cnkSCwoDa2V5GAEgASgDEg0KBXZhbHVlGAIgASgJOgI4ASJ4ChNQYXJ0aXRpb25Bc3NpZ25tZW50EhMKC3N0cmVhbV9uYW1lGAEgASgJEhIKCmdyb3VwX25hbWUYAiABKAkSEQoJcGFydGl0aW9uGAMgASgDEhEKCXdvcmtlcl9pZBgEIAEoCRISCgpleHBpcmVzX2F0GAUgASgDIoQBCgZXb3JrZXISEwoLc3RyZWFtX25hbWUYASABKAkSEgoKZ3JvdXBfbmFtZRgCIAEoCRIKCgJpZBgDIAEoCRIcChRwYXJ0aXRpb25fYXNzaWdubWVudBgEIAEoAxIQCghwb3NpdGlvbhgFIAEoCRIVCg1sZWFzZV9leHBpcmVzGAYgASgDIsoBCgZSZWNvcmQSEwoLc3RyZWFtX25hbWUYASABKAkSEQoJcGFydGl0aW9uGAIgASgDEgoKAmlkGAMgASgMEhMKC2ludGVybmFsX2lkGAQgASgJEi4KB2hlYWRlcnMYBSADKAsyHS5rYXlhay52MS5SZWNvcmQuSGVhZGVyc0VudHJ5EhcKB3BheWxvYWQYBiABKAxCBrpIA8gBARouCgxIZWFkZXJzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUKNAQoMY29tLmtheWFrLnYxQgpNb2RlbFByb3RvUAFaMGdpdGh1Yi5jb20vYmluYXJ5bWF0dC9rYXlhay9nZW4va2F5YWsvdjE7a2F5YWt2MaICA0tYWKoCCEtheWFrLlYxygIIS2F5YWtcVjHiAhRLYXlha1xWMVxHUEJNZXRhZGF0YeoCCUtheWFrOjpWMWIGcHJvdG8z", [file_buf_validate_validate]);
+  fileDesc("ChRrYXlhay92MS9tb2RlbC5wcm90bxIIa2F5YWsudjEicQoGU3RyZWFtEgwKBG5hbWUYASABKAkSFwoPcGFydGl0aW9uX2NvdW50GAIgASgDEgsKA3R0bBgDIAEoAxIpCgVzdGF0cxgEIAEoCzIVLmtheWFrLnYxLlN0cmVhbVN0YXRzSACIAQFCCAoGX3N0YXRzIsIBCgtTdHJlYW1TdGF0cxJEChBwYXJ0aXRpb25fY291bnRzGAEgAygLMioua2F5YWsudjEuU3RyZWFtU3RhdHMuUGFydGl0aW9uQ291bnRzRW50cnkSFAoMcmVjb3JkX2NvdW50GAIgASgDEh8KBmdyb3VwcxgDIAMoCzIPLmtheWFrLnYxLkdyb3VwGjYKFFBhcnRpdGlvbkNvdW50c0VudHJ5EgsKA2tleRgBIAEoAxINCgV2YWx1ZRgCIAEoAzoCOAEiqwEKBUdyb3VwEhMKC3N0cmVhbV9uYW1lGAEgASgJEgwKBG5hbWUYAiABKAkSRAoTcGFydGl0aW9uX3Bvc2l0aW9ucxgDIAMoCzInLmtheWFrLnYxLkdyb3VwLlBhcnRpdGlvblBvc2l0aW9uc0VudHJ5GjkKF1BhcnRpdGlvblBvc2l0aW9uc0VudHJ5EgsKA2tleRgBIAEoAxINCgV2YWx1ZRgCIAEoCToCOAEieAoTUGFydGl0aW9uQXNzaWdubWVudBITCgtzdHJlYW1fbmFtZRgBIAEoCRISCgpncm91cF9uYW1lGAIgASgJEhEKCXBhcnRpdGlvbhgDIAEoAxIRCgl3b3JrZXJfaWQYBCABKAkSEgoKZXhwaXJlc19hdBgFIAEoAyKEAQoGV29ya2VyEhMKC3N0cmVhbV9uYW1lGAEgASgJEhIKCmdyb3VwX25hbWUYAiABKAkSCgoCaWQYAyABKAkSHAoUcGFydGl0aW9uX2Fzc2lnbm1lbnQYBCABKAMSEAoIcG9zaXRpb24YBSABKAkSFQoNbGVhc2VfZXhwaXJlcxgGIAEoAyLKAQoGUmVjb3JkEhMKC3N0cmVhbV9uYW1lGAEgASgJEhEKCXBhcnRpdGlvbhgCIAEoAxIKCgJpZBgDIAEoDBITCgtpbnRlcm5hbF9pZBgEIAEoCRIuCgdoZWFkZXJzGAUgAygLMh0ua2F5YWsudjEuUmVjb3JkLkhlYWRlcnNFbnRyeRIXCgdwYXlsb2FkGAYgASgMQga6SAPIAQEaLgoMSGVhZGVyc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCjQEKDGNvbS5rYXlhay52MUIKTW9kZWxQcm90b1ABWjBnaXRodWIuY29tL2JpbmFyeW1hdHQva2F5YWsvZ2VuL2theWFrL3YxO2theWFrdjGiAgNLWFiqAghLYXlhay5WMcoCCEtheWFrXFYx4gIUS2F5YWtcVjFcR1BCTWV0YWRhdGHqAglLYXlhazo6VjFiBnByb3RvMw", [file_buf_validate_validate]);
 
 /**
  * @generated from message kayak.v1.Stream
@@ -50,12 +50,17 @@ export const StreamSchema: GenMessage<Stream> = /*@__PURE__*/
  */
 export type StreamStats = Message<"kayak.v1.StreamStats"> & {
   /**
-   * @generated from field: int64 record_count = 1;
+   * @generated from field: map<int64, int64> partition_counts = 1;
+   */
+  partitionCounts: { [key: string]: bigint };
+
+  /**
+   * @generated from field: int64 record_count = 2;
    */
   recordCount: bigint;
 
   /**
-   * @generated from field: repeated kayak.v1.Group groups = 2;
+   * @generated from field: repeated kayak.v1.Group groups = 3;
    */
   groups: Group[];
 };
@@ -72,12 +77,17 @@ export const StreamStatsSchema: GenMessage<StreamStats> = /*@__PURE__*/
  */
 export type Group = Message<"kayak.v1.Group"> & {
   /**
-   * @generated from field: string name = 1;
+   * @generated from field: string stream_name = 1;
+   */
+  streamName: string;
+
+  /**
+   * @generated from field: string name = 2;
    */
   name: string;
 
   /**
-   * @generated from field: map<int64, string> partition_positions = 2;
+   * @generated from field: map<int64, string> partition_positions = 3;
    */
   partitionPositions: { [key: string]: string };
 };

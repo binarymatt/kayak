@@ -124,6 +124,20 @@ components:
       type: object
       title: AddVoterResponse
       additionalProperties: false
+    kayak.v1.ConfigItem:
+      type: object
+      properties:
+        suffrage:
+          type: string
+          title: suffrage
+        id:
+          type: string
+          title: id
+        address:
+          type: string
+          title: address
+      title: ConfigItem
+      additionalProperties: false
     kayak.v1.LeaderRequest:
       type: object
       title: LeaderRequest
@@ -146,24 +160,22 @@ components:
     kayak.v1.StatsResponse:
       type: object
       properties:
-        stats:
-          type: object
-          title: stats
-          additionalProperties:
-            type: string
-            title: value
+        state:
+          type: string
+          title: state
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/kayak.v1.ConfigItem'
+          title: nodes
+        term:
+          type: string
+          title: term
+        fsmPending:
+          type: string
+          title: fsm_pending
+          description: map<string, string> stats = 1;
       title: StatsResponse
-      additionalProperties: false
-    kayak.v1.StatsResponse.StatsEntry:
-      type: object
-      properties:
-        key:
-          type: string
-          title: key
-        value:
-          type: string
-          title: value
-      title: StatsEntry
       additionalProperties: false
     connect-protocol-version:
       type: number

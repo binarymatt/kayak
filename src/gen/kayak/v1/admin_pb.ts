@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file kayak/v1/admin.proto.
  */
 export const file_kayak_v1_admin: GenFile = /*@__PURE__*/
-  fileDesc("ChRrYXlhay92MS9hZG1pbi5wcm90bxIIa2F5YWsudjEiLgoPQWRkVm90ZXJSZXF1ZXN0EgoKAmlkGAEgASgJEg8KB2FkZHJlc3MYAiABKAkiEgoQQWRkVm90ZXJSZXNwb25zZSIOCgxTdGF0c1JlcXVlc3QicAoNU3RhdHNSZXNwb25zZRIxCgVzdGF0cxgBIAMoCzIiLmtheWFrLnYxLlN0YXRzUmVzcG9uc2UuU3RhdHNFbnRyeRosCgpTdGF0c0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEiDwoNTGVhZGVyUmVxdWVzdCItCg5MZWFkZXJSZXNwb25zZRIPCgdhZGRyZXNzGAEgASgJEgoKAmlkGAIgASgJMs4BCgxBZG1pblNlcnZpY2USQwoIQWRkVm90ZXISGS5rYXlhay52MS5BZGRWb3RlclJlcXVlc3QaGi5rYXlhay52MS5BZGRWb3RlclJlc3BvbnNlIgASOgoFU3RhdHMSFi5rYXlhay52MS5TdGF0c1JlcXVlc3QaFy5rYXlhay52MS5TdGF0c1Jlc3BvbnNlIgASPQoGTGVhZGVyEhcua2F5YWsudjEuTGVhZGVyUmVxdWVzdBoYLmtheWFrLnYxLkxlYWRlclJlc3BvbnNlIgBCjQEKDGNvbS5rYXlhay52MUIKQWRtaW5Qcm90b1ABWjBnaXRodWIuY29tL2JpbmFyeW1hdHQva2F5YWsvZ2VuL2theWFrL3YxO2theWFrdjGiAgNLWFiqAghLYXlhay5WMcoCCEtheWFrXFYx4gIUS2F5YWtcVjFcR1BCTWV0YWRhdGHqAglLYXlhazo6VjFiBnByb3RvMw");
+  fileDesc("ChRrYXlhay92MS9hZG1pbi5wcm90bxIIa2F5YWsudjEiLgoPQWRkVm90ZXJSZXF1ZXN0EgoKAmlkGAEgASgJEg8KB2FkZHJlc3MYAiABKAkiEgoQQWRkVm90ZXJSZXNwb25zZSIOCgxTdGF0c1JlcXVlc3QiOwoKQ29uZmlnSXRlbRIQCghzdWZmcmFnZRgBIAEoCRIKCgJpZBgCIAEoCRIPCgdhZGRyZXNzGAMgASgJImYKDVN0YXRzUmVzcG9uc2USDQoFc3RhdGUYASABKAkSIwoFbm9kZXMYAiADKAsyFC5rYXlhay52MS5Db25maWdJdGVtEgwKBHRlcm0YAyABKAkSEwoLZnNtX3BlbmRpbmcYBCABKAkiDwoNTGVhZGVyUmVxdWVzdCItCg5MZWFkZXJSZXNwb25zZRIPCgdhZGRyZXNzGAEgASgJEgoKAmlkGAIgASgJMs4BCgxBZG1pblNlcnZpY2USQwoIQWRkVm90ZXISGS5rYXlhay52MS5BZGRWb3RlclJlcXVlc3QaGi5rYXlhay52MS5BZGRWb3RlclJlc3BvbnNlIgASOgoFU3RhdHMSFi5rYXlhay52MS5TdGF0c1JlcXVlc3QaFy5rYXlhay52MS5TdGF0c1Jlc3BvbnNlIgASPQoGTGVhZGVyEhcua2F5YWsudjEuTGVhZGVyUmVxdWVzdBoYLmtheWFrLnYxLkxlYWRlclJlc3BvbnNlIgBCjQEKDGNvbS5rYXlhay52MUIKQWRtaW5Qcm90b1ABWjBnaXRodWIuY29tL2JpbmFyeW1hdHQva2F5YWsvZ2VuL2theWFrL3YxO2theWFrdjGiAgNLWFiqAghLYXlhay5WMcoCCEtheWFrXFYx4gIUS2F5YWtcVjFcR1BCTWV0YWRhdGHqAglLYXlhazo6VjFiBnByb3RvMw");
 
 /**
  * @generated from message kayak.v1.AddVoterRequest
@@ -61,13 +61,57 @@ export const StatsRequestSchema: GenMessage<StatsRequest> = /*@__PURE__*/
   messageDesc(file_kayak_v1_admin, 2);
 
 /**
+ * @generated from message kayak.v1.ConfigItem
+ */
+export type ConfigItem = Message<"kayak.v1.ConfigItem"> & {
+  /**
+   * @generated from field: string suffrage = 1;
+   */
+  suffrage: string;
+
+  /**
+   * @generated from field: string id = 2;
+   */
+  id: string;
+
+  /**
+   * @generated from field: string address = 3;
+   */
+  address: string;
+};
+
+/**
+ * Describes the message kayak.v1.ConfigItem.
+ * Use `create(ConfigItemSchema)` to create a new message.
+ */
+export const ConfigItemSchema: GenMessage<ConfigItem> = /*@__PURE__*/
+  messageDesc(file_kayak_v1_admin, 3);
+
+/**
  * @generated from message kayak.v1.StatsResponse
  */
 export type StatsResponse = Message<"kayak.v1.StatsResponse"> & {
   /**
-   * @generated from field: map<string, string> stats = 1;
+   * @generated from field: string state = 1;
    */
-  stats: { [key: string]: string };
+  state: string;
+
+  /**
+   * @generated from field: repeated kayak.v1.ConfigItem nodes = 2;
+   */
+  nodes: ConfigItem[];
+
+  /**
+   * @generated from field: string term = 3;
+   */
+  term: string;
+
+  /**
+   * map<string, string> stats = 1;
+   *
+   * @generated from field: string fsm_pending = 4;
+   */
+  fsmPending: string;
 };
 
 /**
@@ -75,7 +119,7 @@ export type StatsResponse = Message<"kayak.v1.StatsResponse"> & {
  * Use `create(StatsResponseSchema)` to create a new message.
  */
 export const StatsResponseSchema: GenMessage<StatsResponse> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_admin, 3);
+  messageDesc(file_kayak_v1_admin, 4);
 
 /**
  * @generated from message kayak.v1.LeaderRequest
@@ -88,7 +132,7 @@ export type LeaderRequest = Message<"kayak.v1.LeaderRequest"> & {
  * Use `create(LeaderRequestSchema)` to create a new message.
  */
 export const LeaderRequestSchema: GenMessage<LeaderRequest> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_admin, 4);
+  messageDesc(file_kayak_v1_admin, 5);
 
 /**
  * @generated from message kayak.v1.LeaderResponse
@@ -110,7 +154,7 @@ export type LeaderResponse = Message<"kayak.v1.LeaderResponse"> & {
  * Use `create(LeaderResponseSchema)` to create a new message.
  */
 export const LeaderResponseSchema: GenMessage<LeaderResponse> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_admin, 5);
+  messageDesc(file_kayak_v1_admin, 6);
 
 /**
  * @generated from service kayak.v1.AdminService
