@@ -26,9 +26,8 @@ message ConfigItem {
 message StatsResponse {
   string state = 1;
   repeated ConfigItem nodes = 2;
-  string term = 3;
-  string fsm_pending = 4;
-  // map<string, string> stats = 1;
+  string last_contact = 3;
+  map<string, string> stats = 4;
 }
 
 message LeaderRequest {}

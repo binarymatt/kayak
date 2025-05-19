@@ -168,14 +168,27 @@ components:
           items:
             $ref: '#/components/schemas/kayak.v1.ConfigItem'
           title: nodes
-        term:
+        lastContact:
           type: string
-          title: term
-        fsmPending:
-          type: string
-          title: fsm_pending
-          description: map<string, string> stats = 1;
+          title: last_contact
+        stats:
+          type: object
+          title: stats
+          additionalProperties:
+            type: string
+            title: value
       title: StatsResponse
+      additionalProperties: false
+    kayak.v1.StatsResponse.StatsEntry:
+      type: object
+      properties:
+        key:
+          type: string
+          title: key
+        value:
+          type: string
+          title: value
+      title: StatsEntry
       additionalProperties: false
     connect-protocol-version:
       type: number

@@ -10,7 +10,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file kayak/v1/admin.proto.
  */
 export const file_kayak_v1_admin: GenFile = /*@__PURE__*/
-  fileDesc("ChRrYXlhay92MS9hZG1pbi5wcm90bxIIa2F5YWsudjEiLgoPQWRkVm90ZXJSZXF1ZXN0EgoKAmlkGAEgASgJEg8KB2FkZHJlc3MYAiABKAkiEgoQQWRkVm90ZXJSZXNwb25zZSIOCgxTdGF0c1JlcXVlc3QiOwoKQ29uZmlnSXRlbRIQCghzdWZmcmFnZRgBIAEoCRIKCgJpZBgCIAEoCRIPCgdhZGRyZXNzGAMgASgJImYKDVN0YXRzUmVzcG9uc2USDQoFc3RhdGUYASABKAkSIwoFbm9kZXMYAiADKAsyFC5rYXlhay52MS5Db25maWdJdGVtEgwKBHRlcm0YAyABKAkSEwoLZnNtX3BlbmRpbmcYBCABKAkiDwoNTGVhZGVyUmVxdWVzdCItCg5MZWFkZXJSZXNwb25zZRIPCgdhZGRyZXNzGAEgASgJEgoKAmlkGAIgASgJMs4BCgxBZG1pblNlcnZpY2USQwoIQWRkVm90ZXISGS5rYXlhay52MS5BZGRWb3RlclJlcXVlc3QaGi5rYXlhay52MS5BZGRWb3RlclJlc3BvbnNlIgASOgoFU3RhdHMSFi5rYXlhay52MS5TdGF0c1JlcXVlc3QaFy5rYXlhay52MS5TdGF0c1Jlc3BvbnNlIgASPQoGTGVhZGVyEhcua2F5YWsudjEuTGVhZGVyUmVxdWVzdBoYLmtheWFrLnYxLkxlYWRlclJlc3BvbnNlIgBCjQEKDGNvbS5rYXlhay52MUIKQWRtaW5Qcm90b1ABWjBnaXRodWIuY29tL2JpbmFyeW1hdHQva2F5YWsvZ2VuL2theWFrL3YxO2theWFrdjGiAgNLWFiqAghLYXlhay5WMcoCCEtheWFrXFYx4gIUS2F5YWtcVjFcR1BCTWV0YWRhdGHqAglLYXlhazo6VjFiBnByb3RvMw");
+  fileDesc("ChRrYXlhay92MS9hZG1pbi5wcm90bxIIa2F5YWsudjEiLgoPQWRkVm90ZXJSZXF1ZXN0EgoKAmlkGAEgASgJEg8KB2FkZHJlc3MYAiABKAkiEgoQQWRkVm90ZXJSZXNwb25zZSIOCgxTdGF0c1JlcXVlc3QiOwoKQ29uZmlnSXRlbRIQCghzdWZmcmFnZRgBIAEoCRIKCgJpZBgCIAEoCRIPCgdhZGRyZXNzGAMgASgJIroBCg1TdGF0c1Jlc3BvbnNlEg0KBXN0YXRlGAEgASgJEiMKBW5vZGVzGAIgAygLMhQua2F5YWsudjEuQ29uZmlnSXRlbRIUCgxsYXN0X2NvbnRhY3QYAyABKAkSMQoFc3RhdHMYBCADKAsyIi5rYXlhay52MS5TdGF0c1Jlc3BvbnNlLlN0YXRzRW50cnkaLAoKU3RhdHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIg8KDUxlYWRlclJlcXVlc3QiLQoOTGVhZGVyUmVzcG9uc2USDwoHYWRkcmVzcxgBIAEoCRIKCgJpZBgCIAEoCTLOAQoMQWRtaW5TZXJ2aWNlEkMKCEFkZFZvdGVyEhkua2F5YWsudjEuQWRkVm90ZXJSZXF1ZXN0Ghoua2F5YWsudjEuQWRkVm90ZXJSZXNwb25zZSIAEjoKBVN0YXRzEhYua2F5YWsudjEuU3RhdHNSZXF1ZXN0Ghcua2F5YWsudjEuU3RhdHNSZXNwb25zZSIAEj0KBkxlYWRlchIXLmtheWFrLnYxLkxlYWRlclJlcXVlc3QaGC5rYXlhay52MS5MZWFkZXJSZXNwb25zZSIAQo0BCgxjb20ua2F5YWsudjFCCkFkbWluUHJvdG9QAVowZ2l0aHViLmNvbS9iaW5hcnltYXR0L2theWFrL2dlbi9rYXlhay92MTtrYXlha3YxogIDS1hYqgIIS2F5YWsuVjHKAghLYXlha1xWMeICFEtheWFrXFYxXEdQQk1ldGFkYXRh6gIJS2F5YWs6OlYxYgZwcm90bzM");
 
 /**
  * @generated from message kayak.v1.AddVoterRequest
@@ -102,16 +102,14 @@ export type StatsResponse = Message<"kayak.v1.StatsResponse"> & {
   nodes: ConfigItem[];
 
   /**
-   * @generated from field: string term = 3;
+   * @generated from field: string last_contact = 3;
    */
-  term: string;
+  lastContact: string;
 
   /**
-   * map<string, string> stats = 1;
-   *
-   * @generated from field: string fsm_pending = 4;
+   * @generated from field: map<string, string> stats = 4;
    */
-  fsmPending: string;
+  stats: { [key: string]: string };
 };
 
 /**

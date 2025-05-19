@@ -209,8 +209,8 @@ type StatsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	State         string                 `protobuf:"bytes,1,opt,name=state,proto3" json:"state,omitempty"`
 	Nodes         []*ConfigItem          `protobuf:"bytes,2,rep,name=nodes,proto3" json:"nodes,omitempty"`
-	Term          string                 `protobuf:"bytes,3,opt,name=term,proto3" json:"term,omitempty"`
-	FsmPending    string                 `protobuf:"bytes,4,opt,name=fsm_pending,json=fsmPending,proto3" json:"fsm_pending,omitempty"` // map<string, string> stats = 1;
+	LastContact   string                 `protobuf:"bytes,3,opt,name=last_contact,json=lastContact,proto3" json:"last_contact,omitempty"`
+	Stats         map[string]string      `protobuf:"bytes,4,rep,name=stats,proto3" json:"stats,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -259,18 +259,18 @@ func (x *StatsResponse) GetNodes() []*ConfigItem {
 	return nil
 }
 
-func (x *StatsResponse) GetTerm() string {
+func (x *StatsResponse) GetLastContact() string {
 	if x != nil {
-		return x.Term
+		return x.LastContact
 	}
 	return ""
 }
 
-func (x *StatsResponse) GetFsmPending() string {
+func (x *StatsResponse) GetStats() map[string]string {
 	if x != nil {
-		return x.FsmPending
+		return x.Stats
 	}
-	return ""
+	return nil
 }
 
 type LeaderRequest struct {
@@ -375,13 +375,16 @@ const file_kayak_v1_admin_proto_rawDesc = "" +
 	"ConfigItem\x12\x1a\n" +
 	"\bsuffrage\x18\x01 \x01(\tR\bsuffrage\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12\x18\n" +
-	"\aaddress\x18\x03 \x01(\tR\aaddress\"\x86\x01\n" +
+	"\aaddress\x18\x03 \x01(\tR\aaddress\"\xe8\x01\n" +
 	"\rStatsResponse\x12\x14\n" +
 	"\x05state\x18\x01 \x01(\tR\x05state\x12*\n" +
-	"\x05nodes\x18\x02 \x03(\v2\x14.kayak.v1.ConfigItemR\x05nodes\x12\x12\n" +
-	"\x04term\x18\x03 \x01(\tR\x04term\x12\x1f\n" +
-	"\vfsm_pending\x18\x04 \x01(\tR\n" +
-	"fsmPending\"\x0f\n" +
+	"\x05nodes\x18\x02 \x03(\v2\x14.kayak.v1.ConfigItemR\x05nodes\x12!\n" +
+	"\flast_contact\x18\x03 \x01(\tR\vlastContact\x128\n" +
+	"\x05stats\x18\x04 \x03(\v2\".kayak.v1.StatsResponse.StatsEntryR\x05stats\x1a8\n" +
+	"\n" +
+	"StatsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x0f\n" +
 	"\rLeaderRequest\":\n" +
 	"\x0eLeaderResponse\x12\x18\n" +
 	"\aaddress\x18\x01 \x01(\tR\aaddress\x12\x0e\n" +
@@ -405,7 +408,7 @@ func file_kayak_v1_admin_proto_rawDescGZIP() []byte {
 	return file_kayak_v1_admin_proto_rawDescData
 }
 
-var file_kayak_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_kayak_v1_admin_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_kayak_v1_admin_proto_goTypes = []any{
 	(*AddVoterRequest)(nil),  // 0: kayak.v1.AddVoterRequest
 	(*AddVoterResponse)(nil), // 1: kayak.v1.AddVoterResponse
@@ -414,20 +417,22 @@ var file_kayak_v1_admin_proto_goTypes = []any{
 	(*StatsResponse)(nil),    // 4: kayak.v1.StatsResponse
 	(*LeaderRequest)(nil),    // 5: kayak.v1.LeaderRequest
 	(*LeaderResponse)(nil),   // 6: kayak.v1.LeaderResponse
+	nil,                      // 7: kayak.v1.StatsResponse.StatsEntry
 }
 var file_kayak_v1_admin_proto_depIdxs = []int32{
 	3, // 0: kayak.v1.StatsResponse.nodes:type_name -> kayak.v1.ConfigItem
-	0, // 1: kayak.v1.AdminService.AddVoter:input_type -> kayak.v1.AddVoterRequest
-	2, // 2: kayak.v1.AdminService.Stats:input_type -> kayak.v1.StatsRequest
-	5, // 3: kayak.v1.AdminService.Leader:input_type -> kayak.v1.LeaderRequest
-	1, // 4: kayak.v1.AdminService.AddVoter:output_type -> kayak.v1.AddVoterResponse
-	4, // 5: kayak.v1.AdminService.Stats:output_type -> kayak.v1.StatsResponse
-	6, // 6: kayak.v1.AdminService.Leader:output_type -> kayak.v1.LeaderResponse
-	4, // [4:7] is the sub-list for method output_type
-	1, // [1:4] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	7, // 1: kayak.v1.StatsResponse.stats:type_name -> kayak.v1.StatsResponse.StatsEntry
+	0, // 2: kayak.v1.AdminService.AddVoter:input_type -> kayak.v1.AddVoterRequest
+	2, // 3: kayak.v1.AdminService.Stats:input_type -> kayak.v1.StatsRequest
+	5, // 4: kayak.v1.AdminService.Leader:input_type -> kayak.v1.LeaderRequest
+	1, // 5: kayak.v1.AdminService.AddVoter:output_type -> kayak.v1.AddVoterResponse
+	4, // 6: kayak.v1.AdminService.Stats:output_type -> kayak.v1.StatsResponse
+	6, // 7: kayak.v1.AdminService.Leader:output_type -> kayak.v1.LeaderResponse
+	5, // [5:8] is the sub-list for method output_type
+	2, // [2:5] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_kayak_v1_admin_proto_init() }
@@ -441,7 +446,7 @@ func file_kayak_v1_admin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_kayak_v1_admin_proto_rawDesc), len(file_kayak_v1_admin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

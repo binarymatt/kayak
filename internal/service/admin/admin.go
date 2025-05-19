@@ -29,11 +29,28 @@ func (a *adminService) AddVoter(ctx context.Context, req *connect.Request[kayakv
 }
 
 func (a *adminService) Stats(ctx context.Context, req *connect.Request[kayakv1.StatsRequest]) (*connect.Response[kayakv1.StatsResponse], error) {
-	stats := map[string]string{}
-	for k, v := range a.raft.Stats() {
-		stats[k] = v
+	statsMap := map[string]string{}
+
+	future := a.raft.GetConfiguration()
+	if err := future.Error(); err != nil {
+		return nil, err
 	}
-	return connect.NewResponse(&kayakv1.StatsResponse{Stats: stats}), nil
+	resp := &kayakv1.StatsResponse{
+		State:       a.raft.State().String(),
+		LastContact: a.raft.LastContact().String(),
+		Stats:       a.raft.Stats(),
+		Nodes:       []*kayakv1.ConfigItem{},
+	}
+	servers := future.Configuration().Servers
+	for _, server := range servers {
+		resp.Nodes = append(resp.Nodes, &kayakv1.ConfigItem{
+			Suffrage: server.Suffrage.String(),
+			Id:       string(server.ID),
+			Address:  string(server.Address),
+		})
+	}
+
+	return connect.NewResponse(resp), nil
 }
 func (a *adminService) Leader(ctx context.Context, req *connect.Request[kayakv1.LeaderRequest]) (*connect.Response[kayakv1.LeaderResponse], error) {
 	address, id := a.raft.LeaderWithID()
