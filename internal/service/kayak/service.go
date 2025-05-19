@@ -201,6 +201,11 @@ func (s *service) GetStream(ctx context.Context, req *connect.Request[v1.GetStre
 		}
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
+	stats, err := s.store.GetStreamStats(stream.Name)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	stream.Stats = stats
 	return connect.NewResponse(&v1.GetStreamResponse{
 		Stream: stream,
 	}), nil

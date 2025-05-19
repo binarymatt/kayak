@@ -10,6 +10,17 @@ message Stream {
   string name = 1;
   int64 partition_count = 2;
   int64 ttl = 3;
+  optional StreamStats stats = 4;
+}
+message StreamStats {
+  map<int64, int64> partition_counts = 1;
+  int64 record_count = 2;
+  repeated Group groups = 3;
+}
+message Group {
+  string stream_name = 1;
+  string name = 2;
+  map<int64, string> partition_positions = 3;
 }
 message PartitionAssignment {
   string stream_name = 1;

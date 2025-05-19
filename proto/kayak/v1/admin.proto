@@ -18,8 +18,16 @@ message AddVoterRequest {
 message AddVoterResponse {}
 
 message StatsRequest {}
+message ConfigItem {
+  string suffrage = 1;
+  string id = 2;
+  string address = 3;
+}
 message StatsResponse {
-  map<string, string> stats = 1;
+  string state = 1;
+  repeated ConfigItem nodes = 2;
+  string last_contact = 3;
+  map<string, string> stats = 4;
 }
 
 message LeaderRequest {}

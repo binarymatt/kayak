@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	connectcors "connectrpc.com/cors"
 	"connectrpc.com/otelconnect"
 	"github.com/ValerySidorin/shclog"
 	"github.com/dgraph-io/badger/v4"
@@ -21,6 +22,7 @@ import (
 	raftboltdb "github.com/hashicorp/raft-boltdb/v2"
 	"github.com/lmittmann/tint"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/rs/cors"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
@@ -45,6 +47,16 @@ import (
 	"github.com/binarymatt/kayak/internal/service/kayak"
 	"github.com/binarymatt/kayak/internal/store"
 )
+
+func withCORS(h http.Handler) http.Handler {
+	middleware := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"},
+		AllowedMethods: connectcors.AllowedMethods(),
+		AllowedHeaders: connectcors.AllowedHeaders(),
+		ExposedHeaders: connectcors.ExposedHeaders(),
+	})
+	return middleware.Handler(h)
+}
 
 func setupTracing(ctx context.Context) (func(), error) {
 	client := otlptracegrpc.NewClient()
@@ -229,11 +241,12 @@ func main() {
 		),
 	))
 
+	handler := withCORS(mux)
 	server := &http.Server{
 		Addr:              cfg.ListenAddress,
 		ReadHeaderTimeout: 3 * time.Second,
 		// Use h2c so we can serve HTTP/2 without TLS.
-		Handler: h2c.NewHandler(mux, &http2.Server{}),
+		Handler: h2c.NewHandler(handler, &http2.Server{}),
 	}
 	g.Go(func() error {
 		slog.Info("listening", "id", cfg.NodeId, "address", cfg.ListenAddress, "join", cfg.JoinAddr != "", "join_addr", cfg.JoinAddr)
