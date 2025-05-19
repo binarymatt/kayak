@@ -29,7 +29,6 @@ func (a *adminService) AddVoter(ctx context.Context, req *connect.Request[kayakv
 }
 
 func (a *adminService) Stats(ctx context.Context, req *connect.Request[kayakv1.StatsRequest]) (*connect.Response[kayakv1.StatsResponse], error) {
-	statsMap := map[string]string{}
 
 	future := a.raft.GetConfiguration()
 	if err := future.Error(); err != nil {
