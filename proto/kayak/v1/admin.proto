@@ -22,6 +22,7 @@ message ConfigItem {
   string suffrage = 1;
   string id = 2;
   string address = 3;
+  bool is_leader = 4;
 }
 message StatsResponse {
   string state = 1;

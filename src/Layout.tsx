@@ -1,6 +1,6 @@
-import { Component, For, PropsWithChildren } from "solid-js";
+import { Component, For, PropsWithChildren, Show } from "solid-js";
 import { A } from "@solidjs/router";
-import { clusters } from "./stores";
+import { alerts, clusters, node, removeAlert } from "./stores";
 
 const Layout: Component = (props: PropsWithChildren) => {
   return (
@@ -42,7 +42,40 @@ const Layout: Component = (props: PropsWithChildren) => {
             </div>
           </header>
           <main class="m-4 mb-auto">
-            <div class="object-center">{props.children}</div>
+            <div class="object-center">
+              {props.children}
+              <div class="alerts">
+                <For each={alerts()}>
+                  {(item, index) => (
+                    <div class="toast">
+                      <div class="alert">
+                        <span>{item.message}</span>
+                        <div>
+                          <button
+                            class="btn btn-ghost btn-sm"
+                            onClick={() => removeAlert(index())}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              class="h-6 w-6 shrink-0 stroke-current"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                stroke-width="2"
+                                d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </For>
+              </div>
+            </div>
           </main>
           <footer class="footer bg-neutral text-neutral-content p-4">
             <input
@@ -64,35 +97,31 @@ const Layout: Component = (props: PropsWithChildren) => {
           class="drawer-overlay"
         ></label>
         <ul class="menu bg-base-200 text-base-content min-h-full w-80 p-4">
-          <For each={clusters}>
-            {(cluster, i) => (
+          <li>
+            <h2 class="menu-title">{node.name}</h2>
+            <ul>
               <li>
-                <h2 class="menu-title">{cluster.name}</h2>
-                <ul>
-                  <li>
-                    <A
-                      href={"/nodes/" + i()}
-                      onClick={() => {
-                        document.getElementById("my-drawer").click();
-                      }}
-                    >
-                      Nodes
-                    </A>
-                  </li>
-                  <li>
-                    <A
-                      href={"/streams/" + i()}
-                      onClick={() => {
-                        document.getElementById("my-drawer").click();
-                      }}
-                    >
-                      Streams
-                    </A>
-                  </li>
-                </ul>
+                <A
+                  href={"/nodes/"}
+                  onClick={() => {
+                    document.getElementById("my-drawer").click();
+                  }}
+                >
+                  Nodes
+                </A>
               </li>
-            )}
-          </For>
+              <li>
+                <A
+                  href={"/streams/"}
+                  onClick={() => {
+                    document.getElementById("my-drawer").click();
+                  }}
+                >
+                  Streams
+                </A>
+              </li>
+            </ul>
+          </li>
         </ul>
       </div>
     </div>

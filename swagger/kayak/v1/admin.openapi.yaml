@@ -136,6 +136,9 @@ components:
         address:
           type: string
           title: address
+        isLeader:
+          type: boolean
+          title: is_leader
       title: ConfigItem
       additionalProperties: false
     kayak.v1.LeaderRequest:

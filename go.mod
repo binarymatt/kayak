@@ -7,7 +7,7 @@ require (
 	connectrpc.com/connect v1.18.1
 	connectrpc.com/cors v0.1.0
 	connectrpc.com/otelconnect v0.7.2
-	github.com/ValerySidorin/shclog v0.0.1
+	github.com/Jille/raft-grpc-transport v1.6.1
 	github.com/dgraph-io/badger/v4 v4.7.0
 	github.com/hashicorp/raft v1.7.3
 	github.com/hashicorp/raft-boltdb/v2 v2.3.1
@@ -29,6 +29,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.35.0
 	golang.org/x/net v0.38.0
 	golang.org/x/sync v0.13.0
+	google.golang.org/grpc v1.71.0
 	google.golang.org/protobuf v1.36.6
 )
 
@@ -55,11 +56,13 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1 // indirect
+	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-hclog v1.6.2 // indirect
-	github.com/hashicorp/go-immutable-radix v1.0.0 // indirect
+	github.com/hashicorp/go-immutable-radix v1.3.1 // indirect
 	github.com/hashicorp/go-metrics v0.5.4 // indirect
 	github.com/hashicorp/go-msgpack/v2 v2.1.2 // indirect
-	github.com/hashicorp/golang-lru v0.5.1 // indirect
+	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/mattn/go-colorable v0.1.12 // indirect
@@ -67,6 +70,7 @@ require (
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pb33f/libopenapi v0.21.10 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.62.0 // indirect
@@ -90,7 +94,6 @@ require (
 	golang.org/x/text v0.24.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250428153025-10db94c68c34 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250425173222-7b384671a197 // indirect
-	google.golang.org/grpc v1.71.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

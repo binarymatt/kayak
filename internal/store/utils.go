@@ -40,6 +40,7 @@ func groupPrefix(streamName string) string {
 	return fmt.Sprintf("groups:%s", streamName)
 }
 
+// TODO: decide if this will be used
 func streamMetadataKey(stream string) []byte {
 	key := fmt.Sprintf("meta:%s", stream)
 	return []byte(key)

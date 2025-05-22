@@ -12,7 +12,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file kayak/v1/raft.proto.
  */
 export const file_kayak_v1_raft: GenFile = /*@__PURE__*/
-  fileDesc("ChNrYXlhay92MS9yYWZ0LnByb3RvEghrYXlhay52MSK2AgoLUmFmdENvbW1hbmQSJgoJb3BlcmF0aW9uGAEgASgOMhMua2F5YWsudjEuT3BlcmF0aW9uEikKCnB1dF9zdHJlYW0YAiABKAsyEy5rYXlhay52MS5QdXRTdHJlYW1IABIrCgtwdXRfcmVjb3JkcxgDIAEoCzIULmtheWFrLnYxLlB1dFJlY29yZHNIABItCgxleHRlbmRfbGVhc2UYBCABKAsyFS5rYXlhay52MS5FeHRlbmRMZWFzZUgAEi0KDHJlbW92ZV9sZWFzZRgFIAEoCzIVLmtheWFrLnYxLlJlbW92ZUxlYXNlSAASPgoVY29tbWl0X2dyb3VwX3Bvc2l0aW9uGAYgASgLMh0ua2F5YWsudjEuQ29tbWl0R3JvdXBQb3NpdGlvbkgAQgkKB3BheWxvYWQiLQoJUHV0U3RyZWFtEiAKBnN0cmVhbRgBIAEoCzIQLmtheWFrLnYxLlN0cmVhbSJECgpQdXRSZWNvcmRzEhMKC3N0cmVhbV9uYW1lGAEgASgJEiEKB3JlY29yZHMYAiADKAsyEC5rYXlhay52MS5SZWNvcmQiQwoLRXh0ZW5kTGVhc2USIAoGd29ya2VyGAEgASgLMhAua2F5YWsudjEuV29ya2VyEhIKCmV4cGlyZXNfbXMYAiABKAMiLwoLUmVtb3ZlTGVhc2USIAoGd29ya2VyGAEgASgLMhAua2F5YWsudjEuV29ya2VyImMKE0NvbW1pdEdyb3VwUG9zaXRpb24SEwoLc3RyZWFtX25hbWUYASABKAkSEgoKZ3JvdXBfbmFtZRgCIAEoCRIRCglwYXJ0aXRpb24YAyABKAMSEAoIcG9zaXRpb24YBCABKAkquAEKCU9wZXJhdGlvbhIZChVPUEVSQVRJT05fVU5TUEVDSUZJRUQQABIYChRPUEVSQVRJT05fUFVUX1NUUkVBTRABEhkKFU9QRVJBVElPTl9QVVRfUkVDT1JEUxACEhoKFk9QRVJBVElPTl9FWFRFTkRfTEVBU0UQAxIaChZPUEVSQVRJT05fUkVNT1ZFX0xFQVNFEAQSIwofT1BFUkFUSU9OX0NPTU1JVF9HUk9VUF9QT1NJVElPThAFQowBCgxjb20ua2F5YWsudjFCCVJhZnRQcm90b1ABWjBnaXRodWIuY29tL2JpbmFyeW1hdHQva2F5YWsvZ2VuL2theWFrL3YxO2theWFrdjGiAgNLWFiqAghLYXlhay5WMcoCCEtheWFrXFYx4gIUS2F5YWtcVjFcR1BCTWV0YWRhdGHqAglLYXlhazo6VjFiBnByb3RvMw", [file_kayak_v1_model]);
+  fileDesc("ChNrYXlhay92MS9yYWZ0LnByb3RvEghrYXlhay52MSLnAgoLUmFmdENvbW1hbmQSJgoJb3BlcmF0aW9uGAEgASgOMhMua2F5YWsudjEuT3BlcmF0aW9uEikKCnB1dF9zdHJlYW0YAiABKAsyEy5rYXlhay52MS5QdXRTdHJlYW1IABIrCgtwdXRfcmVjb3JkcxgDIAEoCzIULmtheWFrLnYxLlB1dFJlY29yZHNIABItCgxleHRlbmRfbGVhc2UYBCABKAsyFS5rYXlhay52MS5FeHRlbmRMZWFzZUgAEi0KDHJlbW92ZV9sZWFzZRgFIAEoCzIVLmtheWFrLnYxLlJlbW92ZUxlYXNlSAASPgoVY29tbWl0X2dyb3VwX3Bvc2l0aW9uGAYgASgLMh0ua2F5YWsudjEuQ29tbWl0R3JvdXBQb3NpdGlvbkgAEi8KDWRlbGV0ZV9zdHJlYW0YByABKAsyFi5rYXlhay52MS5EZWxldGVTdHJlYW1IAEIJCgdwYXlsb2FkIiMKDERlbGV0ZVN0cmVhbRITCgtzdHJlYW1fbmFtZRgBIAEoCSItCglQdXRTdHJlYW0SIAoGc3RyZWFtGAEgASgLMhAua2F5YWsudjEuU3RyZWFtIkQKClB1dFJlY29yZHMSEwoLc3RyZWFtX25hbWUYASABKAkSIQoHcmVjb3JkcxgCIAMoCzIQLmtheWFrLnYxLlJlY29yZCJDCgtFeHRlbmRMZWFzZRIgCgZ3b3JrZXIYASABKAsyEC5rYXlhay52MS5Xb3JrZXISEgoKZXhwaXJlc19tcxgCIAEoAyIvCgtSZW1vdmVMZWFzZRIgCgZ3b3JrZXIYASABKAsyEC5rYXlhay52MS5Xb3JrZXIiYwoTQ29tbWl0R3JvdXBQb3NpdGlvbhITCgtzdHJlYW1fbmFtZRgBIAEoCRISCgpncm91cF9uYW1lGAIgASgJEhEKCXBhcnRpdGlvbhgDIAEoAxIQCghwb3NpdGlvbhgEIAEoCSq4AQoJT3BlcmF0aW9uEhkKFU9QRVJBVElPTl9VTlNQRUNJRklFRBAAEhgKFE9QRVJBVElPTl9QVVRfU1RSRUFNEAESGQoVT1BFUkFUSU9OX1BVVF9SRUNPUkRTEAISGgoWT1BFUkFUSU9OX0VYVEVORF9MRUFTRRADEhoKFk9QRVJBVElPTl9SRU1PVkVfTEVBU0UQBBIjCh9PUEVSQVRJT05fQ09NTUlUX0dST1VQX1BPU0lUSU9OEAVCjAEKDGNvbS5rYXlhay52MUIJUmFmdFByb3RvUAFaMGdpdGh1Yi5jb20vYmluYXJ5bWF0dC9rYXlhay9nZW4va2F5YWsvdjE7a2F5YWt2MaICA0tYWKoCCEtheWFrLlYxygIIS2F5YWtcVjHiAhRLYXlha1xWMVxHUEJNZXRhZGF0YeoCCUtheWFrOjpWMWIGcHJvdG8z", [file_kayak_v1_model]);
 
 /**
  * @generated from message kayak.v1.RaftCommand
@@ -56,6 +56,12 @@ export type RaftCommand = Message<"kayak.v1.RaftCommand"> & {
      */
     value: CommitGroupPosition;
     case: "commitGroupPosition";
+  } | {
+    /**
+     * @generated from field: kayak.v1.DeleteStream delete_stream = 7;
+     */
+    value: DeleteStream;
+    case: "deleteStream";
   } | { case: undefined; value?: undefined };
 };
 
@@ -65,6 +71,23 @@ export type RaftCommand = Message<"kayak.v1.RaftCommand"> & {
  */
 export const RaftCommandSchema: GenMessage<RaftCommand> = /*@__PURE__*/
   messageDesc(file_kayak_v1_raft, 0);
+
+/**
+ * @generated from message kayak.v1.DeleteStream
+ */
+export type DeleteStream = Message<"kayak.v1.DeleteStream"> & {
+  /**
+   * @generated from field: string stream_name = 1;
+   */
+  streamName: string;
+};
+
+/**
+ * Describes the message kayak.v1.DeleteStream.
+ * Use `create(DeleteStreamSchema)` to create a new message.
+ */
+export const DeleteStreamSchema: GenMessage<DeleteStream> = /*@__PURE__*/
+  messageDesc(file_kayak_v1_raft, 1);
 
 /**
  * @generated from message kayak.v1.PutStream
@@ -81,7 +104,7 @@ export type PutStream = Message<"kayak.v1.PutStream"> & {
  * Use `create(PutStreamSchema)` to create a new message.
  */
 export const PutStreamSchema: GenMessage<PutStream> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_raft, 1);
+  messageDesc(file_kayak_v1_raft, 2);
 
 /**
  * @generated from message kayak.v1.PutRecords
@@ -103,7 +126,7 @@ export type PutRecords = Message<"kayak.v1.PutRecords"> & {
  * Use `create(PutRecordsSchema)` to create a new message.
  */
 export const PutRecordsSchema: GenMessage<PutRecords> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_raft, 2);
+  messageDesc(file_kayak_v1_raft, 3);
 
 /**
  * @generated from message kayak.v1.ExtendLease
@@ -125,7 +148,7 @@ export type ExtendLease = Message<"kayak.v1.ExtendLease"> & {
  * Use `create(ExtendLeaseSchema)` to create a new message.
  */
 export const ExtendLeaseSchema: GenMessage<ExtendLease> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_raft, 3);
+  messageDesc(file_kayak_v1_raft, 4);
 
 /**
  * @generated from message kayak.v1.RemoveLease
@@ -142,7 +165,7 @@ export type RemoveLease = Message<"kayak.v1.RemoveLease"> & {
  * Use `create(RemoveLeaseSchema)` to create a new message.
  */
 export const RemoveLeaseSchema: GenMessage<RemoveLease> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_raft, 4);
+  messageDesc(file_kayak_v1_raft, 5);
 
 /**
  * @generated from message kayak.v1.CommitGroupPosition
@@ -174,7 +197,7 @@ export type CommitGroupPosition = Message<"kayak.v1.CommitGroupPosition"> & {
  * Use `create(CommitGroupPositionSchema)` to create a new message.
  */
 export const CommitGroupPositionSchema: GenMessage<CommitGroupPosition> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_raft, 5);
+  messageDesc(file_kayak_v1_raft, 6);
 
 /**
  * @generated from enum kayak.v1.Operation

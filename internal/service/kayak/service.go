@@ -292,6 +292,23 @@ func (s *service) Apply(ctx context.Context, req *connect.Request[v1.ApplyReques
 	return connect.NewResponse(&v1.ApplyResponse{}), nil
 }
 
+func (s *service) DeleteStream(ctx context.Context, req *connect.Request[v1.DeleteStreamRequest]) (*connect.Response[emptypb.Empty], error) {
+
+	// TODO: validate request
+	cmd := &v1.RaftCommand{
+		Payload: &v1.RaftCommand_DeleteStream{
+			DeleteStream: &v1.DeleteStream{
+				StreamName: req.Msg.Name,
+			},
+		},
+	}
+	if err := s.applyCommand(ctx, cmd); err != nil {
+		slog.Error("could not create stream", "error", err)
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(&emptypb.Empty{}), nil
+}
+
 func (s *service) getLeaderClient() kayakv1connect.KayakServiceClient {
 	if s.testLeaderClient != nil {
 		return s.testLeaderClient

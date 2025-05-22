@@ -18,8 +18,8 @@ render(
   () => (
     <Router root={Layout}>
       <Route path="/" component={Dashboard} />
-      <Route path="/nodes/:index" component={Nodes} />
-      <Route path="/streams/:index" component={Streams} />
+      <Route path="/nodes" component={Nodes} />
+      <Route path="/streams" component={Streams} />
       <Route path="/stream/:name" component={Stream} />
     </Router>
   ),

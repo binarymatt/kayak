@@ -37,6 +37,8 @@ func (s *store) Apply(l *raft.Log) any {
 		response.Error = s.RemoveLease(p.RemoveLease.Worker)
 	case *kayakv1.RaftCommand_CommitGroupPosition:
 		response.Error = s.CommitGroupPosition(p.CommitGroupPosition.StreamName, p.CommitGroupPosition.GroupName, p.CommitGroupPosition.Partition, p.CommitGroupPosition.Position)
+	case *kayakv1.RaftCommand_DeleteStream:
+		response.Error = s.DeleteStream(p.DeleteStream.StreamName)
 	default:
 		response.Error = errors.New("unknown command")
 	}

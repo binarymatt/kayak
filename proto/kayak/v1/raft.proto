@@ -21,9 +21,13 @@ message RaftCommand {
     ExtendLease extend_lease = 4;
     RemoveLease remove_lease = 5;
     CommitGroupPosition commit_group_position = 6;
+    DeleteStream delete_stream = 7;
   }
 }
 
+message DeleteStream {
+  string stream_name = 1;
+}
 message PutStream {
   Stream stream = 1;
 }

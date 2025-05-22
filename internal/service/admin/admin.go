@@ -34,6 +34,7 @@ func (a *adminService) Stats(ctx context.Context, req *connect.Request[kayakv1.S
 	if err := future.Error(); err != nil {
 		return nil, err
 	}
+	address, id := a.raft.LeaderWithID()
 	resp := &kayakv1.StatsResponse{
 		State:       a.raft.State().String(),
 		LastContact: a.raft.LastContact().String(),
@@ -42,10 +43,15 @@ func (a *adminService) Stats(ctx context.Context, req *connect.Request[kayakv1.S
 	}
 	servers := future.Configuration().Servers
 	for _, server := range servers {
+		isLeader := false
+		if server.Address == address && server.ID == id {
+			isLeader = true
+		}
 		resp.Nodes = append(resp.Nodes, &kayakv1.ConfigItem{
 			Suffrage: server.Suffrage.String(),
 			Id:       string(server.ID),
 			Address:  string(server.Address),
+			IsLeader: isLeader,
 		})
 	}
 

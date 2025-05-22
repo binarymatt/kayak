@@ -135,6 +135,51 @@ func (_c *MockStore_CommitGroupPosition_Call) RunAndReturn(run func(stream strin
 	return _c
 }
 
+// DeleteStream provides a mock function for the type MockStore
+func (_mock *MockStore) DeleteStream(name string) error {
+	ret := _mock.Called(name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteStream")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
+		r0 = returnFunc(name)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockStore_DeleteStream_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteStream'
+type MockStore_DeleteStream_Call struct {
+	*mock.Call
+}
+
+// DeleteStream is a helper method to define mock.On call
+//   - name
+func (_e *MockStore_Expecter) DeleteStream(name interface{}) *MockStore_DeleteStream_Call {
+	return &MockStore_DeleteStream_Call{Call: _e.mock.On("DeleteStream", name)}
+}
+
+func (_c *MockStore_DeleteStream_Call) Run(run func(name string)) *MockStore_DeleteStream_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockStore_DeleteStream_Call) Return(err error) *MockStore_DeleteStream_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockStore_DeleteStream_Call) RunAndReturn(run func(name string) error) *MockStore_DeleteStream_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ExtendLease provides a mock function for the type MockStore
 func (_mock *MockStore) ExtendLease(worker *kayakv1.Worker, expires time.Duration) error {
 	ret := _mock.Called(worker, expires)

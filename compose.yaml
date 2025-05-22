@@ -13,19 +13,19 @@ services:
         "/data",
         "--raft_data_dir",
         "/raft_data",
-        "--advertise_address=kayak1:8080",
+        "--grpc_address=kayak1:28080",
+        "--listen_address=0.0.0.0:8080",
       ]
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317
     ports:
       - "8080:8080"
-      - "1200:1200"
   kayak2:
     depends_on:
       - kayak1
     image: kayak
     ports:
-      - "8081:8080"
+      - "8081:8081"
     command:
       [
         "--node_id",
@@ -35,7 +35,8 @@ services:
         "--raft_data_dir",
         "/raft_data",
         "--join_addr=kayak1:8080",
-        "--advertise_address=kayak2:8080",
+        "--grpc_address=kayak2:28081",
+        "--listen_address=0.0.0.0:8081",
       ]
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317
@@ -44,7 +45,7 @@ services:
       - kayak1
     image: kayak
     ports:
-      - "8082:8080"
+      - "8082:8082"
     command:
       [
         "--node_id",
@@ -54,51 +55,52 @@ services:
         "--raft_data_dir",
         "/raft_data",
         "--join_addr=kayak1:8080",
-        "--advertise_address=kayak3:8080",
+        "--grpc_address=kayak3:28082",
+        "--listen_address=0.0.0.0:8082",
       ]
     environment:
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317
-  memcached:
-    image: memcached:1.6.29
-    container_name: memcached
-    ports:
-      - "11211:11211"
-    environment:
-      - MEMCACHED_MAX_MEMORY=64m # Set the maximum memory usage
-      - MEMCACHED_THREADS=4 # Number of threads to use
-  tempo:
-    image: grafana/tempo:latest
-    command: ["-config.file=/etc/tempo.yaml"]
-    volumes:
-      - ./compose/tempo.yaml:/etc/tempo.yaml
-    ports:
-      - "14268:14268" # jaeger ingest
-      - "3200:3200" # tempo
-      - "9095:9095" # tempo grpc
-      - "4317:4317" # otlp grpc
-      - "4318:4318" # otlp http
-      - "9411:9411" # zipkin
-    depends_on:
-      - memcached
-  prometheus:
-    image: prom/prometheus:latest
-    command:
-      - --config.file=/etc/prometheus.yaml
-      - --web.enable-remote-write-receiver
-      - --enable-feature=exemplar-storage
-      - --enable-feature=native-histograms
-    volumes:
-      - ./compose/prometheus.yaml:/etc/prometheus.yaml
-    ports:
-      - "9090:9090"
-  grafana:
-    image: grafana/grafana:11.5.2
-    volumes:
-      - ./compose/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
-    environment:
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-      - GF_AUTH_DISABLE_LOGIN_FORM=true
-      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor metricsSummary
-    ports:
-      - "3000:3000"
+  #  memcached:
+  #    image: memcached:1.6.29
+  #    container_name: memcached
+  #    ports:
+  #      - "11211:11211"
+  #    environment:
+  #      - MEMCACHED_MAX_MEMORY=64m # Set the maximum memory usage
+  #      - MEMCACHED_THREADS=4 # Number of threads to use
+  #  tempo:
+  #    image: grafana/tempo:latest
+  #    command: ["-config.file=/etc/tempo.yaml"]
+  #    volumes:
+  #      - ./compose/tempo.yaml:/etc/tempo.yaml
+  #    ports:
+  #      - "14268:14268" # jaeger ingest
+  #      - "3200:3200" # tempo
+  #      - "9095:9095" # tempo grpc
+  #      - "4317:4317" # otlp grpc
+  #      - "4318:4318" # otlp http
+  #      - "9411:9411" # zipkin
+  #    depends_on:
+  #      - memcached
+  #  prometheus:
+  #    image: prom/prometheus:latest
+  #    command:
+  #      - --config.file=/etc/prometheus.yaml
+  #      - --web.enable-remote-write-receiver
+  #      - --enable-feature=exemplar-storage
+  #      - --enable-feature=native-histograms
+  #    volumes:
+  #      - ./compose/prometheus.yaml:/etc/prometheus.yaml
+  #    ports:
+  #      - "9090:9090"
+  #  grafana:
+  #    image: grafana/grafana:11.5.2
+  #    volumes:
+  #      - ./compose/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+  #    environment:
+  #      - GF_AUTH_ANONYMOUS_ENABLED=true
+  #      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+  #      - GF_AUTH_DISABLE_LOGIN_FORM=true
+  #      - GF_FEATURE_TOGGLES_ENABLE=traceqlEditor metricsSummary
+  #    ports:
+  #      - "3000:3000"

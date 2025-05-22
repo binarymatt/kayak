@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -16,7 +17,7 @@ import (
 	"connectrpc.com/connect"
 	connectcors "connectrpc.com/cors"
 	"connectrpc.com/otelconnect"
-	"github.com/ValerySidorin/shclog"
+	transport "github.com/Jille/raft-grpc-transport"
 	"github.com/dgraph-io/badger/v4"
 	"github.com/hashicorp/raft"
 	raftboltdb "github.com/hashicorp/raft-boltdb/v2"
@@ -37,12 +38,12 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
-	"github.com/binarymatt/kayak/gen/transport/v1/transportv1connect"
 	"github.com/binarymatt/kayak/internal/log"
-	"github.com/binarymatt/kayak/internal/raft/transport"
 	"github.com/binarymatt/kayak/internal/service/admin"
 	"github.com/binarymatt/kayak/internal/service/kayak"
 	"github.com/binarymatt/kayak/internal/store"
@@ -114,23 +115,23 @@ func setupMetrics() error {
 }
 
 type config struct {
-	NodeId           string
-	ListenAddress    string
-	AdvertiseAddress string
-	RaftDataDir      string
-	KayakDataDir     string
-	Bootstrap        bool
-	InMemory         bool
-	JoinAddr         string
-	ConsoleLogging   bool
-	LogLevel         string
+	NodeId         string
+	ListenAddress  string
+	GRPCAddress    string
+	RaftDataDir    string
+	KayakDataDir   string
+	Bootstrap      bool
+	InMemory       bool
+	JoinAddr       string
+	ConsoleLogging bool
+	LogLevel       string
 }
 
 func parseConfig() (*config, error) {
 	pflag.String("node_id", "", "")
 	pflag.String("raft_address", "127.0.0.1:1200", "ip:port to use for raft communication")
 	pflag.String("listen_address", "0.0.0.0:8080", "ip:port to use for kayak service")
-	pflag.String("advertise_address", "", "ip:port to use for kayak service")
+	pflag.String("grpc_address", "0.0.0.0:28080", "ip:port to use for grpc")
 	pflag.String("raft_data_dir", "./raft_data", "")
 	pflag.String("data_dir", "./data", "")
 	pflag.Bool("in_memory", true, "")
@@ -150,16 +151,16 @@ func parseConfig() (*config, error) {
 		advertise = viper.GetString("listen_address")
 	}
 	return &config{
-		NodeId:           nodeId,
-		ListenAddress:    viper.GetString("listen_address"),
-		AdvertiseAddress: advertise,
-		RaftDataDir:      viper.GetString("raft_data_dir"),
-		KayakDataDir:     viper.GetString("data_dir"),
-		Bootstrap:        viper.GetString("join_addr") == "",
-		InMemory:         viper.GetBool("in_memory"),
-		JoinAddr:         viper.GetString("join_addr"),
-		ConsoleLogging:   viper.GetBool("console"),
-		LogLevel:         viper.GetString("log_level"),
+		NodeId:         nodeId,
+		ListenAddress:  viper.GetString("listen_address"),
+		GRPCAddress:    viper.GetString("grpc_address"),
+		RaftDataDir:    viper.GetString("raft_data_dir"),
+		KayakDataDir:   viper.GetString("data_dir"),
+		Bootstrap:      viper.GetString("join_addr") == "",
+		InMemory:       viper.GetBool("in_memory"),
+		JoinAddr:       viper.GetString("join_addr"),
+		ConsoleLogging: viper.GetBool("console"),
+		LogLevel:       viper.GetString("log_level"),
 	}, nil
 }
 
@@ -176,13 +177,15 @@ func main() {
 		os.Exit(-1)
 		return
 	}
-	closer, err := setupTracing(ctx)
-	if err != nil {
-		slog.Error("failure to setup tracing", "error", err)
-		os.Exit(-1)
-		return
-	}
-	defer closer()
+	/*
+		closer, err := setupTracing(ctx)
+		if err != nil {
+			slog.Error("failure to setup tracing", "error", err)
+			os.Exit(-1)
+			return
+		}
+		defer closer()
+	*/
 	otelInterceptor, err := otelconnect.NewInterceptor()
 	if err != nil {
 		slog.Error("failure to initialize otel connect interceptor", "error", err)
@@ -210,16 +213,21 @@ func main() {
 	}
 	store := store.New(db)
 
-	tr, ts := transport.New(raft.ServerAddress(cfg.AdvertiseAddress), nil)
-
-	mux.Handle(transportv1connect.NewRaftTransportHandler(
-		ts,
-		connect.WithInterceptors(
-			log.NewLogInterceptor(),
-			otelInterceptor,
-		),
-	))
-	ra, err := setupRaft(cfg.NodeId, cfg.RaftDataDir, store, tr, cfg.InMemory, cfg.Bootstrap)
+	_, port, err := net.SplitHostPort(cfg.GRPCAddress)
+	if err != nil {
+		slog.Error("failed to parse local address", "error", err, "address", cfg.GRPCAddress)
+		os.Exit(1)
+		return
+	}
+	sock, err := net.Listen("tcp", fmt.Sprintf(":%s", port))
+	if err != nil {
+		slog.Error("failed to listen", "error", err)
+		os.Exit(1)
+	}
+	tm := transport.New(raft.ServerAddress(cfg.GRPCAddress), []grpc.DialOption{grpc.WithTransportCredentials(insecure.NewCredentials())})
+	s := grpc.NewServer()
+	tm.Register(s)
+	ra, err := setupRaft(cfg.NodeId, cfg.RaftDataDir, store, tm.Transport(), cfg.InMemory, cfg.Bootstrap)
 	if err != nil {
 		slog.Error("could not setup raft", "error", err)
 		return
@@ -262,8 +270,16 @@ func main() {
 		return nil
 	})
 	g.Go(func() error {
+		if err := s.Serve(sock); err != nil {
+			slog.Warn("grpc server error", "error", err)
+			return err
+		}
+		return nil
+	})
+	g.Go(func() error {
 		<-ctx.Done()
 		slog.Debug("ctx is done")
+		s.GracefulStop()
 		ct, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
 		if err := server.Shutdown(ct); err != nil {
@@ -277,12 +293,12 @@ func main() {
 		g.Go(func() error {
 			// create client
 			time.Sleep(5 * time.Second)
-			slog.Info("trying to join", "address", cfg.JoinAddr, "advertise_address", cfg.AdvertiseAddress, "id", cfg.NodeId)
+			slog.Info("trying to join", "address", cfg.JoinAddr, "grpc_address", cfg.GRPCAddress, "id", cfg.NodeId)
 			leader := fmt.Sprintf("http://%s", cfg.JoinAddr)
 			client := kayakv1connect.NewAdminServiceClient(http.DefaultClient, leader)
 			_, err := client.AddVoter(ctx, connect.NewRequest(&kayakv1.AddVoterRequest{
 				Id:      cfg.NodeId,
-				Address: cfg.AdvertiseAddress,
+				Address: cfg.GRPCAddress,
 			}))
 			if err != nil {
 				slog.Error("could not join cluster", "error", err)
@@ -300,9 +316,9 @@ func main() {
 
 func setupRaft(nodeId, raftDir string, st store.Store, transport raft.Transport, inMemory, bootstrap bool) (*raft.Raft, error) {
 	config := raft.DefaultConfig()
-	slogger := slog.Default().With("component", "raft")
-	logger := shclog.New(slogger)
-	config.Logger = logger
+	//slogger := slog.Default().With("component", "raft")
+	//logger := shclog.New(slogger)
+	//config.Logger = logger
 	config.LocalID = raft.ServerID(nodeId)
 
 	// Create the snapshot store. This allows the Raft to truncate the log.

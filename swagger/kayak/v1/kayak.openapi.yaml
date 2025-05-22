@@ -325,6 +325,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/kayak.v1.GetStreamsResponse'
+  /kayak.v1.KayakService/DeleteStream:
+    post:
+      tags:
+        - kayak.v1.KayakService
+      summary: DeleteStream
+      operationId: kayak.v1.KayakService.DeleteStream
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/kayak.v1.DeleteStreamRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/google.protobuf.Empty'
   /kayak.v1.KayakService/Apply:
     post:
       tags:
@@ -445,6 +480,24 @@ components:
           title: ttl
           format: int64
       title: CreateStreamRequest
+      additionalProperties: false
+    kayak.v1.DeleteStream:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+      title: DeleteStream
+      additionalProperties: false
+    kayak.v1.DeleteStreamRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          title: name
+      title: DeleteStreamRequest
+      required:
+        - name
       additionalProperties: false
     kayak.v1.DeregisterWorkerRequest:
       type: object
@@ -638,6 +691,13 @@ components:
           title: commit_group_position
           required:
             - commitGroupPosition
+        - properties:
+            deleteStream:
+              title: delete_stream
+              $ref: '#/components/schemas/kayak.v1.DeleteStream'
+          title: delete_stream
+          required:
+            - deleteStream
         - properties:
             extendLease:
               title: extend_lease

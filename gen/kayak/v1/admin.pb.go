@@ -150,6 +150,7 @@ type ConfigItem struct {
 	Suffrage      string                 `protobuf:"bytes,1,opt,name=suffrage,proto3" json:"suffrage,omitempty"`
 	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
 	Address       string                 `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
+	IsLeader      bool                   `protobuf:"varint,4,opt,name=is_leader,json=isLeader,proto3" json:"is_leader,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -203,6 +204,13 @@ func (x *ConfigItem) GetAddress() string {
 		return x.Address
 	}
 	return ""
+}
+
+func (x *ConfigItem) GetIsLeader() bool {
+	if x != nil {
+		return x.IsLeader
+	}
+	return false
 }
 
 type StatsResponse struct {
@@ -370,12 +378,13 @@ const file_kayak_v1_admin_proto_rawDesc = "" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
 	"\aaddress\x18\x02 \x01(\tR\aaddress\"\x12\n" +
 	"\x10AddVoterResponse\"\x0e\n" +
-	"\fStatsRequest\"R\n" +
+	"\fStatsRequest\"o\n" +
 	"\n" +
 	"ConfigItem\x12\x1a\n" +
 	"\bsuffrage\x18\x01 \x01(\tR\bsuffrage\x12\x0e\n" +
 	"\x02id\x18\x02 \x01(\tR\x02id\x12\x18\n" +
-	"\aaddress\x18\x03 \x01(\tR\aaddress\"\xe8\x01\n" +
+	"\aaddress\x18\x03 \x01(\tR\aaddress\x12\x1b\n" +
+	"\tis_leader\x18\x04 \x01(\bR\bisLeader\"\xe8\x01\n" +
 	"\rStatsResponse\x12\x14\n" +
 	"\x05state\x18\x01 \x01(\tR\x05state\x12*\n" +
 	"\x05nodes\x18\x02 \x03(\v2\x14.kayak.v1.ConfigItemR\x05nodes\x12!\n" +

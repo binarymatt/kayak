@@ -34,6 +34,14 @@ components:
           title: position
       title: CommitGroupPosition
       additionalProperties: false
+    kayak.v1.DeleteStream:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+      title: DeleteStream
+      additionalProperties: false
     kayak.v1.ExtendLease:
       type: object
       properties:
@@ -110,6 +118,13 @@ components:
           title: commit_group_position
           required:
             - commitGroupPosition
+        - properties:
+            deleteStream:
+              title: delete_stream
+              $ref: '#/components/schemas/kayak.v1.DeleteStream'
+          title: delete_stream
+          required:
+            - deleteStream
         - properties:
             extendLease:
               title: extend_lease

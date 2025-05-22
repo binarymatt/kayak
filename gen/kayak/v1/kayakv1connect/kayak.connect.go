@@ -57,6 +57,9 @@ const (
 	KayakServiceGetStreamProcedure = "/kayak.v1.KayakService/GetStream"
 	// KayakServiceGetStreamsProcedure is the fully-qualified name of the KayakService's GetStreams RPC.
 	KayakServiceGetStreamsProcedure = "/kayak.v1.KayakService/GetStreams"
+	// KayakServiceDeleteStreamProcedure is the fully-qualified name of the KayakService's DeleteStream
+	// RPC.
+	KayakServiceDeleteStreamProcedure = "/kayak.v1.KayakService/DeleteStream"
 	// KayakServiceApplyProcedure is the fully-qualified name of the KayakService's Apply RPC.
 	KayakServiceApplyProcedure = "/kayak.v1.KayakService/Apply"
 )
@@ -79,6 +82,7 @@ type KayakServiceClient interface {
 	CreateStream(context.Context, *connect.Request[v1.CreateStreamRequest]) (*connect.Response[emptypb.Empty], error)
 	GetStream(context.Context, *connect.Request[v1.GetStreamRequest]) (*connect.Response[v1.GetStreamResponse], error)
 	GetStreams(context.Context, *connect.Request[v1.GetStreamsRequest]) (*connect.Response[v1.GetStreamsResponse], error)
+	DeleteStream(context.Context, *connect.Request[v1.DeleteStreamRequest]) (*connect.Response[emptypb.Empty], error)
 	// Raft Specific
 	Apply(context.Context, *connect.Request[v1.ApplyRequest]) (*connect.Response[v1.ApplyResponse], error)
 }
@@ -148,6 +152,12 @@ func NewKayakServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(kayakServiceMethods.ByName("GetStreams")),
 			connect.WithClientOptions(opts...),
 		),
+		deleteStream: connect.NewClient[v1.DeleteStreamRequest, emptypb.Empty](
+			httpClient,
+			baseURL+KayakServiceDeleteStreamProcedure,
+			connect.WithSchema(kayakServiceMethods.ByName("DeleteStream")),
+			connect.WithClientOptions(opts...),
+		),
 		apply: connect.NewClient[v1.ApplyRequest, v1.ApplyResponse](
 			httpClient,
 			baseURL+KayakServiceApplyProcedure,
@@ -168,6 +178,7 @@ type kayakServiceClient struct {
 	createStream     *connect.Client[v1.CreateStreamRequest, emptypb.Empty]
 	getStream        *connect.Client[v1.GetStreamRequest, v1.GetStreamResponse]
 	getStreams       *connect.Client[v1.GetStreamsRequest, v1.GetStreamsResponse]
+	deleteStream     *connect.Client[v1.DeleteStreamRequest, emptypb.Empty]
 	apply            *connect.Client[v1.ApplyRequest, v1.ApplyResponse]
 }
 
@@ -216,6 +227,11 @@ func (c *kayakServiceClient) GetStreams(ctx context.Context, req *connect.Reques
 	return c.getStreams.CallUnary(ctx, req)
 }
 
+// DeleteStream calls kayak.v1.KayakService.DeleteStream.
+func (c *kayakServiceClient) DeleteStream(ctx context.Context, req *connect.Request[v1.DeleteStreamRequest]) (*connect.Response[emptypb.Empty], error) {
+	return c.deleteStream.CallUnary(ctx, req)
+}
+
 // Apply calls kayak.v1.KayakService.Apply.
 func (c *kayakServiceClient) Apply(ctx context.Context, req *connect.Request[v1.ApplyRequest]) (*connect.Response[v1.ApplyResponse], error) {
 	return c.apply.CallUnary(ctx, req)
@@ -239,6 +255,7 @@ type KayakServiceHandler interface {
 	CreateStream(context.Context, *connect.Request[v1.CreateStreamRequest]) (*connect.Response[emptypb.Empty], error)
 	GetStream(context.Context, *connect.Request[v1.GetStreamRequest]) (*connect.Response[v1.GetStreamResponse], error)
 	GetStreams(context.Context, *connect.Request[v1.GetStreamsRequest]) (*connect.Response[v1.GetStreamsResponse], error)
+	DeleteStream(context.Context, *connect.Request[v1.DeleteStreamRequest]) (*connect.Response[emptypb.Empty], error)
 	// Raft Specific
 	Apply(context.Context, *connect.Request[v1.ApplyRequest]) (*connect.Response[v1.ApplyResponse], error)
 }
@@ -304,6 +321,12 @@ func NewKayakServiceHandler(svc KayakServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(kayakServiceMethods.ByName("GetStreams")),
 		connect.WithHandlerOptions(opts...),
 	)
+	kayakServiceDeleteStreamHandler := connect.NewUnaryHandler(
+		KayakServiceDeleteStreamProcedure,
+		svc.DeleteStream,
+		connect.WithSchema(kayakServiceMethods.ByName("DeleteStream")),
+		connect.WithHandlerOptions(opts...),
+	)
 	kayakServiceApplyHandler := connect.NewUnaryHandler(
 		KayakServiceApplyProcedure,
 		svc.Apply,
@@ -330,6 +353,8 @@ func NewKayakServiceHandler(svc KayakServiceHandler, opts ...connect.HandlerOpti
 			kayakServiceGetStreamHandler.ServeHTTP(w, r)
 		case KayakServiceGetStreamsProcedure:
 			kayakServiceGetStreamsHandler.ServeHTTP(w, r)
+		case KayakServiceDeleteStreamProcedure:
+			kayakServiceDeleteStreamHandler.ServeHTTP(w, r)
 		case KayakServiceApplyProcedure:
 			kayakServiceApplyHandler.ServeHTTP(w, r)
 		default:
@@ -375,6 +400,10 @@ func (UnimplementedKayakServiceHandler) GetStream(context.Context, *connect.Requ
 
 func (UnimplementedKayakServiceHandler) GetStreams(context.Context, *connect.Request[v1.GetStreamsRequest]) (*connect.Response[v1.GetStreamsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kayak.v1.KayakService.GetStreams is not implemented"))
+}
+
+func (UnimplementedKayakServiceHandler) DeleteStream(context.Context, *connect.Request[v1.DeleteStreamRequest]) (*connect.Response[emptypb.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kayak.v1.KayakService.DeleteStream is not implemented"))
 }
 
 func (UnimplementedKayakServiceHandler) Apply(context.Context, *connect.Request[v1.ApplyRequest]) (*connect.Response[v1.ApplyResponse], error) {

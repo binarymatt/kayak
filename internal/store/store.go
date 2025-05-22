@@ -21,6 +21,8 @@ type Store interface {
 	PutStream(stream *kayakv1.Stream) error
 	GetStream(name string) (*kayakv1.Stream, error)
 	GetStreams() ([]*kayakv1.Stream, error)
+	DeleteStream(name string) error
+
 	PutRecords(streamName string, records ...*kayakv1.Record) error
 	GetRecords(streamName string, partition int64, startPosition string, limit int) ([]*kayakv1.Record, error)
 
@@ -408,7 +410,7 @@ func (s *store) getStreamGroups(streamName string) ([]*kayakv1.Group, error) {
 	}
 	return groups, nil
 }
-func (s store) GetGroupInformation(streamName, groupName string) (*kayakv1.Group, error) {
+func (s *store) GetGroupInformation(streamName, groupName string) (*kayakv1.Group, error) {
 	stream, err := s.GetStream(streamName)
 	if err != nil {
 		return nil, err
@@ -427,6 +429,58 @@ func (s store) GetGroupInformation(streamName, groupName string) (*kayakv1.Group
 	}
 	return group, nil
 }
+
+func (s *store) DeleteStream(name string) error {
+	return s.db.Update(func(tx *badger.Txn) error {
+		// delete stream info
+		sKey := streamsKey(name)
+		if err := tx.Delete(sKey); err != nil {
+			return err
+		}
+		// delete stream record
+		recordPrefix := []byte(fmt.Sprintf("%s:", name))
+
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = false
+
+		recordIt := tx.NewIterator(opts)
+		defer recordIt.Close()
+		for recordIt.Seek(recordPrefix); recordIt.ValidForPrefix(recordPrefix); recordIt.Next() {
+			key := recordIt.Item().Key()
+			if err := tx.Delete(key); err != nil {
+				return err
+			}
+		}
+
+		// delete group info
+		groupPre := []byte(groupPrefix(name))
+		groupIt := tx.NewIterator(opts)
+		defer groupIt.Close()
+		for groupIt.Seek(groupPre); groupIt.ValidForPrefix(groupPre); groupIt.Next() {
+			key := groupIt.Item().Key()
+
+			if err := tx.Delete(key); err != nil {
+				return err
+			}
+		}
+		// delete partition assignments
+		assignmentPrefix := []byte(fmt.Sprintf("registrations:%s:", name))
+
+		it := tx.NewIterator(opts)
+		defer it.Close()
+		for it.Seek(assignmentPrefix); it.ValidForPrefix(assignmentPrefix); it.Next() {
+
+			key := groupIt.Item().Key()
+
+			if err := tx.Delete(key); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+
+}
+
 func New(db *badger.DB) *store {
 	return &store{db: db}
 }
