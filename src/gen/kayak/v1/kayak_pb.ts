@@ -17,7 +17,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file kayak/v1/kayak.proto.
  */
 export const file_kayak_v1_kayak: GenFile = /*@__PURE__*/
-  fileDesc("ChRrYXlhay92MS9rYXlhay5wcm90bxIIa2F5YWsudjEiZAoRUHV0UmVjb3Jkc1JlcXVlc3QSEwoLc3RyZWFtX25hbWUYASABKAkSIQoHcmVjb3JkcxgCIAMoCzIQLmtheWFrLnYxLlJlY29yZBIXCg9pZGVtcG90ZW5jeV9rZXkYAyABKAkiXAoRR2V0UmVjb3Jkc1JlcXVlc3QSEwoLc3RyZWFtX25hbWUYASABKAkSEQoJcGFydGl0aW9uGAIgASgDEhAKCHN0YXJ0X2lkGAMgASgJEg0KBWxpbWl0GAQgASgDIjcKEkdldFJlY29yZHNSZXNwb25zZRIhCgdyZWNvcmRzGAEgAygLMhAua2F5YWsudjEuUmVjb3JkIlsKE0ZldGNoUmVjb3Jkc1JlcXVlc3QSEwoLc3RyZWFtX25hbWUYASABKAkSIAoGd29ya2VyGAIgASgLMhAua2F5YWsudjEuV29ya2VyEg0KBWxpbWl0GAQgASgDIjkKFEZldGNoUmVjb3Jkc1Jlc3BvbnNlEiEKB3JlY29yZHMYASADKAsyEC5rYXlhay52MS5SZWNvcmQiWQoTQ29tbWl0UmVjb3JkUmVxdWVzdBIgCgZ3b3JrZXIYASABKAsyEC5rYXlhay52MS5Xb3JrZXISIAoGcmVjb3JkGAIgASgLMhAua2F5YWsudjEuUmVjb3JkIkcKFVJlZ2lzdGVyV29ya2VyUmVxdWVzdBITCgtzdHJlYW1fbmFtZRgBIAEoCRINCgVncm91cBgCIAEoCRIKCgJpZBgDIAEoCSI6ChZSZWdpc3RlcldvcmtlclJlc3BvbnNlEiAKBndvcmtlchgBIAEoCzIQLmtheWFrLnYxLldvcmtlciI7ChdEZXJlZ2lzdGVyV29ya2VyUmVxdWVzdBIgCgZ3b3JrZXIYASABKAsyEC5rYXlhay52MS5Xb3JrZXIiSQoTQ3JlYXRlU3RyZWFtUmVxdWVzdBIMCgRuYW1lGAEgASgJEhcKD3BhcnRpdGlvbl9jb3VudBgCIAEoAxILCgN0dGwYAyABKAMiKAoQR2V0U3RyZWFtUmVxdWVzdBIUCgRuYW1lGAEgASgJQga6SAPIAQEiNQoRR2V0U3RyZWFtUmVzcG9uc2USIAoGc3RyZWFtGAEgASgLMhAua2F5YWsudjEuU3RyZWFtIhMKEUdldFN0cmVhbXNSZXF1ZXN0IjcKEkdldFN0cmVhbXNSZXNwb25zZRIhCgdzdHJlYW1zGAEgAygLMhAua2F5YWsudjEuU3RyZWFtIjYKDEFwcGx5UmVxdWVzdBImCgdjb21tYW5kGAEgASgLMhUua2F5YWsudjEuUmFmdENvbW1hbmQiDwoNQXBwbHlSZXNwb25zZSIrChNEZWxldGVTdHJlYW1SZXF1ZXN0EhQKBG5hbWUYASABKAlCBrpIA8gBATLBBgoMS2F5YWtTZXJ2aWNlEkMKClB1dFJlY29yZHMSGy5rYXlhay52MS5QdXRSZWNvcmRzUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEkkKCkdldFJlY29yZHMSGy5rYXlhay52MS5HZXRSZWNvcmRzUmVxdWVzdBocLmtheWFrLnYxLkdldFJlY29yZHNSZXNwb25zZSIAEk8KDEZldGNoUmVjb3JkcxIdLmtheWFrLnYxLkZldGNoUmVjb3Jkc1JlcXVlc3QaHi5rYXlhay52MS5GZXRjaFJlY29yZHNSZXNwb25zZSIAEkcKDENvbW1pdFJlY29yZBIdLmtheWFrLnYxLkNvbW1pdFJlY29yZFJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJVCg5SZWdpc3RlcldvcmtlchIfLmtheWFrLnYxLlJlZ2lzdGVyV29ya2VyUmVxdWVzdBogLmtheWFrLnYxLlJlZ2lzdGVyV29ya2VyUmVzcG9uc2UiABJPChBEZXJlZ2lzdGVyV29ya2VyEiEua2F5YWsudjEuRGVyZWdpc3RlcldvcmtlclJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJHCgxDcmVhdGVTdHJlYW0SHS5rYXlhay52MS5DcmVhdGVTdHJlYW1SZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASRgoJR2V0U3RyZWFtEhoua2F5YWsudjEuR2V0U3RyZWFtUmVxdWVzdBobLmtheWFrLnYxLkdldFN0cmVhbVJlc3BvbnNlIgASSQoKR2V0U3RyZWFtcxIbLmtheWFrLnYxLkdldFN0cmVhbXNSZXF1ZXN0Ghwua2F5YWsudjEuR2V0U3RyZWFtc1Jlc3BvbnNlIgASRwoMRGVsZXRlU3RyZWFtEh0ua2F5YWsudjEuRGVsZXRlU3RyZWFtUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEjoKBUFwcGx5EhYua2F5YWsudjEuQXBwbHlSZXF1ZXN0Ghcua2F5YWsudjEuQXBwbHlSZXNwb25zZSIAQo0BCgxjb20ua2F5YWsudjFCCktheWFrUHJvdG9QAVowZ2l0aHViLmNvbS9iaW5hcnltYXR0L2theWFrL2dlbi9rYXlhay92MTtrYXlha3YxogIDS1hYqgIIS2F5YWsuVjHKAghLYXlha1xWMeICFEtheWFrXFYxXEdQQk1ldGFkYXRh6gIJS2F5YWs6OlYxYgZwcm90bzM", [file_buf_validate_validate, file_google_protobuf_empty, file_kayak_v1_model, file_kayak_v1_raft]);
+  fileDesc("ChRrYXlhay92MS9rYXlhay5wcm90bxIIa2F5YWsudjEiZAoRUHV0UmVjb3Jkc1JlcXVlc3QSEwoLc3RyZWFtX25hbWUYASABKAkSIQoHcmVjb3JkcxgCIAMoCzIQLmtheWFrLnYxLlJlY29yZBIXCg9pZGVtcG90ZW5jeV9rZXkYAyABKAkiXAoRR2V0UmVjb3Jkc1JlcXVlc3QSEwoLc3RyZWFtX25hbWUYASABKAkSEQoJcGFydGl0aW9uGAIgASgDEhAKCHN0YXJ0X2lkGAMgASgJEg0KBWxpbWl0GAQgASgDIjcKEkdldFJlY29yZHNSZXNwb25zZRIhCgdyZWNvcmRzGAEgAygLMhAua2F5YWsudjEuUmVjb3JkIlsKE0ZldGNoUmVjb3Jkc1JlcXVlc3QSEwoLc3RyZWFtX25hbWUYASABKAkSIAoGd29ya2VyGAIgASgLMhAua2F5YWsudjEuV29ya2VyEg0KBWxpbWl0GAQgASgDIjkKFEZldGNoUmVjb3Jkc1Jlc3BvbnNlEiEKB3JlY29yZHMYASADKAsyEC5rYXlhay52MS5SZWNvcmQiWQoTQ29tbWl0UmVjb3JkUmVxdWVzdBIgCgZ3b3JrZXIYASABKAsyEC5rYXlhay52MS5Xb3JrZXISIAoGcmVjb3JkGAIgASgLMhAua2F5YWsudjEuUmVjb3JkIkcKFVJlZ2lzdGVyV29ya2VyUmVxdWVzdBITCgtzdHJlYW1fbmFtZRgBIAEoCRINCgVncm91cBgCIAEoCRIKCgJpZBgDIAEoCSI6ChZSZWdpc3RlcldvcmtlclJlc3BvbnNlEiAKBndvcmtlchgBIAEoCzIQLmtheWFrLnYxLldvcmtlciJEChhSZW5ld1JlZ2lzdHJhdGlvblJlcXVlc3QSKAoGd29ya2VyGAEgASgLMhAua2F5YWsudjEuV29ya2VyQga6SAPIAQEiOwoXRGVyZWdpc3RlcldvcmtlclJlcXVlc3QSIAoGd29ya2VyGAEgASgLMhAua2F5YWsudjEuV29ya2VyIkkKE0NyZWF0ZVN0cmVhbVJlcXVlc3QSDAoEbmFtZRgBIAEoCRIXCg9wYXJ0aXRpb25fY291bnQYAiABKAMSCwoDdHRsGAMgASgDIigKEEdldFN0cmVhbVJlcXVlc3QSFAoEbmFtZRgBIAEoCUIGukgDyAEBIjUKEUdldFN0cmVhbVJlc3BvbnNlEiAKBnN0cmVhbRgBIAEoCzIQLmtheWFrLnYxLlN0cmVhbSITChFHZXRTdHJlYW1zUmVxdWVzdCI3ChJHZXRTdHJlYW1zUmVzcG9uc2USIQoHc3RyZWFtcxgBIAMoCzIQLmtheWFrLnYxLlN0cmVhbSI2CgxBcHBseVJlcXVlc3QSJgoHY29tbWFuZBgBIAEoCzIVLmtheWFrLnYxLlJhZnRDb21tYW5kIg8KDUFwcGx5UmVzcG9uc2UiKwoTRGVsZXRlU3RyZWFtUmVxdWVzdBIUCgRuYW1lGAEgASgJQga6SAPIAQEylAcKDEtheWFrU2VydmljZRJDCgpQdXRSZWNvcmRzEhsua2F5YWsudjEuUHV0UmVjb3Jkc1JlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJJCgpHZXRSZWNvcmRzEhsua2F5YWsudjEuR2V0UmVjb3Jkc1JlcXVlc3QaHC5rYXlhay52MS5HZXRSZWNvcmRzUmVzcG9uc2UiABJPCgxGZXRjaFJlY29yZHMSHS5rYXlhay52MS5GZXRjaFJlY29yZHNSZXF1ZXN0Gh4ua2F5YWsudjEuRmV0Y2hSZWNvcmRzUmVzcG9uc2UiABJHCgxDb21taXRSZWNvcmQSHS5rYXlhay52MS5Db21taXRSZWNvcmRSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASVQoOUmVnaXN0ZXJXb3JrZXISHy5rYXlhay52MS5SZWdpc3RlcldvcmtlclJlcXVlc3QaIC5rYXlhay52MS5SZWdpc3RlcldvcmtlclJlc3BvbnNlIgASTwoQRGVyZWdpc3RlcldvcmtlchIhLmtheWFrLnYxLkRlcmVnaXN0ZXJXb3JrZXJSZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASUQoRUmVuZXdSZWdpc3RyYXRpb24SIi5rYXlhay52MS5SZW5ld1JlZ2lzdHJhdGlvblJlcXVlc3QaFi5nb29nbGUucHJvdG9idWYuRW1wdHkiABJHCgxDcmVhdGVTdHJlYW0SHS5rYXlhay52MS5DcmVhdGVTdHJlYW1SZXF1ZXN0GhYuZ29vZ2xlLnByb3RvYnVmLkVtcHR5IgASRgoJR2V0U3RyZWFtEhoua2F5YWsudjEuR2V0U3RyZWFtUmVxdWVzdBobLmtheWFrLnYxLkdldFN0cmVhbVJlc3BvbnNlIgASSQoKR2V0U3RyZWFtcxIbLmtheWFrLnYxLkdldFN0cmVhbXNSZXF1ZXN0Ghwua2F5YWsudjEuR2V0U3RyZWFtc1Jlc3BvbnNlIgASRwoMRGVsZXRlU3RyZWFtEh0ua2F5YWsudjEuRGVsZXRlU3RyZWFtUmVxdWVzdBoWLmdvb2dsZS5wcm90b2J1Zi5FbXB0eSIAEjoKBUFwcGx5EhYua2F5YWsudjEuQXBwbHlSZXF1ZXN0Ghcua2F5YWsudjEuQXBwbHlSZXNwb25zZSIAQo0BCgxjb20ua2F5YWsudjFCCktheWFrUHJvdG9QAVowZ2l0aHViLmNvbS9iaW5hcnltYXR0L2theWFrL2dlbi9rYXlhay92MTtrYXlha3YxogIDS1hYqgIIS2F5YWsuVjHKAghLYXlha1xWMeICFEtheWFrXFYxXEdQQk1ldGFkYXRh6gIJS2F5YWs6OlYxYgZwcm90bzM", [file_buf_validate_validate, file_google_protobuf_empty, file_kayak_v1_model, file_kayak_v1_raft]);
 
 /**
  * @generated from message kayak.v1.PutRecordsRequest
@@ -29,6 +29,8 @@ export type PutRecordsRequest = Message<"kayak.v1.PutRecordsRequest"> & {
   streamName: string;
 
   /**
+   * all records will be part of the same stream.
+   *
    * @generated from field: repeated kayak.v1.Record records = 2;
    */
   records: Record[];
@@ -206,6 +208,23 @@ export const RegisterWorkerResponseSchema: GenMessage<RegisterWorkerResponse> = 
   messageDesc(file_kayak_v1_kayak, 7);
 
 /**
+ * @generated from message kayak.v1.RenewRegistrationRequest
+ */
+export type RenewRegistrationRequest = Message<"kayak.v1.RenewRegistrationRequest"> & {
+  /**
+   * @generated from field: kayak.v1.Worker worker = 1;
+   */
+  worker?: Worker;
+};
+
+/**
+ * Describes the message kayak.v1.RenewRegistrationRequest.
+ * Use `create(RenewRegistrationRequestSchema)` to create a new message.
+ */
+export const RenewRegistrationRequestSchema: GenMessage<RenewRegistrationRequest> = /*@__PURE__*/
+  messageDesc(file_kayak_v1_kayak, 8);
+
+/**
  * @generated from message kayak.v1.DeregisterWorkerRequest
  */
 export type DeregisterWorkerRequest = Message<"kayak.v1.DeregisterWorkerRequest"> & {
@@ -220,7 +239,7 @@ export type DeregisterWorkerRequest = Message<"kayak.v1.DeregisterWorkerRequest"
  * Use `create(DeregisterWorkerRequestSchema)` to create a new message.
  */
 export const DeregisterWorkerRequestSchema: GenMessage<DeregisterWorkerRequest> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_kayak, 8);
+  messageDesc(file_kayak_v1_kayak, 9);
 
 /**
  * @generated from message kayak.v1.CreateStreamRequest
@@ -247,7 +266,7 @@ export type CreateStreamRequest = Message<"kayak.v1.CreateStreamRequest"> & {
  * Use `create(CreateStreamRequestSchema)` to create a new message.
  */
 export const CreateStreamRequestSchema: GenMessage<CreateStreamRequest> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_kayak, 9);
+  messageDesc(file_kayak_v1_kayak, 10);
 
 /**
  * @generated from message kayak.v1.GetStreamRequest
@@ -264,7 +283,7 @@ export type GetStreamRequest = Message<"kayak.v1.GetStreamRequest"> & {
  * Use `create(GetStreamRequestSchema)` to create a new message.
  */
 export const GetStreamRequestSchema: GenMessage<GetStreamRequest> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_kayak, 10);
+  messageDesc(file_kayak_v1_kayak, 11);
 
 /**
  * @generated from message kayak.v1.GetStreamResponse
@@ -281,7 +300,7 @@ export type GetStreamResponse = Message<"kayak.v1.GetStreamResponse"> & {
  * Use `create(GetStreamResponseSchema)` to create a new message.
  */
 export const GetStreamResponseSchema: GenMessage<GetStreamResponse> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_kayak, 11);
+  messageDesc(file_kayak_v1_kayak, 12);
 
 /**
  * @generated from message kayak.v1.GetStreamsRequest
@@ -294,7 +313,7 @@ export type GetStreamsRequest = Message<"kayak.v1.GetStreamsRequest"> & {
  * Use `create(GetStreamsRequestSchema)` to create a new message.
  */
 export const GetStreamsRequestSchema: GenMessage<GetStreamsRequest> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_kayak, 12);
+  messageDesc(file_kayak_v1_kayak, 13);
 
 /**
  * @generated from message kayak.v1.GetStreamsResponse
@@ -311,7 +330,7 @@ export type GetStreamsResponse = Message<"kayak.v1.GetStreamsResponse"> & {
  * Use `create(GetStreamsResponseSchema)` to create a new message.
  */
 export const GetStreamsResponseSchema: GenMessage<GetStreamsResponse> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_kayak, 13);
+  messageDesc(file_kayak_v1_kayak, 14);
 
 /**
  * @generated from message kayak.v1.ApplyRequest
@@ -328,7 +347,7 @@ export type ApplyRequest = Message<"kayak.v1.ApplyRequest"> & {
  * Use `create(ApplyRequestSchema)` to create a new message.
  */
 export const ApplyRequestSchema: GenMessage<ApplyRequest> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_kayak, 14);
+  messageDesc(file_kayak_v1_kayak, 15);
 
 /**
  * @generated from message kayak.v1.ApplyResponse
@@ -341,7 +360,7 @@ export type ApplyResponse = Message<"kayak.v1.ApplyResponse"> & {
  * Use `create(ApplyResponseSchema)` to create a new message.
  */
 export const ApplyResponseSchema: GenMessage<ApplyResponse> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_kayak, 15);
+  messageDesc(file_kayak_v1_kayak, 16);
 
 /**
  * @generated from message kayak.v1.DeleteStreamRequest
@@ -358,7 +377,7 @@ export type DeleteStreamRequest = Message<"kayak.v1.DeleteStreamRequest"> & {
  * Use `create(DeleteStreamRequestSchema)` to create a new message.
  */
 export const DeleteStreamRequestSchema: GenMessage<DeleteStreamRequest> = /*@__PURE__*/
-  messageDesc(file_kayak_v1_kayak, 16);
+  messageDesc(file_kayak_v1_kayak, 17);
 
 /**
  * @generated from service kayak.v1.KayakService
@@ -421,6 +440,14 @@ export const KayakService: GenService<{
   deregisterWorker: {
     methodKind: "unary";
     input: typeof DeregisterWorkerRequestSchema;
+    output: typeof EmptySchema;
+  },
+  /**
+   * @generated from rpc kayak.v1.KayakService.RenewRegistration
+   */
+  renewRegistration: {
+    methodKind: "unary";
+    input: typeof RenewRegistrationRequestSchema;
     output: typeof EmptySchema;
   },
   /**

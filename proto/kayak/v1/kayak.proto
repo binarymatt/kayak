@@ -25,6 +25,7 @@ service KayakService {
   // Worker Operations
   rpc RegisterWorker(RegisterWorkerRequest) returns (RegisterWorkerResponse) {}
   rpc DeregisterWorker(DeregisterWorkerRequest) returns (google.protobuf.Empty) {}
+  rpc RenewRegistration(RenewRegistrationRequest) returns (google.protobuf.Empty) {}
 
   // Stream Operations
   rpc CreateStream(CreateStreamRequest) returns (google.protobuf.Empty) {}
@@ -38,6 +39,7 @@ service KayakService {
 
 message PutRecordsRequest {
   string stream_name = 1;
+  // all records will be part of the same stream.
   repeated Record records = 2;
   string idempotency_key = 3;
 }
@@ -69,6 +71,9 @@ message RegisterWorkerRequest {
 }
 message RegisterWorkerResponse {
   Worker worker = 1;
+}
+message RenewRegistrationRequest {
+  Worker worker = 1 [(buf.validate.field).required = true];
 }
 message DeregisterWorkerRequest {
   Worker worker = 1;

@@ -371,12 +371,14 @@ func (x *Worker) GetLeaseExpires() int64 {
 }
 
 type Record struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	StreamName string                 `protobuf:"bytes,1,opt,name=stream_name,json=streamName,proto3" json:"stream_name,omitempty"`
-	Partition  int64                  `protobuf:"varint,2,opt,name=partition,proto3" json:"partition,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// name of the stream the record is being added to. Will be set by PutRecordsRequest
+	StreamName string `protobuf:"bytes,1,opt,name=stream_name,json=streamName,proto3" json:"stream_name,omitempty"`
+	// partition is set by server.
+	Partition int64 `protobuf:"varint,2,opt,name=partition,proto3" json:"partition,omitempty"`
 	// id is used to hashed and used for partition assignment, can be set by client.
 	Id []byte `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
-	// internal id is used as identifier in partition stream
+	// internal id is used as identifier in partition stream. Set by server.
 	InternalId    string            `protobuf:"bytes,4,opt,name=internal_id,json=internalId,proto3" json:"internal_id,omitempty"`
 	Headers       map[string]string `protobuf:"bytes,5,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Payload       []byte            `protobuf:"bytes,6,opt,name=payload,proto3" json:"payload,omitempty"`

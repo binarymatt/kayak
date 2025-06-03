@@ -666,3 +666,60 @@ func (_c *MockKayakServiceClient_RegisterWorker_Call) RunAndReturn(run func(cont
 	_c.Call.Return(run)
 	return _c
 }
+
+// RenewRegistration provides a mock function for the type MockKayakServiceClient
+func (_mock *MockKayakServiceClient) RenewRegistration(context1 context.Context, request *connect.Request[kayakv1.RenewRegistrationRequest]) (*connect.Response[emptypb.Empty], error) {
+	ret := _mock.Called(context1, request)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RenewRegistration")
+	}
+
+	var r0 *connect.Response[emptypb.Empty]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *connect.Request[kayakv1.RenewRegistrationRequest]) (*connect.Response[emptypb.Empty], error)); ok {
+		return returnFunc(context1, request)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *connect.Request[kayakv1.RenewRegistrationRequest]) *connect.Response[emptypb.Empty]); ok {
+		r0 = returnFunc(context1, request)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*connect.Response[emptypb.Empty])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *connect.Request[kayakv1.RenewRegistrationRequest]) error); ok {
+		r1 = returnFunc(context1, request)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockKayakServiceClient_RenewRegistration_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RenewRegistration'
+type MockKayakServiceClient_RenewRegistration_Call struct {
+	*mock.Call
+}
+
+// RenewRegistration is a helper method to define mock.On call
+//   - context1
+//   - request
+func (_e *MockKayakServiceClient_Expecter) RenewRegistration(context1 interface{}, request interface{}) *MockKayakServiceClient_RenewRegistration_Call {
+	return &MockKayakServiceClient_RenewRegistration_Call{Call: _e.mock.On("RenewRegistration", context1, request)}
+}
+
+func (_c *MockKayakServiceClient_RenewRegistration_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.RenewRegistrationRequest])) *MockKayakServiceClient_RenewRegistration_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*connect.Request[kayakv1.RenewRegistrationRequest]))
+	})
+	return _c
+}
+
+func (_c *MockKayakServiceClient_RenewRegistration_Call) Return(response *connect.Response[emptypb.Empty], err error) *MockKayakServiceClient_RenewRegistration_Call {
+	_c.Call.Return(response, err)
+	return _c
+}
+
+func (_c *MockKayakServiceClient_RenewRegistration_Call) RunAndReturn(run func(context1 context.Context, request *connect.Request[kayakv1.RenewRegistrationRequest]) (*connect.Response[emptypb.Empty], error)) *MockKayakServiceClient_RenewRegistration_Call {
+	_c.Call.Return(run)
+	return _c
+}

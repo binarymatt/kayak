@@ -67,12 +67,14 @@ components:
         streamName:
           type: string
           title: stream_name
+          description: name of the stream the record is being added to. Will be set by PutRecordsRequest
         partition:
           type:
             - integer
             - string
           title: partition
           format: int64
+          description: partition is set by server.
         id:
           type: string
           title: id
@@ -81,7 +83,7 @@ components:
         internalId:
           type: string
           title: internal_id
-          description: internal id is used as identifier in partition stream
+          description: internal id is used as identifier in partition stream. Set by server.
         headers:
           type: object
           title: headers

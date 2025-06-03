@@ -183,11 +183,15 @@ export const WorkerSchema: GenMessage<Worker> = /*@__PURE__*/
  */
 export type Record = Message<"kayak.v1.Record"> & {
   /**
+   * name of the stream the record is being added to. Will be set by PutRecordsRequest
+   *
    * @generated from field: string stream_name = 1;
    */
   streamName: string;
 
   /**
+   * partition is set by server.
+   *
    * @generated from field: int64 partition = 2;
    */
   partition: bigint;
@@ -200,7 +204,7 @@ export type Record = Message<"kayak.v1.Record"> & {
   id: Uint8Array;
 
   /**
-   * internal id is used as identifier in partition stream
+   * internal id is used as identifier in partition stream. Set by server.
    *
    * @generated from field: string internal_id = 4;
    */

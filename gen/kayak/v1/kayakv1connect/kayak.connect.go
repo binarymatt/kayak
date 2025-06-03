@@ -50,6 +50,9 @@ const (
 	// KayakServiceDeregisterWorkerProcedure is the fully-qualified name of the KayakService's
 	// DeregisterWorker RPC.
 	KayakServiceDeregisterWorkerProcedure = "/kayak.v1.KayakService/DeregisterWorker"
+	// KayakServiceRenewRegistrationProcedure is the fully-qualified name of the KayakService's
+	// RenewRegistration RPC.
+	KayakServiceRenewRegistrationProcedure = "/kayak.v1.KayakService/RenewRegistration"
 	// KayakServiceCreateStreamProcedure is the fully-qualified name of the KayakService's CreateStream
 	// RPC.
 	KayakServiceCreateStreamProcedure = "/kayak.v1.KayakService/CreateStream"
@@ -78,6 +81,7 @@ type KayakServiceClient interface {
 	// Worker Operations
 	RegisterWorker(context.Context, *connect.Request[v1.RegisterWorkerRequest]) (*connect.Response[v1.RegisterWorkerResponse], error)
 	DeregisterWorker(context.Context, *connect.Request[v1.DeregisterWorkerRequest]) (*connect.Response[emptypb.Empty], error)
+	RenewRegistration(context.Context, *connect.Request[v1.RenewRegistrationRequest]) (*connect.Response[emptypb.Empty], error)
 	// Stream Operations
 	CreateStream(context.Context, *connect.Request[v1.CreateStreamRequest]) (*connect.Response[emptypb.Empty], error)
 	GetStream(context.Context, *connect.Request[v1.GetStreamRequest]) (*connect.Response[v1.GetStreamResponse], error)
@@ -134,6 +138,12 @@ func NewKayakServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(kayakServiceMethods.ByName("DeregisterWorker")),
 			connect.WithClientOptions(opts...),
 		),
+		renewRegistration: connect.NewClient[v1.RenewRegistrationRequest, emptypb.Empty](
+			httpClient,
+			baseURL+KayakServiceRenewRegistrationProcedure,
+			connect.WithSchema(kayakServiceMethods.ByName("RenewRegistration")),
+			connect.WithClientOptions(opts...),
+		),
 		createStream: connect.NewClient[v1.CreateStreamRequest, emptypb.Empty](
 			httpClient,
 			baseURL+KayakServiceCreateStreamProcedure,
@@ -169,17 +179,18 @@ func NewKayakServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 
 // kayakServiceClient implements KayakServiceClient.
 type kayakServiceClient struct {
-	putRecords       *connect.Client[v1.PutRecordsRequest, emptypb.Empty]
-	getRecords       *connect.Client[v1.GetRecordsRequest, v1.GetRecordsResponse]
-	fetchRecords     *connect.Client[v1.FetchRecordsRequest, v1.FetchRecordsResponse]
-	commitRecord     *connect.Client[v1.CommitRecordRequest, emptypb.Empty]
-	registerWorker   *connect.Client[v1.RegisterWorkerRequest, v1.RegisterWorkerResponse]
-	deregisterWorker *connect.Client[v1.DeregisterWorkerRequest, emptypb.Empty]
-	createStream     *connect.Client[v1.CreateStreamRequest, emptypb.Empty]
-	getStream        *connect.Client[v1.GetStreamRequest, v1.GetStreamResponse]
-	getStreams       *connect.Client[v1.GetStreamsRequest, v1.GetStreamsResponse]
-	deleteStream     *connect.Client[v1.DeleteStreamRequest, emptypb.Empty]
-	apply            *connect.Client[v1.ApplyRequest, v1.ApplyResponse]
+	putRecords        *connect.Client[v1.PutRecordsRequest, emptypb.Empty]
+	getRecords        *connect.Client[v1.GetRecordsRequest, v1.GetRecordsResponse]
+	fetchRecords      *connect.Client[v1.FetchRecordsRequest, v1.FetchRecordsResponse]
+	commitRecord      *connect.Client[v1.CommitRecordRequest, emptypb.Empty]
+	registerWorker    *connect.Client[v1.RegisterWorkerRequest, v1.RegisterWorkerResponse]
+	deregisterWorker  *connect.Client[v1.DeregisterWorkerRequest, emptypb.Empty]
+	renewRegistration *connect.Client[v1.RenewRegistrationRequest, emptypb.Empty]
+	createStream      *connect.Client[v1.CreateStreamRequest, emptypb.Empty]
+	getStream         *connect.Client[v1.GetStreamRequest, v1.GetStreamResponse]
+	getStreams        *connect.Client[v1.GetStreamsRequest, v1.GetStreamsResponse]
+	deleteStream      *connect.Client[v1.DeleteStreamRequest, emptypb.Empty]
+	apply             *connect.Client[v1.ApplyRequest, v1.ApplyResponse]
 }
 
 // PutRecords calls kayak.v1.KayakService.PutRecords.
@@ -210,6 +221,11 @@ func (c *kayakServiceClient) RegisterWorker(ctx context.Context, req *connect.Re
 // DeregisterWorker calls kayak.v1.KayakService.DeregisterWorker.
 func (c *kayakServiceClient) DeregisterWorker(ctx context.Context, req *connect.Request[v1.DeregisterWorkerRequest]) (*connect.Response[emptypb.Empty], error) {
 	return c.deregisterWorker.CallUnary(ctx, req)
+}
+
+// RenewRegistration calls kayak.v1.KayakService.RenewRegistration.
+func (c *kayakServiceClient) RenewRegistration(ctx context.Context, req *connect.Request[v1.RenewRegistrationRequest]) (*connect.Response[emptypb.Empty], error) {
+	return c.renewRegistration.CallUnary(ctx, req)
 }
 
 // CreateStream calls kayak.v1.KayakService.CreateStream.
@@ -251,6 +267,7 @@ type KayakServiceHandler interface {
 	// Worker Operations
 	RegisterWorker(context.Context, *connect.Request[v1.RegisterWorkerRequest]) (*connect.Response[v1.RegisterWorkerResponse], error)
 	DeregisterWorker(context.Context, *connect.Request[v1.DeregisterWorkerRequest]) (*connect.Response[emptypb.Empty], error)
+	RenewRegistration(context.Context, *connect.Request[v1.RenewRegistrationRequest]) (*connect.Response[emptypb.Empty], error)
 	// Stream Operations
 	CreateStream(context.Context, *connect.Request[v1.CreateStreamRequest]) (*connect.Response[emptypb.Empty], error)
 	GetStream(context.Context, *connect.Request[v1.GetStreamRequest]) (*connect.Response[v1.GetStreamResponse], error)
@@ -303,6 +320,12 @@ func NewKayakServiceHandler(svc KayakServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(kayakServiceMethods.ByName("DeregisterWorker")),
 		connect.WithHandlerOptions(opts...),
 	)
+	kayakServiceRenewRegistrationHandler := connect.NewUnaryHandler(
+		KayakServiceRenewRegistrationProcedure,
+		svc.RenewRegistration,
+		connect.WithSchema(kayakServiceMethods.ByName("RenewRegistration")),
+		connect.WithHandlerOptions(opts...),
+	)
 	kayakServiceCreateStreamHandler := connect.NewUnaryHandler(
 		KayakServiceCreateStreamProcedure,
 		svc.CreateStream,
@@ -347,6 +370,8 @@ func NewKayakServiceHandler(svc KayakServiceHandler, opts ...connect.HandlerOpti
 			kayakServiceRegisterWorkerHandler.ServeHTTP(w, r)
 		case KayakServiceDeregisterWorkerProcedure:
 			kayakServiceDeregisterWorkerHandler.ServeHTTP(w, r)
+		case KayakServiceRenewRegistrationProcedure:
+			kayakServiceRenewRegistrationHandler.ServeHTTP(w, r)
 		case KayakServiceCreateStreamProcedure:
 			kayakServiceCreateStreamHandler.ServeHTTP(w, r)
 		case KayakServiceGetStreamProcedure:
@@ -388,6 +413,10 @@ func (UnimplementedKayakServiceHandler) RegisterWorker(context.Context, *connect
 
 func (UnimplementedKayakServiceHandler) DeregisterWorker(context.Context, *connect.Request[v1.DeregisterWorkerRequest]) (*connect.Response[emptypb.Empty], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kayak.v1.KayakService.DeregisterWorker is not implemented"))
+}
+
+func (UnimplementedKayakServiceHandler) RenewRegistration(context.Context, *connect.Request[v1.RenewRegistrationRequest]) (*connect.Response[emptypb.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kayak.v1.KayakService.RenewRegistration is not implemented"))
 }
 
 func (UnimplementedKayakServiceHandler) CreateStream(context.Context, *connect.Request[v1.CreateStreamRequest]) (*connect.Response[emptypb.Empty], error) {

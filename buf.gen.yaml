@@ -15,3 +15,6 @@ plugins:
     opt: target=ts
 managed:
   enabled: true
+  disable:
+    - file_option: go_package
+      module: buf.build/bufbuild/protovalidate

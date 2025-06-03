@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"time"
 
+	"buf.build/go/protovalidate"
 	"connectrpc.com/connect"
+	"github.com/coder/quartz"
 	"github.com/dgraph-io/badger/v4"
 	"github.com/hashicorp/raft"
 	"github.com/oklog/ulid/v2"
@@ -37,6 +39,7 @@ type service struct {
 	logger           *slog.Logger
 	raft             RaftInterface
 	testLeaderClient kayakv1connect.KayakServiceClient
+	clock            quartz.Clock
 }
 
 func (s *service) applyCommand(ctx context.Context, cmd *v1.RaftCommand) error {
@@ -82,6 +85,7 @@ func (s *service) PutRecords(ctx context.Context, req *connect.Request[v1.PutRec
 		if r.Id == nil {
 			r.Id = id.Bytes()
 		}
+		r.StreamName = stream.Name
 		r.Partition = balancer(r.Id, stream.PartitionCount)
 	}
 
@@ -108,7 +112,7 @@ func (s *service) CommitRecord(ctx context.Context, req *connect.Request[v1.Comm
 		Payload: &v1.RaftCommand_ExtendLease{
 			ExtendLease: &v1.ExtendLease{
 				Worker:    req.Msg.Worker,
-				ExpiresMs: time.Now().Add(s.workerExpiration).UnixMilli(),
+				ExpiresMs: s.clock.Now().Add(s.workerExpiration).UnixMilli(),
 			},
 		},
 	})
@@ -251,7 +255,7 @@ func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.Re
 	} else {
 		return nil, connect.NewError(connect.CodeOutOfRange, errors.New("no partitions available"))
 	}
-	n := time.Now().Add(s.workerExpiration)
+	n := s.clock.Now().Add(s.workerExpiration)
 	worker.LeaseExpires = n.UnixMilli()
 	cmd := &v1.RaftCommand{
 		Payload: &v1.RaftCommand_ExtendLease{
@@ -271,6 +275,41 @@ func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.Re
 	return connect.NewResponse(resp), nil
 }
 
+var (
+	ErrNoAssignmentMatch = errors.New("assignment does not match")
+)
+
+func (s *service) RenewRegistration(ctx context.Context, req *connect.Request[v1.RenewRegistrationRequest]) (*connect.Response[emptypb.Empty], error) {
+	if err := protovalidate.Validate(req.Msg); err != nil {
+		fmt.Println("invalid request")
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	worker := req.Msg.GetWorker()
+	// check partition assignment
+	id, err := s.store.GetPartitionAssignment(worker.GetStreamName(), worker.GetGroupName(), worker.GetPartitionAssignment())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	if id != req.Msg.Worker.Id {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("partition is assigned to a different id %s: %w", id, ErrNoAssignmentMatch))
+	}
+	n := s.clock.Now().Add(s.workerExpiration)
+	worker.LeaseExpires = n.UnixMilli()
+	cmd := &v1.RaftCommand{
+		Payload: &v1.RaftCommand_ExtendLease{
+			ExtendLease: &v1.ExtendLease{
+				Worker:    worker,
+				ExpiresMs: worker.LeaseExpires,
+			},
+		},
+	}
+	if err := s.applyCommand(ctx, cmd); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	return connect.NewResponse(&emptypb.Empty{}), nil
+}
 func (s *service) DeregisterWorker(ctx context.Context, req *connect.Request[v1.DeregisterWorkerRequest]) (*connect.Response[emptypb.Empty], error) {
 	cmd := &v1.RaftCommand{
 		Payload: &v1.RaftCommand_RemoveLease{
@@ -327,5 +366,6 @@ func New(st store.Store, ra *raft.Raft) *service {
 		workerExpiration: 60 * time.Second,
 		store:            st,
 		logger:           slog.Default().With("service", "kayak"),
+		clock:            quartz.NewReal(),
 	}
 }

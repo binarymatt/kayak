@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	"github.com/coder/quartz"
 	"github.com/hashicorp/raft"
 	"github.com/oklog/ulid/v2"
 	"github.com/shoenig/test/must"
@@ -38,6 +39,7 @@ type testServiceSuite struct {
 	mockRaft       *MockRaftInterface
 	mockTestClient *kayakv1connect.MockKayakServiceClient
 	id             ulid.ULID
+	clock          *quartz.Mock
 }
 
 func setupTest(t *testing.T) *testServiceSuite {
@@ -46,11 +48,13 @@ func setupTest(t *testing.T) *testServiceSuite {
 	s := store.NewMockStore(t)
 	r := NewMockRaftInterface(t)
 	client := kayakv1connect.NewMockKayakServiceClient(t)
+	c := quartz.NewMock(t)
 	ts := &testServiceSuite{
 		mockStore:      s,
 		mockRaft:       r,
 		mockTestClient: client,
 		id:             ulid.Make(),
+		clock:          c,
 	}
 
 	ts.service = &service{
@@ -61,6 +65,8 @@ func setupTest(t *testing.T) *testServiceSuite {
 		idGenerator: func() ulid.ULID {
 			return ts.id
 		},
+		clock:            c,
+		workerExpiration: 10 * time.Second,
 	}
 	return ts
 }
@@ -88,6 +94,7 @@ func TestPutRecords_Leader(t *testing.T) {
 						InternalId: ts.id.String(),
 						Payload:    []byte("test"),
 						Partition:  0,
+						StreamName: "test_stream",
 					},
 				},
 				StreamName: "test_stream",
@@ -162,5 +169,66 @@ func TestApplyCommand(t *testing.T) {
 			must.ErrorIs(t, err, tc.err)
 		})
 	}
+}
+
+func TestRenewRegistration_HappyPath(t *testing.T) {
+	ts := setupTest(t)
+	ctx := context.Background()
+	worker := &kayakv1.Worker{
+		StreamName:          "stream",
+		GroupName:           "group",
+		PartitionAssignment: 1,
+		Id:                  "worker1",
+	}
+	leaseExpires := ts.clock.Now().Add(10 * time.Second)
+	cmd, _ := proto.Marshal(&kayakv1.RaftCommand{
+		Payload: &kayakv1.RaftCommand_ExtendLease{
+			ExtendLease: &kayakv1.ExtendLease{
+				Worker: &kayakv1.Worker{
+					StreamName:          "stream",
+					GroupName:           "group",
+					PartitionAssignment: 1,
+					Id:                  "worker1",
+					LeaseExpires:        leaseExpires.UnixMilli(),
+				},
+				ExpiresMs: leaseExpires.UnixMilli(),
+			},
+		},
+	})
+
+	ts.mockRaft.EXPECT().State().Return(raft.Leader).Once()
+	ts.mockRaft.EXPECT().Apply(cmd, 10*time.Millisecond).Return(&TestFuture{
+		response: &store.ApplyResponse{},
+	}).Once()
+	ts.mockStore.EXPECT().GetPartitionAssignment("stream", "group", int64(1)).
+		Return("worker1", nil).Once()
+
+	_, err := ts.service.RenewRegistration(ctx, connect.NewRequest(&kayakv1.RenewRegistrationRequest{Worker: worker}))
+	must.NoError(t, err)
+
+}
+
+func TestRenewRegistration_InvalidInput(t *testing.T) {
+	ts := setupTest(t)
+
+	_, err := ts.service.RenewRegistration(context.Background(), connect.NewRequest(&kayakv1.RenewRegistrationRequest{}))
+	must.EqError(t, err, "invalid_argument: validation error:\n - worker: value is required [required]")
+}
+
+func TestRenewRegistration_MisMatchingWorkers(t *testing.T) {
+	ts := setupTest(t)
+	ctx := context.Background()
+	worker := &kayakv1.Worker{
+		StreamName:          "stream",
+		GroupName:           "group",
+		PartitionAssignment: 1,
+		Id:                  "worker1",
+	}
+	ts.mockStore.EXPECT().GetPartitionAssignment("stream", "group", int64(1)).
+		Return("worker2", nil).Once()
+
+	_, err := ts.service.RenewRegistration(ctx, connect.NewRequest(&kayakv1.RenewRegistrationRequest{Worker: worker}))
+	must.ErrorIs(t, err, ErrNoAssignmentMatch)
+
 }
 func TestGetRecords(t *testing.T) {}

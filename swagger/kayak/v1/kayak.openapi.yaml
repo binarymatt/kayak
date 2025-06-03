@@ -219,6 +219,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/google.protobuf.Empty'
+  /kayak.v1.KayakService/RenewRegistration:
+    post:
+      tags:
+        - kayak.v1.KayakService
+      summary: RenewRegistration
+      operationId: kayak.v1.KayakService.RenewRegistration
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/kayak.v1.RenewRegistrationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/google.protobuf.Empty'
   /kayak.v1.KayakService/CreateStream:
     post:
       tags:
@@ -668,6 +703,7 @@ components:
           items:
             $ref: '#/components/schemas/kayak.v1.Record'
           title: records
+          description: all records will be part of the same stream.
         idempotencyKey:
           type: string
           title: idempotency_key
@@ -738,12 +774,14 @@ components:
         streamName:
           type: string
           title: stream_name
+          description: name of the stream the record is being added to. Will be set by PutRecordsRequest
         partition:
           type:
             - integer
             - string
           title: partition
           format: int64
+          description: partition is set by server.
         id:
           type: string
           title: id
@@ -752,7 +790,7 @@ components:
         internalId:
           type: string
           title: internal_id
-          description: internal id is used as identifier in partition stream
+          description: internal id is used as identifier in partition stream. Set by server.
         headers:
           type: object
           title: headers
@@ -807,6 +845,16 @@ components:
           title: worker
           $ref: '#/components/schemas/kayak.v1.Worker'
       title: RemoveLease
+      additionalProperties: false
+    kayak.v1.RenewRegistrationRequest:
+      type: object
+      properties:
+        worker:
+          title: worker
+          $ref: '#/components/schemas/kayak.v1.Worker'
+      title: RenewRegistrationRequest
+      required:
+        - worker
       additionalProperties: false
     kayak.v1.Stream:
       type: object
