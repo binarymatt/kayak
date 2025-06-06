@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"time"
 
+	"buf.build/go/protovalidate"
 	"connectrpc.com/connect"
+	"github.com/coder/quartz"
 	"github.com/dgraph-io/badger/v4"
 	"github.com/hashicorp/raft"
 	"github.com/oklog/ulid/v2"
@@ -17,6 +19,7 @@ import (
 
 	v1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
+	internal_raft "github.com/binarymatt/kayak/internal/raft"
 	"github.com/binarymatt/kayak/internal/store"
 )
 
@@ -25,18 +28,14 @@ var (
 	ErrNotLeader                                    = errors.New("node is not the leader")
 )
 
-type RaftInterface interface {
-	Apply(cmd []byte, timeout time.Duration) raft.ApplyFuture
-	State() raft.RaftState
-	Leader() raft.ServerAddress
-}
 type service struct {
 	idGenerator      func() ulid.ULID
 	store            store.Store
 	workerExpiration time.Duration
 	logger           *slog.Logger
-	raft             RaftInterface
+	raft             internal_raft.RaftInterface
 	testLeaderClient kayakv1connect.KayakServiceClient
+	clock            quartz.Clock
 }
 
 func (s *service) applyCommand(ctx context.Context, cmd *v1.RaftCommand) error {
@@ -82,6 +81,7 @@ func (s *service) PutRecords(ctx context.Context, req *connect.Request[v1.PutRec
 		if r.Id == nil {
 			r.Id = id.Bytes()
 		}
+		r.StreamName = stream.Name
 		r.Partition = balancer(r.Id, stream.PartitionCount)
 	}
 
@@ -108,7 +108,7 @@ func (s *service) CommitRecord(ctx context.Context, req *connect.Request[v1.Comm
 		Payload: &v1.RaftCommand_ExtendLease{
 			ExtendLease: &v1.ExtendLease{
 				Worker:    req.Msg.Worker,
-				ExpiresMs: time.Now().Add(s.workerExpiration).UnixMilli(),
+				ExpiresMs: s.clock.Now().Add(s.workerExpiration).UnixMilli(),
 			},
 		},
 	})
@@ -201,6 +201,11 @@ func (s *service) GetStream(ctx context.Context, req *connect.Request[v1.GetStre
 		}
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
+	stats, err := s.store.GetStreamStats(stream.Name)
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	stream.Stats = stats
 	return connect.NewResponse(&v1.GetStreamResponse{
 		Stream: stream,
 	}), nil
@@ -246,7 +251,7 @@ func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.Re
 	} else {
 		return nil, connect.NewError(connect.CodeOutOfRange, errors.New("no partitions available"))
 	}
-	n := time.Now().Add(s.workerExpiration)
+	n := s.clock.Now().Add(s.workerExpiration)
 	worker.LeaseExpires = n.UnixMilli()
 	cmd := &v1.RaftCommand{
 		Payload: &v1.RaftCommand_ExtendLease{
@@ -266,6 +271,41 @@ func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.Re
 	return connect.NewResponse(resp), nil
 }
 
+var (
+	ErrNoAssignmentMatch = errors.New("assignment does not match")
+)
+
+func (s *service) RenewRegistration(ctx context.Context, req *connect.Request[v1.RenewRegistrationRequest]) (*connect.Response[emptypb.Empty], error) {
+	if err := protovalidate.Validate(req.Msg); err != nil {
+		fmt.Println("invalid request")
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
+	worker := req.Msg.GetWorker()
+	// check partition assignment
+	id, err := s.store.GetPartitionAssignment(worker.GetStreamName(), worker.GetGroupName(), worker.GetPartitionAssignment())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	if id != req.Msg.Worker.Id {
+		return nil, connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("partition is assigned to a different id %s: %w", id, ErrNoAssignmentMatch))
+	}
+	n := s.clock.Now().Add(s.workerExpiration)
+	worker.LeaseExpires = n.UnixMilli()
+	cmd := &v1.RaftCommand{
+		Payload: &v1.RaftCommand_ExtendLease{
+			ExtendLease: &v1.ExtendLease{
+				Worker:    worker,
+				ExpiresMs: worker.LeaseExpires,
+			},
+		},
+	}
+	if err := s.applyCommand(ctx, cmd); err != nil {
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+
+	return connect.NewResponse(&emptypb.Empty{}), nil
+}
 func (s *service) DeregisterWorker(ctx context.Context, req *connect.Request[v1.DeregisterWorkerRequest]) (*connect.Response[emptypb.Empty], error) {
 	cmd := &v1.RaftCommand{
 		Payload: &v1.RaftCommand_RemoveLease{
@@ -287,6 +327,23 @@ func (s *service) Apply(ctx context.Context, req *connect.Request[v1.ApplyReques
 	return connect.NewResponse(&v1.ApplyResponse{}), nil
 }
 
+func (s *service) DeleteStream(ctx context.Context, req *connect.Request[v1.DeleteStreamRequest]) (*connect.Response[emptypb.Empty], error) {
+
+	// TODO: validate request
+	cmd := &v1.RaftCommand{
+		Payload: &v1.RaftCommand_DeleteStream{
+			DeleteStream: &v1.DeleteStream{
+				StreamName: req.Msg.Name,
+			},
+		},
+	}
+	if err := s.applyCommand(ctx, cmd); err != nil {
+		slog.Error("could not create stream", "error", err)
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(&emptypb.Empty{}), nil
+}
+
 func (s *service) getLeaderClient() kayakv1connect.KayakServiceClient {
 	if s.testLeaderClient != nil {
 		return s.testLeaderClient
@@ -305,5 +362,6 @@ func New(st store.Store, ra *raft.Raft) *service {
 		workerExpiration: 60 * time.Second,
 		store:            st,
 		logger:           slog.Default().With("service", "kayak"),
+		clock:            quartz.NewReal(),
 	}
 }

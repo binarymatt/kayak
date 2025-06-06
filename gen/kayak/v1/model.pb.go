@@ -27,6 +27,7 @@ type Stream struct {
 	Name           string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	PartitionCount int64                  `protobuf:"varint,2,opt,name=partition_count,json=partitionCount,proto3" json:"partition_count,omitempty"`
 	Ttl            int64                  `protobuf:"varint,3,opt,name=ttl,proto3" json:"ttl,omitempty"`
+	Stats          *StreamStats           `protobuf:"bytes,4,opt,name=stats,proto3,oneof" json:"stats,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -82,6 +83,133 @@ func (x *Stream) GetTtl() int64 {
 	return 0
 }
 
+func (x *Stream) GetStats() *StreamStats {
+	if x != nil {
+		return x.Stats
+	}
+	return nil
+}
+
+type StreamStats struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	PartitionCounts map[int64]int64        `protobuf:"bytes,1,rep,name=partition_counts,json=partitionCounts,proto3" json:"partition_counts,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	RecordCount     int64                  `protobuf:"varint,2,opt,name=record_count,json=recordCount,proto3" json:"record_count,omitempty"`
+	Groups          []*Group               `protobuf:"bytes,3,rep,name=groups,proto3" json:"groups,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *StreamStats) Reset() {
+	*x = StreamStats{}
+	mi := &file_kayak_v1_model_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StreamStats) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StreamStats) ProtoMessage() {}
+
+func (x *StreamStats) ProtoReflect() protoreflect.Message {
+	mi := &file_kayak_v1_model_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StreamStats.ProtoReflect.Descriptor instead.
+func (*StreamStats) Descriptor() ([]byte, []int) {
+	return file_kayak_v1_model_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *StreamStats) GetPartitionCounts() map[int64]int64 {
+	if x != nil {
+		return x.PartitionCounts
+	}
+	return nil
+}
+
+func (x *StreamStats) GetRecordCount() int64 {
+	if x != nil {
+		return x.RecordCount
+	}
+	return 0
+}
+
+func (x *StreamStats) GetGroups() []*Group {
+	if x != nil {
+		return x.Groups
+	}
+	return nil
+}
+
+type Group struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	StreamName         string                 `protobuf:"bytes,1,opt,name=stream_name,json=streamName,proto3" json:"stream_name,omitempty"`
+	Name               string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	PartitionPositions map[int64]string       `protobuf:"bytes,3,rep,name=partition_positions,json=partitionPositions,proto3" json:"partition_positions,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *Group) Reset() {
+	*x = Group{}
+	mi := &file_kayak_v1_model_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Group) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Group) ProtoMessage() {}
+
+func (x *Group) ProtoReflect() protoreflect.Message {
+	mi := &file_kayak_v1_model_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Group.ProtoReflect.Descriptor instead.
+func (*Group) Descriptor() ([]byte, []int) {
+	return file_kayak_v1_model_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *Group) GetStreamName() string {
+	if x != nil {
+		return x.StreamName
+	}
+	return ""
+}
+
+func (x *Group) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Group) GetPartitionPositions() map[int64]string {
+	if x != nil {
+		return x.PartitionPositions
+	}
+	return nil
+}
+
 type PartitionAssignment struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	StreamName    string                 `protobuf:"bytes,1,opt,name=stream_name,json=streamName,proto3" json:"stream_name,omitempty"`
@@ -95,7 +223,7 @@ type PartitionAssignment struct {
 
 func (x *PartitionAssignment) Reset() {
 	*x = PartitionAssignment{}
-	mi := &file_kayak_v1_model_proto_msgTypes[1]
+	mi := &file_kayak_v1_model_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -107,7 +235,7 @@ func (x *PartitionAssignment) String() string {
 func (*PartitionAssignment) ProtoMessage() {}
 
 func (x *PartitionAssignment) ProtoReflect() protoreflect.Message {
-	mi := &file_kayak_v1_model_proto_msgTypes[1]
+	mi := &file_kayak_v1_model_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -120,7 +248,7 @@ func (x *PartitionAssignment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PartitionAssignment.ProtoReflect.Descriptor instead.
 func (*PartitionAssignment) Descriptor() ([]byte, []int) {
-	return file_kayak_v1_model_proto_rawDescGZIP(), []int{1}
+	return file_kayak_v1_model_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PartitionAssignment) GetStreamName() string {
@@ -172,7 +300,7 @@ type Worker struct {
 
 func (x *Worker) Reset() {
 	*x = Worker{}
-	mi := &file_kayak_v1_model_proto_msgTypes[2]
+	mi := &file_kayak_v1_model_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -184,7 +312,7 @@ func (x *Worker) String() string {
 func (*Worker) ProtoMessage() {}
 
 func (x *Worker) ProtoReflect() protoreflect.Message {
-	mi := &file_kayak_v1_model_proto_msgTypes[2]
+	mi := &file_kayak_v1_model_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -197,7 +325,7 @@ func (x *Worker) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Worker.ProtoReflect.Descriptor instead.
 func (*Worker) Descriptor() ([]byte, []int) {
-	return file_kayak_v1_model_proto_rawDescGZIP(), []int{2}
+	return file_kayak_v1_model_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *Worker) GetStreamName() string {
@@ -243,12 +371,14 @@ func (x *Worker) GetLeaseExpires() int64 {
 }
 
 type Record struct {
-	state      protoimpl.MessageState `protogen:"open.v1"`
-	StreamName string                 `protobuf:"bytes,1,opt,name=stream_name,json=streamName,proto3" json:"stream_name,omitempty"`
-	Partition  int64                  `protobuf:"varint,2,opt,name=partition,proto3" json:"partition,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// name of the stream the record is being added to. Will be set by PutRecordsRequest
+	StreamName string `protobuf:"bytes,1,opt,name=stream_name,json=streamName,proto3" json:"stream_name,omitempty"`
+	// partition is set by server.
+	Partition int64 `protobuf:"varint,2,opt,name=partition,proto3" json:"partition,omitempty"`
 	// id is used to hashed and used for partition assignment, can be set by client.
 	Id []byte `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
-	// internal id is used as identifier in partition stream
+	// internal id is used as identifier in partition stream. Set by server.
 	InternalId    string            `protobuf:"bytes,4,opt,name=internal_id,json=internalId,proto3" json:"internal_id,omitempty"`
 	Headers       map[string]string `protobuf:"bytes,5,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Payload       []byte            `protobuf:"bytes,6,opt,name=payload,proto3" json:"payload,omitempty"`
@@ -258,7 +388,7 @@ type Record struct {
 
 func (x *Record) Reset() {
 	*x = Record{}
-	mi := &file_kayak_v1_model_proto_msgTypes[3]
+	mi := &file_kayak_v1_model_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -270,7 +400,7 @@ func (x *Record) String() string {
 func (*Record) ProtoMessage() {}
 
 func (x *Record) ProtoReflect() protoreflect.Message {
-	mi := &file_kayak_v1_model_proto_msgTypes[3]
+	mi := &file_kayak_v1_model_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -283,7 +413,7 @@ func (x *Record) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Record.ProtoReflect.Descriptor instead.
 func (*Record) Descriptor() ([]byte, []int) {
-	return file_kayak_v1_model_proto_rawDescGZIP(), []int{3}
+	return file_kayak_v1_model_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Record) GetStreamName() string {
@@ -332,11 +462,28 @@ var File_kayak_v1_model_proto protoreflect.FileDescriptor
 
 const file_kayak_v1_model_proto_rawDesc = "" +
 	"\n" +
-	"\x14kayak/v1/model.proto\x12\bkayak.v1\x1a\x1bbuf/validate/validate.proto\"W\n" +
+	"\x14kayak/v1/model.proto\x12\bkayak.v1\x1a\x1bbuf/validate/validate.proto\"\x93\x01\n" +
 	"\x06Stream\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12'\n" +
 	"\x0fpartition_count\x18\x02 \x01(\x03R\x0epartitionCount\x12\x10\n" +
-	"\x03ttl\x18\x03 \x01(\x03R\x03ttl\"\xaf\x01\n" +
+	"\x03ttl\x18\x03 \x01(\x03R\x03ttl\x120\n" +
+	"\x05stats\x18\x04 \x01(\v2\x15.kayak.v1.StreamStatsH\x00R\x05stats\x88\x01\x01B\b\n" +
+	"\x06_stats\"\xf4\x01\n" +
+	"\vStreamStats\x12U\n" +
+	"\x10partition_counts\x18\x01 \x03(\v2*.kayak.v1.StreamStats.PartitionCountsEntryR\x0fpartitionCounts\x12!\n" +
+	"\frecord_count\x18\x02 \x01(\x03R\vrecordCount\x12'\n" +
+	"\x06groups\x18\x03 \x03(\v2\x0f.kayak.v1.GroupR\x06groups\x1aB\n" +
+	"\x14PartitionCountsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\x03R\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"\xdd\x01\n" +
+	"\x05Group\x12\x1f\n" +
+	"\vstream_name\x18\x01 \x01(\tR\n" +
+	"streamName\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12X\n" +
+	"\x13partition_positions\x18\x03 \x03(\v2'.kayak.v1.Group.PartitionPositionsEntryR\x12partitionPositions\x1aE\n" +
+	"\x17PartitionPositionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\x03R\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xaf\x01\n" +
 	"\x13PartitionAssignment\x12\x1f\n" +
 	"\vstream_name\x18\x01 \x01(\tR\n" +
 	"streamName\x12\x1d\n" +
@@ -382,21 +529,29 @@ func file_kayak_v1_model_proto_rawDescGZIP() []byte {
 	return file_kayak_v1_model_proto_rawDescData
 }
 
-var file_kayak_v1_model_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_kayak_v1_model_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_kayak_v1_model_proto_goTypes = []any{
 	(*Stream)(nil),              // 0: kayak.v1.Stream
-	(*PartitionAssignment)(nil), // 1: kayak.v1.PartitionAssignment
-	(*Worker)(nil),              // 2: kayak.v1.Worker
-	(*Record)(nil),              // 3: kayak.v1.Record
-	nil,                         // 4: kayak.v1.Record.HeadersEntry
+	(*StreamStats)(nil),         // 1: kayak.v1.StreamStats
+	(*Group)(nil),               // 2: kayak.v1.Group
+	(*PartitionAssignment)(nil), // 3: kayak.v1.PartitionAssignment
+	(*Worker)(nil),              // 4: kayak.v1.Worker
+	(*Record)(nil),              // 5: kayak.v1.Record
+	nil,                         // 6: kayak.v1.StreamStats.PartitionCountsEntry
+	nil,                         // 7: kayak.v1.Group.PartitionPositionsEntry
+	nil,                         // 8: kayak.v1.Record.HeadersEntry
 }
 var file_kayak_v1_model_proto_depIdxs = []int32{
-	4, // 0: kayak.v1.Record.headers:type_name -> kayak.v1.Record.HeadersEntry
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	1, // 0: kayak.v1.Stream.stats:type_name -> kayak.v1.StreamStats
+	6, // 1: kayak.v1.StreamStats.partition_counts:type_name -> kayak.v1.StreamStats.PartitionCountsEntry
+	2, // 2: kayak.v1.StreamStats.groups:type_name -> kayak.v1.Group
+	7, // 3: kayak.v1.Group.partition_positions:type_name -> kayak.v1.Group.PartitionPositionsEntry
+	8, // 4: kayak.v1.Record.headers:type_name -> kayak.v1.Record.HeadersEntry
+	5, // [5:5] is the sub-list for method output_type
+	5, // [5:5] is the sub-list for method input_type
+	5, // [5:5] is the sub-list for extension type_name
+	5, // [5:5] is the sub-list for extension extendee
+	0, // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_kayak_v1_model_proto_init() }
@@ -404,13 +559,14 @@ func file_kayak_v1_model_proto_init() {
 	if File_kayak_v1_model_proto != nil {
 		return
 	}
+	file_kayak_v1_model_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_kayak_v1_model_proto_rawDesc), len(file_kayak_v1_model_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

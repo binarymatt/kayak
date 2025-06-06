@@ -4,6 +4,37 @@ info:
 paths: {}
 components:
   schemas:
+    kayak.v1.Group:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        name:
+          type: string
+          title: name
+        partitionPositions:
+          type: object
+          title: partition_positions
+          additionalProperties:
+            type: string
+            title: value
+      title: Group
+      additionalProperties: false
+    kayak.v1.Group.PartitionPositionsEntry:
+      type: object
+      properties:
+        key:
+          type:
+            - integer
+            - string
+          title: key
+          format: int64
+        value:
+          type: string
+          title: value
+      title: PartitionPositionsEntry
+      additionalProperties: false
     kayak.v1.PartitionAssignment:
       type: object
       properties:
@@ -36,12 +67,14 @@ components:
         streamName:
           type: string
           title: stream_name
+          description: name of the stream the record is being added to. Will be set by PutRecordsRequest
         partition:
           type:
             - integer
             - string
           title: partition
           format: int64
+          description: partition is set by server.
         id:
           type: string
           title: id
@@ -50,7 +83,7 @@ components:
         internalId:
           type: string
           title: internal_id
-          description: internal id is used as identifier in partition stream
+          description: internal id is used as identifier in partition stream. Set by server.
         headers:
           type: object
           title: headers
@@ -94,7 +127,53 @@ components:
             - string
           title: ttl
           format: int64
+        stats:
+          title: stats
+          nullable: true
+          $ref: '#/components/schemas/kayak.v1.StreamStats'
       title: Stream
+      additionalProperties: false
+    kayak.v1.StreamStats:
+      type: object
+      properties:
+        partitionCounts:
+          type: object
+          title: partition_counts
+          additionalProperties:
+            type:
+              - integer
+              - string
+            title: value
+            format: int64
+        recordCount:
+          type:
+            - integer
+            - string
+          title: record_count
+          format: int64
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/kayak.v1.Group'
+          title: groups
+      title: StreamStats
+      additionalProperties: false
+    kayak.v1.StreamStats.PartitionCountsEntry:
+      type: object
+      properties:
+        key:
+          type:
+            - integer
+            - string
+          title: key
+          format: int64
+        value:
+          type:
+            - integer
+            - string
+          title: value
+          format: int64
+      title: PartitionCountsEntry
       additionalProperties: false
     kayak.v1.Worker:
       type: object

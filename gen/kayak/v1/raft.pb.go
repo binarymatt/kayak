@@ -89,6 +89,7 @@ type RaftCommand struct {
 	//	*RaftCommand_ExtendLease
 	//	*RaftCommand_RemoveLease
 	//	*RaftCommand_CommitGroupPosition
+	//	*RaftCommand_DeleteStream
 	Payload       isRaftCommand_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -183,6 +184,15 @@ func (x *RaftCommand) GetCommitGroupPosition() *CommitGroupPosition {
 	return nil
 }
 
+func (x *RaftCommand) GetDeleteStream() *DeleteStream {
+	if x != nil {
+		if x, ok := x.Payload.(*RaftCommand_DeleteStream); ok {
+			return x.DeleteStream
+		}
+	}
+	return nil
+}
+
 type isRaftCommand_Payload interface {
 	isRaftCommand_Payload()
 }
@@ -207,6 +217,10 @@ type RaftCommand_CommitGroupPosition struct {
 	CommitGroupPosition *CommitGroupPosition `protobuf:"bytes,6,opt,name=commit_group_position,json=commitGroupPosition,proto3,oneof"`
 }
 
+type RaftCommand_DeleteStream struct {
+	DeleteStream *DeleteStream `protobuf:"bytes,7,opt,name=delete_stream,json=deleteStream,proto3,oneof"`
+}
+
 func (*RaftCommand_PutStream) isRaftCommand_Payload() {}
 
 func (*RaftCommand_PutRecords) isRaftCommand_Payload() {}
@@ -217,6 +231,52 @@ func (*RaftCommand_RemoveLease) isRaftCommand_Payload() {}
 
 func (*RaftCommand_CommitGroupPosition) isRaftCommand_Payload() {}
 
+func (*RaftCommand_DeleteStream) isRaftCommand_Payload() {}
+
+type DeleteStream struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StreamName    string                 `protobuf:"bytes,1,opt,name=stream_name,json=streamName,proto3" json:"stream_name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteStream) Reset() {
+	*x = DeleteStream{}
+	mi := &file_kayak_v1_raft_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteStream) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteStream) ProtoMessage() {}
+
+func (x *DeleteStream) ProtoReflect() protoreflect.Message {
+	mi := &file_kayak_v1_raft_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteStream.ProtoReflect.Descriptor instead.
+func (*DeleteStream) Descriptor() ([]byte, []int) {
+	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *DeleteStream) GetStreamName() string {
+	if x != nil {
+		return x.StreamName
+	}
+	return ""
+}
+
 type PutStream struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Stream        *Stream                `protobuf:"bytes,1,opt,name=stream,proto3" json:"stream,omitempty"`
@@ -226,7 +286,7 @@ type PutStream struct {
 
 func (x *PutStream) Reset() {
 	*x = PutStream{}
-	mi := &file_kayak_v1_raft_proto_msgTypes[1]
+	mi := &file_kayak_v1_raft_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -238,7 +298,7 @@ func (x *PutStream) String() string {
 func (*PutStream) ProtoMessage() {}
 
 func (x *PutStream) ProtoReflect() protoreflect.Message {
-	mi := &file_kayak_v1_raft_proto_msgTypes[1]
+	mi := &file_kayak_v1_raft_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -251,7 +311,7 @@ func (x *PutStream) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutStream.ProtoReflect.Descriptor instead.
 func (*PutStream) Descriptor() ([]byte, []int) {
-	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{1}
+	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *PutStream) GetStream() *Stream {
@@ -271,7 +331,7 @@ type PutRecords struct {
 
 func (x *PutRecords) Reset() {
 	*x = PutRecords{}
-	mi := &file_kayak_v1_raft_proto_msgTypes[2]
+	mi := &file_kayak_v1_raft_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -283,7 +343,7 @@ func (x *PutRecords) String() string {
 func (*PutRecords) ProtoMessage() {}
 
 func (x *PutRecords) ProtoReflect() protoreflect.Message {
-	mi := &file_kayak_v1_raft_proto_msgTypes[2]
+	mi := &file_kayak_v1_raft_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -296,7 +356,7 @@ func (x *PutRecords) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PutRecords.ProtoReflect.Descriptor instead.
 func (*PutRecords) Descriptor() ([]byte, []int) {
-	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{2}
+	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PutRecords) GetStreamName() string {
@@ -323,7 +383,7 @@ type ExtendLease struct {
 
 func (x *ExtendLease) Reset() {
 	*x = ExtendLease{}
-	mi := &file_kayak_v1_raft_proto_msgTypes[3]
+	mi := &file_kayak_v1_raft_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -335,7 +395,7 @@ func (x *ExtendLease) String() string {
 func (*ExtendLease) ProtoMessage() {}
 
 func (x *ExtendLease) ProtoReflect() protoreflect.Message {
-	mi := &file_kayak_v1_raft_proto_msgTypes[3]
+	mi := &file_kayak_v1_raft_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -348,7 +408,7 @@ func (x *ExtendLease) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExtendLease.ProtoReflect.Descriptor instead.
 func (*ExtendLease) Descriptor() ([]byte, []int) {
-	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{3}
+	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ExtendLease) GetWorker() *Worker {
@@ -374,7 +434,7 @@ type RemoveLease struct {
 
 func (x *RemoveLease) Reset() {
 	*x = RemoveLease{}
-	mi := &file_kayak_v1_raft_proto_msgTypes[4]
+	mi := &file_kayak_v1_raft_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -386,7 +446,7 @@ func (x *RemoveLease) String() string {
 func (*RemoveLease) ProtoMessage() {}
 
 func (x *RemoveLease) ProtoReflect() protoreflect.Message {
-	mi := &file_kayak_v1_raft_proto_msgTypes[4]
+	mi := &file_kayak_v1_raft_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -399,7 +459,7 @@ func (x *RemoveLease) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RemoveLease.ProtoReflect.Descriptor instead.
 func (*RemoveLease) Descriptor() ([]byte, []int) {
-	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{4}
+	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RemoveLease) GetWorker() *Worker {
@@ -421,7 +481,7 @@ type CommitGroupPosition struct {
 
 func (x *CommitGroupPosition) Reset() {
 	*x = CommitGroupPosition{}
-	mi := &file_kayak_v1_raft_proto_msgTypes[5]
+	mi := &file_kayak_v1_raft_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -433,7 +493,7 @@ func (x *CommitGroupPosition) String() string {
 func (*CommitGroupPosition) ProtoMessage() {}
 
 func (x *CommitGroupPosition) ProtoReflect() protoreflect.Message {
-	mi := &file_kayak_v1_raft_proto_msgTypes[5]
+	mi := &file_kayak_v1_raft_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -446,7 +506,7 @@ func (x *CommitGroupPosition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CommitGroupPosition.ProtoReflect.Descriptor instead.
 func (*CommitGroupPosition) Descriptor() ([]byte, []int) {
-	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{5}
+	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CommitGroupPosition) GetStreamName() string {
@@ -481,7 +541,7 @@ var File_kayak_v1_raft_proto protoreflect.FileDescriptor
 
 const file_kayak_v1_raft_proto_rawDesc = "" +
 	"\n" +
-	"\x13kayak/v1/raft.proto\x12\bkayak.v1\x1a\x14kayak/v1/model.proto\"\x87\x03\n" +
+	"\x13kayak/v1/raft.proto\x12\bkayak.v1\x1a\x14kayak/v1/model.proto\"\xc6\x03\n" +
 	"\vRaftCommand\x121\n" +
 	"\toperation\x18\x01 \x01(\x0e2\x13.kayak.v1.OperationR\toperation\x124\n" +
 	"\n" +
@@ -490,8 +550,12 @@ const file_kayak_v1_raft_proto_rawDesc = "" +
 	"putRecords\x12:\n" +
 	"\fextend_lease\x18\x04 \x01(\v2\x15.kayak.v1.ExtendLeaseH\x00R\vextendLease\x12:\n" +
 	"\fremove_lease\x18\x05 \x01(\v2\x15.kayak.v1.RemoveLeaseH\x00R\vremoveLease\x12S\n" +
-	"\x15commit_group_position\x18\x06 \x01(\v2\x1d.kayak.v1.CommitGroupPositionH\x00R\x13commitGroupPositionB\t\n" +
-	"\apayload\"5\n" +
+	"\x15commit_group_position\x18\x06 \x01(\v2\x1d.kayak.v1.CommitGroupPositionH\x00R\x13commitGroupPosition\x12=\n" +
+	"\rdelete_stream\x18\a \x01(\v2\x16.kayak.v1.DeleteStreamH\x00R\fdeleteStreamB\t\n" +
+	"\apayload\"/\n" +
+	"\fDeleteStream\x12\x1f\n" +
+	"\vstream_name\x18\x01 \x01(\tR\n" +
+	"streamName\"5\n" +
 	"\tPutStream\x12(\n" +
 	"\x06stream\x18\x01 \x01(\v2\x10.kayak.v1.StreamR\x06stream\"Y\n" +
 	"\n" +
@@ -534,35 +598,37 @@ func file_kayak_v1_raft_proto_rawDescGZIP() []byte {
 }
 
 var file_kayak_v1_raft_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_kayak_v1_raft_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_kayak_v1_raft_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_kayak_v1_raft_proto_goTypes = []any{
 	(Operation)(0),              // 0: kayak.v1.Operation
 	(*RaftCommand)(nil),         // 1: kayak.v1.RaftCommand
-	(*PutStream)(nil),           // 2: kayak.v1.PutStream
-	(*PutRecords)(nil),          // 3: kayak.v1.PutRecords
-	(*ExtendLease)(nil),         // 4: kayak.v1.ExtendLease
-	(*RemoveLease)(nil),         // 5: kayak.v1.RemoveLease
-	(*CommitGroupPosition)(nil), // 6: kayak.v1.CommitGroupPosition
-	(*Stream)(nil),              // 7: kayak.v1.Stream
-	(*Record)(nil),              // 8: kayak.v1.Record
-	(*Worker)(nil),              // 9: kayak.v1.Worker
+	(*DeleteStream)(nil),        // 2: kayak.v1.DeleteStream
+	(*PutStream)(nil),           // 3: kayak.v1.PutStream
+	(*PutRecords)(nil),          // 4: kayak.v1.PutRecords
+	(*ExtendLease)(nil),         // 5: kayak.v1.ExtendLease
+	(*RemoveLease)(nil),         // 6: kayak.v1.RemoveLease
+	(*CommitGroupPosition)(nil), // 7: kayak.v1.CommitGroupPosition
+	(*Stream)(nil),              // 8: kayak.v1.Stream
+	(*Record)(nil),              // 9: kayak.v1.Record
+	(*Worker)(nil),              // 10: kayak.v1.Worker
 }
 var file_kayak_v1_raft_proto_depIdxs = []int32{
 	0,  // 0: kayak.v1.RaftCommand.operation:type_name -> kayak.v1.Operation
-	2,  // 1: kayak.v1.RaftCommand.put_stream:type_name -> kayak.v1.PutStream
-	3,  // 2: kayak.v1.RaftCommand.put_records:type_name -> kayak.v1.PutRecords
-	4,  // 3: kayak.v1.RaftCommand.extend_lease:type_name -> kayak.v1.ExtendLease
-	5,  // 4: kayak.v1.RaftCommand.remove_lease:type_name -> kayak.v1.RemoveLease
-	6,  // 5: kayak.v1.RaftCommand.commit_group_position:type_name -> kayak.v1.CommitGroupPosition
-	7,  // 6: kayak.v1.PutStream.stream:type_name -> kayak.v1.Stream
-	8,  // 7: kayak.v1.PutRecords.records:type_name -> kayak.v1.Record
-	9,  // 8: kayak.v1.ExtendLease.worker:type_name -> kayak.v1.Worker
-	9,  // 9: kayak.v1.RemoveLease.worker:type_name -> kayak.v1.Worker
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	3,  // 1: kayak.v1.RaftCommand.put_stream:type_name -> kayak.v1.PutStream
+	4,  // 2: kayak.v1.RaftCommand.put_records:type_name -> kayak.v1.PutRecords
+	5,  // 3: kayak.v1.RaftCommand.extend_lease:type_name -> kayak.v1.ExtendLease
+	6,  // 4: kayak.v1.RaftCommand.remove_lease:type_name -> kayak.v1.RemoveLease
+	7,  // 5: kayak.v1.RaftCommand.commit_group_position:type_name -> kayak.v1.CommitGroupPosition
+	2,  // 6: kayak.v1.RaftCommand.delete_stream:type_name -> kayak.v1.DeleteStream
+	8,  // 7: kayak.v1.PutStream.stream:type_name -> kayak.v1.Stream
+	9,  // 8: kayak.v1.PutRecords.records:type_name -> kayak.v1.Record
+	10, // 9: kayak.v1.ExtendLease.worker:type_name -> kayak.v1.Worker
+	10, // 10: kayak.v1.RemoveLease.worker:type_name -> kayak.v1.Worker
+	11, // [11:11] is the sub-list for method output_type
+	11, // [11:11] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_kayak_v1_raft_proto_init() }
@@ -577,6 +643,7 @@ func file_kayak_v1_raft_proto_init() {
 		(*RaftCommand_ExtendLease)(nil),
 		(*RaftCommand_RemoveLease)(nil),
 		(*RaftCommand_CommitGroupPosition)(nil),
+		(*RaftCommand_DeleteStream)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -584,7 +651,7 @@ func file_kayak_v1_raft_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_kayak_v1_raft_proto_rawDesc), len(file_kayak_v1_raft_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

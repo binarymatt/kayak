@@ -219,6 +219,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/google.protobuf.Empty'
+  /kayak.v1.KayakService/RenewRegistration:
+    post:
+      tags:
+        - kayak.v1.KayakService
+      summary: RenewRegistration
+      operationId: kayak.v1.KayakService.RenewRegistration
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/kayak.v1.RenewRegistrationRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/google.protobuf.Empty'
   /kayak.v1.KayakService/CreateStream:
     post:
       tags:
@@ -325,6 +360,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/kayak.v1.GetStreamsResponse'
+  /kayak.v1.KayakService/DeleteStream:
+    post:
+      tags:
+        - kayak.v1.KayakService
+      summary: DeleteStream
+      operationId: kayak.v1.KayakService.DeleteStream
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/kayak.v1.DeleteStreamRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/google.protobuf.Empty'
   /kayak.v1.KayakService/Apply:
     post:
       tags:
@@ -446,6 +516,24 @@ components:
           format: int64
       title: CreateStreamRequest
       additionalProperties: false
+    kayak.v1.DeleteStream:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+      title: DeleteStream
+      additionalProperties: false
+    kayak.v1.DeleteStreamRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          title: name
+      title: DeleteStreamRequest
+      required:
+        - name
+      additionalProperties: false
     kayak.v1.DeregisterWorkerRequest:
       type: object
       properties:
@@ -560,6 +648,37 @@ components:
           title: streams
       title: GetStreamsResponse
       additionalProperties: false
+    kayak.v1.Group:
+      type: object
+      properties:
+        streamName:
+          type: string
+          title: stream_name
+        name:
+          type: string
+          title: name
+        partitionPositions:
+          type: object
+          title: partition_positions
+          additionalProperties:
+            type: string
+            title: value
+      title: Group
+      additionalProperties: false
+    kayak.v1.Group.PartitionPositionsEntry:
+      type: object
+      properties:
+        key:
+          type:
+            - integer
+            - string
+          title: key
+          format: int64
+        value:
+          type: string
+          title: value
+      title: PartitionPositionsEntry
+      additionalProperties: false
     kayak.v1.PutRecords:
       type: object
       properties:
@@ -584,6 +703,7 @@ components:
           items:
             $ref: '#/components/schemas/kayak.v1.Record'
           title: records
+          description: all records will be part of the same stream.
         idempotencyKey:
           type: string
           title: idempotency_key
@@ -607,6 +727,13 @@ components:
           title: commit_group_position
           required:
             - commitGroupPosition
+        - properties:
+            deleteStream:
+              title: delete_stream
+              $ref: '#/components/schemas/kayak.v1.DeleteStream'
+          title: delete_stream
+          required:
+            - deleteStream
         - properties:
             extendLease:
               title: extend_lease
@@ -647,12 +774,14 @@ components:
         streamName:
           type: string
           title: stream_name
+          description: name of the stream the record is being added to. Will be set by PutRecordsRequest
         partition:
           type:
             - integer
             - string
           title: partition
           format: int64
+          description: partition is set by server.
         id:
           type: string
           title: id
@@ -661,7 +790,7 @@ components:
         internalId:
           type: string
           title: internal_id
-          description: internal id is used as identifier in partition stream
+          description: internal id is used as identifier in partition stream. Set by server.
         headers:
           type: object
           title: headers
@@ -717,6 +846,16 @@ components:
           $ref: '#/components/schemas/kayak.v1.Worker'
       title: RemoveLease
       additionalProperties: false
+    kayak.v1.RenewRegistrationRequest:
+      type: object
+      properties:
+        worker:
+          title: worker
+          $ref: '#/components/schemas/kayak.v1.Worker'
+      title: RenewRegistrationRequest
+      required:
+        - worker
+      additionalProperties: false
     kayak.v1.Stream:
       type: object
       properties:
@@ -735,7 +874,53 @@ components:
             - string
           title: ttl
           format: int64
+        stats:
+          title: stats
+          nullable: true
+          $ref: '#/components/schemas/kayak.v1.StreamStats'
       title: Stream
+      additionalProperties: false
+    kayak.v1.StreamStats:
+      type: object
+      properties:
+        partitionCounts:
+          type: object
+          title: partition_counts
+          additionalProperties:
+            type:
+              - integer
+              - string
+            title: value
+            format: int64
+        recordCount:
+          type:
+            - integer
+            - string
+          title: record_count
+          format: int64
+        groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/kayak.v1.Group'
+          title: groups
+      title: StreamStats
+      additionalProperties: false
+    kayak.v1.StreamStats.PartitionCountsEntry:
+      type: object
+      properties:
+        key:
+          type:
+            - integer
+            - string
+          title: key
+          format: int64
+        value:
+          type:
+            - integer
+            - string
+          title: value
+          format: int64
+      title: PartitionCountsEntry
       additionalProperties: false
     kayak.v1.Worker:
       type: object

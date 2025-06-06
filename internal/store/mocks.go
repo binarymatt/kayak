@@ -135,6 +135,51 @@ func (_c *MockStore_CommitGroupPosition_Call) RunAndReturn(run func(stream strin
 	return _c
 }
 
+// DeleteStream provides a mock function for the type MockStore
+func (_mock *MockStore) DeleteStream(name string) error {
+	ret := _mock.Called(name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteStream")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
+		r0 = returnFunc(name)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockStore_DeleteStream_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteStream'
+type MockStore_DeleteStream_Call struct {
+	*mock.Call
+}
+
+// DeleteStream is a helper method to define mock.On call
+//   - name
+func (_e *MockStore_Expecter) DeleteStream(name interface{}) *MockStore_DeleteStream_Call {
+	return &MockStore_DeleteStream_Call{Call: _e.mock.On("DeleteStream", name)}
+}
+
+func (_c *MockStore_DeleteStream_Call) Run(run func(name string)) *MockStore_DeleteStream_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockStore_DeleteStream_Call) Return(err error) *MockStore_DeleteStream_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockStore_DeleteStream_Call) RunAndReturn(run func(name string) error) *MockStore_DeleteStream_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ExtendLease provides a mock function for the type MockStore
 func (_mock *MockStore) ExtendLease(worker *kayakv1.Worker, expires time.Duration) error {
 	ret := _mock.Called(worker, expires)
@@ -177,6 +222,63 @@ func (_c *MockStore_ExtendLease_Call) Return(err error) *MockStore_ExtendLease_C
 }
 
 func (_c *MockStore_ExtendLease_Call) RunAndReturn(run func(worker *kayakv1.Worker, expires time.Duration) error) *MockStore_ExtendLease_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetGroupInformation provides a mock function for the type MockStore
+func (_mock *MockStore) GetGroupInformation(streamName string, groupName string) (*kayakv1.Group, error) {
+	ret := _mock.Called(streamName, groupName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetGroupInformation")
+	}
+
+	var r0 *kayakv1.Group
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(string, string) (*kayakv1.Group, error)); ok {
+		return returnFunc(streamName, groupName)
+	}
+	if returnFunc, ok := ret.Get(0).(func(string, string) *kayakv1.Group); ok {
+		r0 = returnFunc(streamName, groupName)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*kayakv1.Group)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = returnFunc(streamName, groupName)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockStore_GetGroupInformation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGroupInformation'
+type MockStore_GetGroupInformation_Call struct {
+	*mock.Call
+}
+
+// GetGroupInformation is a helper method to define mock.On call
+//   - streamName
+//   - groupName
+func (_e *MockStore_Expecter) GetGroupInformation(streamName interface{}, groupName interface{}) *MockStore_GetGroupInformation_Call {
+	return &MockStore_GetGroupInformation_Call{Call: _e.mock.On("GetGroupInformation", streamName, groupName)}
+}
+
+func (_c *MockStore_GetGroupInformation_Call) Run(run func(streamName string, groupName string)) *MockStore_GetGroupInformation_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockStore_GetGroupInformation_Call) Return(group *kayakv1.Group, err error) *MockStore_GetGroupInformation_Call {
+	_c.Call.Return(group, err)
+	return _c
+}
+
+func (_c *MockStore_GetGroupInformation_Call) RunAndReturn(run func(streamName string, groupName string) (*kayakv1.Group, error)) *MockStore_GetGroupInformation_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -461,6 +563,62 @@ func (_c *MockStore_GetStream_Call) Return(stream *kayakv1.Stream, err error) *M
 }
 
 func (_c *MockStore_GetStream_Call) RunAndReturn(run func(name string) (*kayakv1.Stream, error)) *MockStore_GetStream_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetStreamStats provides a mock function for the type MockStore
+func (_mock *MockStore) GetStreamStats(name string) (*kayakv1.StreamStats, error) {
+	ret := _mock.Called(name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetStreamStats")
+	}
+
+	var r0 *kayakv1.StreamStats
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(string) (*kayakv1.StreamStats, error)); ok {
+		return returnFunc(name)
+	}
+	if returnFunc, ok := ret.Get(0).(func(string) *kayakv1.StreamStats); ok {
+		r0 = returnFunc(name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*kayakv1.StreamStats)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(string) error); ok {
+		r1 = returnFunc(name)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockStore_GetStreamStats_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetStreamStats'
+type MockStore_GetStreamStats_Call struct {
+	*mock.Call
+}
+
+// GetStreamStats is a helper method to define mock.On call
+//   - name
+func (_e *MockStore_Expecter) GetStreamStats(name interface{}) *MockStore_GetStreamStats_Call {
+	return &MockStore_GetStreamStats_Call{Call: _e.mock.On("GetStreamStats", name)}
+}
+
+func (_c *MockStore_GetStreamStats_Call) Run(run func(name string)) *MockStore_GetStreamStats_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockStore_GetStreamStats_Call) Return(streamStats *kayakv1.StreamStats, err error) *MockStore_GetStreamStats_Call {
+	_c.Call.Return(streamStats, err)
+	return _c
+}
+
+func (_c *MockStore_GetStreamStats_Call) RunAndReturn(run func(name string) (*kayakv1.StreamStats, error)) *MockStore_GetStreamStats_Call {
 	_c.Call.Return(run)
 	return _c
 }

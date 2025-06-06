@@ -8,6 +8,10 @@ proto:
 test:
 	go test -cover ./...
 
+.PHONY: lint
+lint:
+	golangci-lint run
+
 .PHONY: coverage
 coverage:
 	go test -v ./... -coverprofile=coverage.out
@@ -39,13 +43,17 @@ load:
 	k6 run k6/loadtest.js
 
 server1:
-	go run cmd/kayak/main.go --node_id=server1 --listen_address=localhost:8080 --raft_address=localhost:1200 --data_dir=./data/server1 --raft_data_dir=./raft_data/raft_data1
+	go run cmd/kayak/main.go --node_id=server1 --listen_address=localhost:8080 --data_dir=./data/server1 --raft_data_dir=./raft_data/raft_data1
 server2:
-	go run cmd/kayak/main.go --node_id=server2 --listen_address=localhost:8081 --raft_address=localhost:1201 --data_dir=./data/server2 --raft_data_dir=./raft_data/raft_data2 --join_addr=localhost:8080
+	go run cmd/kayak/main.go --node_id=server2 --listen_address=localhost:8081 --grpc_address=0.0.0.0:28081 --data_dir=./data/server2 --raft_data_dir=./raft_data/raft_data2 --join_addr=localhost:8080
 server3:
-	go run cmd/kayak/main.go --node_id=server3 --listen_address=localhost:8082 --raft_address=localhost:1202 --data_dir=./data/server3 --raft_data_dir=./raft_data/raft_data3 --join_addr=localhost:8080
+	go run cmd/kayak/main.go --node_id=server3 --listen_address=localhost:8082 --data_dir=./data/server3 --raft_data_dir=./raft_data/raft_data3 --join_addr=localhost:8080
 
 docker:
 	docker build . -t kayak
 docker-compose:
 	docker compose -f compose/compose.yaml up
+
+.PHONY: ui/start
+ui/start:
+	npm start

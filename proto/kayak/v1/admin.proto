@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package kayak.v1;
 
+import "buf/validate/validate.proto";
+
 option go_package = "github.com/binarymatt/kayak/gen/kayak/v1;kayakv1";
 
 service AdminService {
@@ -11,15 +13,24 @@ service AdminService {
 }
 
 message AddVoterRequest {
-  string id = 1;
-  string address = 2;
+  string id = 1 [(buf.validate.field).required = true];
+  string address = 2 [(buf.validate.field).required = true];
 }
 
 message AddVoterResponse {}
 
 message StatsRequest {}
+message ConfigItem {
+  string suffrage = 1;
+  string id = 2;
+  string address = 3;
+  bool is_leader = 4;
+}
 message StatsResponse {
-  map<string, string> stats = 1;
+  string state = 1;
+  repeated ConfigItem nodes = 2;
+  string last_contact = 3;
+  map<string, string> stats = 4;
 }
 
 message LeaderRequest {}

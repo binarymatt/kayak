@@ -545,6 +545,18 @@ func TestGetWorkerPosition(t *testing.T) {
 	must.Eq(t, "", value)
 }
 
+func TestGetStreams(t *testing.T) {
+	ts := setupTest(t)
+	ts.store.PutStream(&kayakv1.Stream{ //nolint:errcheck
+		Name:           "test",
+		PartitionCount: 1,
+		Ttl:            300,
+	})
+	streams, err := ts.store.GetStreams()
+	must.NoError(t, err)
+	protoEq(t, []*kayakv1.Stream{{Name: "test", PartitionCount: 1, Ttl: 300}}, streams)
+}
+
 func protoEq[V any](t *testing.T, expected, actual V) {
 	t.Helper()
 	must.Eq(t, expected, actual, must.Cmp(protocmp.Transform()))

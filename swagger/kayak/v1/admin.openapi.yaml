@@ -119,10 +119,30 @@ components:
           type: string
           title: address
       title: AddVoterRequest
+      required:
+        - id
+        - address
       additionalProperties: false
     kayak.v1.AddVoterResponse:
       type: object
       title: AddVoterResponse
+      additionalProperties: false
+    kayak.v1.ConfigItem:
+      type: object
+      properties:
+        suffrage:
+          type: string
+          title: suffrage
+        id:
+          type: string
+          title: id
+        address:
+          type: string
+          title: address
+        isLeader:
+          type: boolean
+          title: is_leader
+      title: ConfigItem
       additionalProperties: false
     kayak.v1.LeaderRequest:
       type: object
@@ -146,6 +166,17 @@ components:
     kayak.v1.StatsResponse:
       type: object
       properties:
+        state:
+          type: string
+          title: state
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/kayak.v1.ConfigItem'
+          title: nodes
+        lastContact:
+          type: string
+          title: last_contact
         stats:
           type: object
           title: stats
