@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package kayak.v1;
 
+import "buf/validate/validate.proto";
+
 option go_package = "github.com/binarymatt/kayak/gen/kayak/v1;kayakv1";
 
 service AdminService {
@@ -11,8 +13,8 @@ service AdminService {
 }
 
 message AddVoterRequest {
-  string id = 1;
-  string address = 2;
+  string id = 1 [(buf.validate.field).required = true];
+  string address = 2 [(buf.validate.field).required = true];
 }
 
 message AddVoterResponse {}

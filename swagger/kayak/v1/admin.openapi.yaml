@@ -119,6 +119,9 @@ components:
           type: string
           title: address
       title: AddVoterRequest
+      required:
+        - id
+        - address
       additionalProperties: false
     kayak.v1.AddVoterResponse:
       type: object

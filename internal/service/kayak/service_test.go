@@ -15,28 +15,14 @@ import (
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
+	iraft "github.com/binarymatt/kayak/internal/raft"
 	"github.com/binarymatt/kayak/internal/store"
 )
-
-type TestFuture struct {
-	err      error
-	response any
-}
-
-func (t *TestFuture) Error() error {
-	return t.err
-}
-func (t *TestFuture) Index() uint64 {
-	return 0
-}
-func (t *TestFuture) Response() any {
-	return t.response
-}
 
 type testServiceSuite struct {
 	service        *service
 	mockStore      *store.MockStore
-	mockRaft       *MockRaftInterface
+	mockRaft       *iraft.MockRaftInterface
 	mockTestClient *kayakv1connect.MockKayakServiceClient
 	id             ulid.ULID
 	clock          *quartz.Mock
@@ -46,7 +32,7 @@ func setupTest(t *testing.T) *testServiceSuite {
 	slog.Warn("setting up test")
 
 	s := store.NewMockStore(t)
-	r := NewMockRaftInterface(t)
+	r := iraft.NewMockRaftInterface(t)
 	client := kayakv1connect.NewMockKayakServiceClient(t)
 	c := quartz.NewMock(t)
 	ts := &testServiceSuite{
@@ -102,8 +88,8 @@ func TestPutRecords_Leader(t *testing.T) {
 		},
 	}
 	raw, _ := proto.Marshal(cmd)
-	ts.mockRaft.EXPECT().Apply(raw, 10*time.Millisecond).Return(&TestFuture{
-		response: &store.ApplyResponse{},
+	ts.mockRaft.EXPECT().Apply(raw, 10*time.Millisecond).Return(&iraft.TestFuture{
+		ResponseI: &store.ApplyResponse{},
 	}).Once()
 
 	req := connect.NewRequest(&kayakv1.PutRecordsRequest{
@@ -153,8 +139,8 @@ func TestApplyCommand(t *testing.T) {
 			if tc.leader {
 				ts.mockRaft.EXPECT().State().Return(raft.Leader).Once()
 				raw, _ := proto.Marshal(tc.cmd)
-				future := &TestFuture{
-					response: &store.ApplyResponse{
+				future := &iraft.TestFuture{
+					ResponseI: &store.ApplyResponse{
 						Error: tc.err,
 					},
 				}
@@ -197,8 +183,8 @@ func TestRenewRegistration_HappyPath(t *testing.T) {
 	})
 
 	ts.mockRaft.EXPECT().State().Return(raft.Leader).Once()
-	ts.mockRaft.EXPECT().Apply(cmd, 10*time.Millisecond).Return(&TestFuture{
-		response: &store.ApplyResponse{},
+	ts.mockRaft.EXPECT().Apply(cmd, 10*time.Millisecond).Return(&iraft.TestFuture{
+		ResponseI: &store.ApplyResponse{},
 	}).Once()
 	ts.mockStore.EXPECT().GetPartitionAssignment("stream", "group", int64(1)).
 		Return("worker1", nil).Once()

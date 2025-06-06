@@ -19,6 +19,7 @@ import (
 
 	v1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
+	internal_raft "github.com/binarymatt/kayak/internal/raft"
 	"github.com/binarymatt/kayak/internal/store"
 )
 
@@ -27,17 +28,12 @@ var (
 	ErrNotLeader                                    = errors.New("node is not the leader")
 )
 
-type RaftInterface interface {
-	Apply(cmd []byte, timeout time.Duration) raft.ApplyFuture
-	State() raft.RaftState
-	Leader() raft.ServerAddress
-}
 type service struct {
 	idGenerator      func() ulid.ULID
 	store            store.Store
 	workerExpiration time.Duration
 	logger           *slog.Logger
-	raft             RaftInterface
+	raft             internal_raft.RaftInterface
 	testLeaderClient kayakv1connect.KayakServiceClient
 	clock            quartz.Clock
 }

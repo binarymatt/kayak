@@ -4,23 +4,32 @@ import (
 	"context"
 	"errors"
 
+	"buf.build/go/protovalidate"
 	"connectrpc.com/connect"
 	"github.com/hashicorp/raft"
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
+	internal_raft "github.com/binarymatt/kayak/internal/raft"
 )
 
-var _ kayakv1connect.AdminServiceHandler = (*adminService)(nil)
+var (
+	_            kayakv1connect.AdminServiceHandler = (*adminService)(nil)
+	ErrNotLeader                                    = errors.New("node is not the leader")
+)
 
 type adminService struct {
-	raft *raft.Raft
+	raft internal_raft.RaftInterface
 }
 
 func (a *adminService) AddVoter(ctx context.Context, req *connect.Request[kayakv1.AddVoterRequest]) (*connect.Response[kayakv1.AddVoterResponse], error) {
 	if a.raft.State() != raft.Leader {
-		return nil, connect.NewError(connect.CodeInvalidArgument, errors.New("not leader"))
+		return nil, connect.NewError(connect.CodeInvalidArgument, ErrNotLeader)
 	}
+	if err := protovalidate.Validate(req.Msg); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+
 	f := a.raft.AddVoter(raft.ServerID(req.Msg.Id), raft.ServerAddress(req.Msg.Address), 0, 0)
 	if f.Error() != nil {
 		return nil, connect.NewError(connect.CodeInternal, f.Error())

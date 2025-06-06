@@ -7,6 +7,7 @@
 package kayakv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -373,10 +374,10 @@ var File_kayak_v1_admin_proto protoreflect.FileDescriptor
 
 const file_kayak_v1_admin_proto_rawDesc = "" +
 	"\n" +
-	"\x14kayak/v1/admin.proto\x12\bkayak.v1\";\n" +
-	"\x0fAddVoterRequest\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x18\n" +
-	"\aaddress\x18\x02 \x01(\tR\aaddress\"\x12\n" +
+	"\x14kayak/v1/admin.proto\x12\bkayak.v1\x1a\x1bbuf/validate/validate.proto\"K\n" +
+	"\x0fAddVoterRequest\x12\x16\n" +
+	"\x02id\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x02id\x12 \n" +
+	"\aaddress\x18\x02 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\aaddress\"\x12\n" +
 	"\x10AddVoterResponse\"\x0e\n" +
 	"\fStatsRequest\"o\n" +
 	"\n" +
