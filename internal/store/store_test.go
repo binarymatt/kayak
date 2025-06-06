@@ -547,7 +547,7 @@ func TestGetWorkerPosition(t *testing.T) {
 
 func TestGetStreams(t *testing.T) {
 	ts := setupTest(t)
-	ts.store.PutStream(&kayakv1.Stream{
+	ts.store.PutStream(&kayakv1.Stream{ //nolint:errcheck
 		Name:           "test",
 		PartitionCount: 1,
 		Ttl:            300,

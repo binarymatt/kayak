@@ -59,7 +59,7 @@ func withCORS(h http.Handler) http.Handler {
 	return middleware.Handler(h)
 }
 
-func setupTracing(ctx context.Context) (func(), error) {
+func setupTracing(ctx context.Context) (func(), error) { //nolint:unused
 	client := otlptracegrpc.NewClient()
 	var err error
 	var exp trace.SpanExporter
@@ -145,10 +145,6 @@ func parseConfig() (*config, error) {
 	nodeId := viper.GetString("node_id")
 	if nodeId == "" {
 		nodeId = viper.GetString("raft_address")
-	}
-	advertise := viper.GetString("advertise_address")
-	if advertise == "" {
-		advertise = viper.GetString("listen_address")
 	}
 	return &config{
 		NodeId:         nodeId,

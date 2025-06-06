@@ -8,6 +8,10 @@ proto:
 test:
 	go test -cover ./...
 
+.PHONY: lint
+lint:
+	golangci-lint run
+
 .PHONY: coverage
 coverage:
 	go test -v ./... -coverprofile=coverage.out

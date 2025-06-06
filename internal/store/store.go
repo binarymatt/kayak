@@ -438,7 +438,7 @@ func (s *store) DeleteStream(name string) error {
 			return err
 		}
 		// delete stream record
-		recordPrefix := []byte(fmt.Sprintf("%s:", name))
+		recordPrefix := fmt.Appendf(nil, "%s:", name)
 
 		opts := badger.DefaultIteratorOptions
 		opts.PrefetchValues = false
@@ -464,7 +464,7 @@ func (s *store) DeleteStream(name string) error {
 			}
 		}
 		// delete partition assignments
-		assignmentPrefix := []byte(fmt.Sprintf("registrations:%s:", name))
+		assignmentPrefix := fmt.Appendf(nil, "registrations:%s:", name)
 
 		it := tx.NewIterator(opts)
 		defer it.Close()
