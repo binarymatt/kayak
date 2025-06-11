@@ -3,6 +3,7 @@ syntax = "proto3";
 package kayak.v1;
 
 import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/binarymatt/kayak/gen/kayak/v1;kayakv1";
 
@@ -43,9 +44,10 @@ message Record {
   // partition is set by server.
   int64 partition = 2;
   // id is used to hashed and used for partition assignment, can be set by client.
-  bytes id = 3;
+  string id = 3;
   // internal id is used as identifier in partition stream. Set by server.
   string internal_id = 4;
   map<string, string> headers = 5;
   bytes payload = 6 [(buf.validate.field).required = true];
+  google.protobuf.Timestamp accept_timestamp = 7;
 }

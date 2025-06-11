@@ -16,6 +16,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	v1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
@@ -78,11 +79,12 @@ func (s *service) PutRecords(ctx context.Context, req *connect.Request[v1.PutRec
 	for _, r := range req.Msg.Records {
 		id := s.idGenerator()
 		r.InternalId = id.String()
-		if r.Id == nil {
-			r.Id = id.Bytes()
+		if r.Id == "" {
+			r.Id = id.String()
 		}
 		r.StreamName = stream.Name
 		r.Partition = balancer(r.Id, stream.PartitionCount)
+		r.AcceptTimestamp = timestamppb.New(s.clock.Now())
 	}
 
 	//err = s.store.PutRecords(req.Msg.StreamName, req.Msg.GetRecords()...)
@@ -100,6 +102,7 @@ func (s *service) PutRecords(ctx context.Context, req *connect.Request[v1.PutRec
 }
 
 func (s *service) CommitRecord(ctx context.Context, req *connect.Request[v1.CommitRecordRequest]) (*connect.Response[emptypb.Empty], error) {
+	slog.Info("commiting record", "msg", req.Msg)
 	// check worker lease
 	if err := s.store.HasLease(req.Msg.Worker); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
@@ -117,8 +120,10 @@ func (s *service) CommitRecord(ctx context.Context, req *connect.Request[v1.Comm
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	worker := req.Msg.GetWorker()
-	id, err := ulid.Parse(req.Msg.Record.InternalId)
+	record := req.Msg.GetRecord()
+	id, err := ulid.Parse(record.InternalId)
 	if err != nil {
+		slog.Error("could not parse internal ID", "error", err, "record")
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	position := id.String()
@@ -344,6 +349,20 @@ func (s *service) DeleteStream(ctx context.Context, req *connect.Request[v1.Dele
 	return connect.NewResponse(&emptypb.Empty{}), nil
 }
 
+func (s *service) GetStreamStatistics(ctx context.Context, req *connect.Request[v1.GetStreamStatisticsRequest]) (*connect.Response[v1.GetStreamStatisticsResponse], error) {
+	if err := protovalidate.Validate(req.Msg); err != nil {
+		fmt.Println("invalid request")
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
+	slog.Info("getting stream statistics", "stream", req.Msg.Name)
+
+	stats, err := s.store.GetStreamStats(req.Msg.Name)
+	if err != nil {
+		slog.Error("could not retreive stream stats", "error", err)
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(&v1.GetStreamStatisticsResponse{StreamStats: stats}), nil
+}
 func (s *service) getLeaderClient() kayakv1connect.KayakServiceClient {
 	if s.testLeaderClient != nil {
 		return s.testLeaderClient

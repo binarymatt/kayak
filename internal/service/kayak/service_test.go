@@ -63,7 +63,7 @@ func TestPutRecords_Leader(t *testing.T) {
 
 	records := &kayakv1.Record{
 		Payload: []byte("test"),
-		Id:      []byte("test"),
+		Id:      "test",
 	}
 
 	ts.mockStore.EXPECT().GetStream("test_stream").
@@ -76,7 +76,7 @@ func TestPutRecords_Leader(t *testing.T) {
 			PutRecords: &kayakv1.PutRecords{
 				Records: []*kayakv1.Record{
 					{
-						Id:         []byte("test"),
+						Id:         "test",
 						InternalId: ts.id.String(),
 						Payload:    []byte("test"),
 						Partition:  0,
@@ -218,3 +218,6 @@ func TestRenewRegistration_MisMatchingWorkers(t *testing.T) {
 
 }
 func TestGetRecords(t *testing.T) {}
+
+func TestGetStreamStatistis(t *testing.T) {
+}

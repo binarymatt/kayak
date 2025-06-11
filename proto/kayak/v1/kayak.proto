@@ -32,6 +32,7 @@ service KayakService {
   rpc GetStream(GetStreamRequest) returns (GetStreamResponse) {}
   rpc GetStreams(GetStreamsRequest) returns (GetStreamsResponse) {}
   rpc DeleteStream(DeleteStreamRequest) returns (google.protobuf.Empty) {}
+  rpc GetStreamStatistics(GetStreamStatisticsRequest) returns (GetStreamStatisticsResponse) {}
 
   // Raft Specific
   rpc Apply(ApplyRequest) returns (ApplyResponse) {}
@@ -103,4 +104,12 @@ message ApplyResponse {}
 
 message DeleteStreamRequest {
   string name = 1 [(buf.validate.field).required = true];
+}
+
+message GetStreamStatisticsRequest {
+  string name = 1;
+}
+
+message GetStreamStatisticsResponse {
+  StreamStats stream_stats = 1;
 }
