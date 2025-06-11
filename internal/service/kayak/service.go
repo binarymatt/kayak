@@ -123,7 +123,7 @@ func (s *service) CommitRecord(ctx context.Context, req *connect.Request[v1.Comm
 	record := req.Msg.GetRecord()
 	id, err := ulid.Parse(record.InternalId)
 	if err != nil {
-		slog.Error("could not parse internal ID", "error", err, "record")
+		slog.Error("could not parse internal ID", "error", err, "record", record)
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	position := id.String()

@@ -12,6 +12,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"github.com/shoenig/test/must"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
@@ -76,11 +77,12 @@ func TestPutRecords_Leader(t *testing.T) {
 			PutRecords: &kayakv1.PutRecords{
 				Records: []*kayakv1.Record{
 					{
-						Id:         "test",
-						InternalId: ts.id.String(),
-						Payload:    []byte("test"),
-						Partition:  0,
-						StreamName: "test_stream",
+						Id:              "test",
+						InternalId:      ts.id.String(),
+						Payload:         []byte("test"),
+						Partition:       0,
+						StreamName:      "test_stream",
+						AcceptTimestamp: timestamppb.New(ts.clock.Now()),
 					},
 				},
 				StreamName: "test_stream",
