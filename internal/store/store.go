@@ -274,6 +274,10 @@ func (s *store) ExtendLease(worker *kayakv1.Worker, expires time.Duration) error
 	return s.db.Update(func(tx *badger.Txn) error {
 		key := partitionAssignmentKey(worker.StreamName, worker.GroupName, worker.PartitionAssignment)
 		entry := badger.NewEntry(key, []byte(worker.Id)).WithTTL(expires)
+		groupKey := groupPositionKey(worker.StreamName, worker.GroupName, worker.PartitionAssignment)
+		if err := tx.Set(groupKey, []byte("")); err != nil {
+			return err
+		}
 		return tx.SetEntry(entry)
 	})
 }
@@ -361,9 +365,14 @@ func (s *store) GetStreamStats(name string) (*kayakv1.StreamStats, error) {
 	if err != nil {
 		return nil, err
 	}
+	recordCount := int64(0)
+	for _, v := range m {
+		recordCount = recordCount + v
+	}
 	stats := &kayakv1.StreamStats{
 		PartitionCounts: m,
 		Groups:          groups,
+		RecordCount:     recordCount,
 	}
 	return stats, nil
 }

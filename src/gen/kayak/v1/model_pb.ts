@@ -5,13 +5,15 @@
 import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv1";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv1";
 import { file_buf_validate_validate } from "../../buf/validate/validate_pb";
+import type { Timestamp } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file kayak/v1/model.proto.
  */
 export const file_kayak_v1_model: GenFile = /*@__PURE__*/
-  fileDesc("ChRrYXlhay92MS9tb2RlbC5wcm90bxIIa2F5YWsudjEicQoGU3RyZWFtEgwKBG5hbWUYASABKAkSFwoPcGFydGl0aW9uX2NvdW50GAIgASgDEgsKA3R0bBgDIAEoAxIpCgVzdGF0cxgEIAEoCzIVLmtheWFrLnYxLlN0cmVhbVN0YXRzSACIAQFCCAoGX3N0YXRzIsIBCgtTdHJlYW1TdGF0cxJEChBwYXJ0aXRpb25fY291bnRzGAEgAygLMioua2F5YWsudjEuU3RyZWFtU3RhdHMuUGFydGl0aW9uQ291bnRzRW50cnkSFAoMcmVjb3JkX2NvdW50GAIgASgDEh8KBmdyb3VwcxgDIAMoCzIPLmtheWFrLnYxLkdyb3VwGjYKFFBhcnRpdGlvbkNvdW50c0VudHJ5EgsKA2tleRgBIAEoAxINCgV2YWx1ZRgCIAEoAzoCOAEiqwEKBUdyb3VwEhMKC3N0cmVhbV9uYW1lGAEgASgJEgwKBG5hbWUYAiABKAkSRAoTcGFydGl0aW9uX3Bvc2l0aW9ucxgDIAMoCzInLmtheWFrLnYxLkdyb3VwLlBhcnRpdGlvblBvc2l0aW9uc0VudHJ5GjkKF1BhcnRpdGlvblBvc2l0aW9uc0VudHJ5EgsKA2tleRgBIAEoAxINCgV2YWx1ZRgCIAEoCToCOAEieAoTUGFydGl0aW9uQXNzaWdubWVudBITCgtzdHJlYW1fbmFtZRgBIAEoCRISCgpncm91cF9uYW1lGAIgASgJEhEKCXBhcnRpdGlvbhgDIAEoAxIRCgl3b3JrZXJfaWQYBCABKAkSEgoKZXhwaXJlc19hdBgFIAEoAyKEAQoGV29ya2VyEhMKC3N0cmVhbV9uYW1lGAEgASgJEhIKCmdyb3VwX25hbWUYAiABKAkSCgoCaWQYAyABKAkSHAoUcGFydGl0aW9uX2Fzc2lnbm1lbnQYBCABKAMSEAoIcG9zaXRpb24YBSABKAkSFQoNbGVhc2VfZXhwaXJlcxgGIAEoAyLKAQoGUmVjb3JkEhMKC3N0cmVhbV9uYW1lGAEgASgJEhEKCXBhcnRpdGlvbhgCIAEoAxIKCgJpZBgDIAEoDBITCgtpbnRlcm5hbF9pZBgEIAEoCRIuCgdoZWFkZXJzGAUgAygLMh0ua2F5YWsudjEuUmVjb3JkLkhlYWRlcnNFbnRyeRIXCgdwYXlsb2FkGAYgASgMQga6SAPIAQEaLgoMSGVhZGVyc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCjQEKDGNvbS5rYXlhay52MUIKTW9kZWxQcm90b1ABWjBnaXRodWIuY29tL2JpbmFyeW1hdHQva2F5YWsvZ2VuL2theWFrL3YxO2theWFrdjGiAgNLWFiqAghLYXlhay5WMcoCCEtheWFrXFYx4gIUS2F5YWtcVjFcR1BCTWV0YWRhdGHqAglLYXlhazo6VjFiBnByb3RvMw", [file_buf_validate_validate]);
+  fileDesc("ChRrYXlhay92MS9tb2RlbC5wcm90bxIIa2F5YWsudjEicQoGU3RyZWFtEgwKBG5hbWUYASABKAkSFwoPcGFydGl0aW9uX2NvdW50GAIgASgDEgsKA3R0bBgDIAEoAxIpCgVzdGF0cxgEIAEoCzIVLmtheWFrLnYxLlN0cmVhbVN0YXRzSACIAQFCCAoGX3N0YXRzIsIBCgtTdHJlYW1TdGF0cxJEChBwYXJ0aXRpb25fY291bnRzGAEgAygLMioua2F5YWsudjEuU3RyZWFtU3RhdHMuUGFydGl0aW9uQ291bnRzRW50cnkSFAoMcmVjb3JkX2NvdW50GAIgASgDEh8KBmdyb3VwcxgDIAMoCzIPLmtheWFrLnYxLkdyb3VwGjYKFFBhcnRpdGlvbkNvdW50c0VudHJ5EgsKA2tleRgBIAEoAxINCgV2YWx1ZRgCIAEoAzoCOAEiqwEKBUdyb3VwEhMKC3N0cmVhbV9uYW1lGAEgASgJEgwKBG5hbWUYAiABKAkSRAoTcGFydGl0aW9uX3Bvc2l0aW9ucxgDIAMoCzInLmtheWFrLnYxLkdyb3VwLlBhcnRpdGlvblBvc2l0aW9uc0VudHJ5GjkKF1BhcnRpdGlvblBvc2l0aW9uc0VudHJ5EgsKA2tleRgBIAEoAxINCgV2YWx1ZRgCIAEoCToCOAEieAoTUGFydGl0aW9uQXNzaWdubWVudBITCgtzdHJlYW1fbmFtZRgBIAEoCRISCgpncm91cF9uYW1lGAIgASgJEhEKCXBhcnRpdGlvbhgDIAEoAxIRCgl3b3JrZXJfaWQYBCABKAkSEgoKZXhwaXJlc19hdBgFIAEoAyKEAQoGV29ya2VyEhMKC3N0cmVhbV9uYW1lGAEgASgJEhIKCmdyb3VwX25hbWUYAiABKAkSCgoCaWQYAyABKAkSHAoUcGFydGl0aW9uX2Fzc2lnbm1lbnQYBCABKAMSEAoIcG9zaXRpb24YBSABKAkSFQoNbGVhc2VfZXhwaXJlcxgGIAEoAyKAAgoGUmVjb3JkEhMKC3N0cmVhbV9uYW1lGAEgASgJEhEKCXBhcnRpdGlvbhgCIAEoAxIKCgJpZBgDIAEoCRITCgtpbnRlcm5hbF9pZBgEIAEoCRIuCgdoZWFkZXJzGAUgAygLMh0ua2F5YWsudjEuUmVjb3JkLkhlYWRlcnNFbnRyeRIXCgdwYXlsb2FkGAYgASgMQga6SAPIAQESNAoQYWNjZXB0X3RpbWVzdGFtcBgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXAaLgoMSGVhZGVyc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAFCjQEKDGNvbS5rYXlhay52MUIKTW9kZWxQcm90b1ABWjBnaXRodWIuY29tL2JpbmFyeW1hdHQva2F5YWsvZ2VuL2theWFrL3YxO2theWFrdjGiAgNLWFiqAghLYXlhay5WMcoCCEtheWFrXFYx4gIUS2F5YWtcVjFcR1BCTWV0YWRhdGHqAglLYXlhazo6VjFiBnByb3RvMw", [file_buf_validate_validate, file_google_protobuf_timestamp]);
 
 /**
  * @generated from message kayak.v1.Stream
@@ -199,9 +201,9 @@ export type Record = Message<"kayak.v1.Record"> & {
   /**
    * id is used to hashed and used for partition assignment, can be set by client.
    *
-   * @generated from field: bytes id = 3;
+   * @generated from field: string id = 3;
    */
-  id: Uint8Array;
+  id: string;
 
   /**
    * internal id is used as identifier in partition stream. Set by server.
@@ -219,6 +221,11 @@ export type Record = Message<"kayak.v1.Record"> & {
    * @generated from field: bytes payload = 6;
    */
   payload: Uint8Array;
+
+  /**
+   * @generated from field: google.protobuf.Timestamp accept_timestamp = 7;
+   */
+  acceptTimestamp?: Timestamp;
 };
 
 /**

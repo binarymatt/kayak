@@ -10,6 +10,7 @@ import (
 	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -377,13 +378,14 @@ type Record struct {
 	// partition is set by server.
 	Partition int64 `protobuf:"varint,2,opt,name=partition,proto3" json:"partition,omitempty"`
 	// id is used to hashed and used for partition assignment, can be set by client.
-	Id []byte `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
+	Id string `protobuf:"bytes,3,opt,name=id,proto3" json:"id,omitempty"`
 	// internal id is used as identifier in partition stream. Set by server.
-	InternalId    string            `protobuf:"bytes,4,opt,name=internal_id,json=internalId,proto3" json:"internal_id,omitempty"`
-	Headers       map[string]string `protobuf:"bytes,5,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	Payload       []byte            `protobuf:"bytes,6,opt,name=payload,proto3" json:"payload,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	InternalId      string                 `protobuf:"bytes,4,opt,name=internal_id,json=internalId,proto3" json:"internal_id,omitempty"`
+	Headers         map[string]string      `protobuf:"bytes,5,rep,name=headers,proto3" json:"headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Payload         []byte                 `protobuf:"bytes,6,opt,name=payload,proto3" json:"payload,omitempty"`
+	AcceptTimestamp *timestamppb.Timestamp `protobuf:"bytes,7,opt,name=accept_timestamp,json=acceptTimestamp,proto3" json:"accept_timestamp,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *Record) Reset() {
@@ -430,11 +432,11 @@ func (x *Record) GetPartition() int64 {
 	return 0
 }
 
-func (x *Record) GetId() []byte {
+func (x *Record) GetId() string {
 	if x != nil {
 		return x.Id
 	}
-	return nil
+	return ""
 }
 
 func (x *Record) GetInternalId() string {
@@ -458,11 +460,18 @@ func (x *Record) GetPayload() []byte {
 	return nil
 }
 
+func (x *Record) GetAcceptTimestamp() *timestamppb.Timestamp {
+	if x != nil {
+		return x.AcceptTimestamp
+	}
+	return nil
+}
+
 var File_kayak_v1_model_proto protoreflect.FileDescriptor
 
 const file_kayak_v1_model_proto_rawDesc = "" +
 	"\n" +
-	"\x14kayak/v1/model.proto\x12\bkayak.v1\x1a\x1bbuf/validate/validate.proto\"\x93\x01\n" +
+	"\x14kayak/v1/model.proto\x12\bkayak.v1\x1a\x1bbuf/validate/validate.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x93\x01\n" +
 	"\x06Stream\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12'\n" +
 	"\x0fpartition_count\x18\x02 \x01(\x03R\x0epartitionCount\x12\x10\n" +
@@ -501,16 +510,17 @@ const file_kayak_v1_model_proto_rawDesc = "" +
 	"\x02id\x18\x03 \x01(\tR\x02id\x121\n" +
 	"\x14partition_assignment\x18\x04 \x01(\x03R\x13partitionAssignment\x12\x1a\n" +
 	"\bposition\x18\x05 \x01(\tR\bposition\x12#\n" +
-	"\rlease_expires\x18\x06 \x01(\x03R\fleaseExpires\"\x8f\x02\n" +
+	"\rlease_expires\x18\x06 \x01(\x03R\fleaseExpires\"\xd6\x02\n" +
 	"\x06Record\x12\x1f\n" +
 	"\vstream_name\x18\x01 \x01(\tR\n" +
 	"streamName\x12\x1c\n" +
 	"\tpartition\x18\x02 \x01(\x03R\tpartition\x12\x0e\n" +
-	"\x02id\x18\x03 \x01(\fR\x02id\x12\x1f\n" +
+	"\x02id\x18\x03 \x01(\tR\x02id\x12\x1f\n" +
 	"\vinternal_id\x18\x04 \x01(\tR\n" +
 	"internalId\x127\n" +
 	"\aheaders\x18\x05 \x03(\v2\x1d.kayak.v1.Record.HeadersEntryR\aheaders\x12 \n" +
-	"\apayload\x18\x06 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\apayload\x1a:\n" +
+	"\apayload\x18\x06 \x01(\fB\x06\xbaH\x03\xc8\x01\x01R\apayload\x12E\n" +
+	"\x10accept_timestamp\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\x0facceptTimestamp\x1a:\n" +
 	"\fHeadersEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\x8d\x01\n" +
@@ -531,15 +541,16 @@ func file_kayak_v1_model_proto_rawDescGZIP() []byte {
 
 var file_kayak_v1_model_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_kayak_v1_model_proto_goTypes = []any{
-	(*Stream)(nil),              // 0: kayak.v1.Stream
-	(*StreamStats)(nil),         // 1: kayak.v1.StreamStats
-	(*Group)(nil),               // 2: kayak.v1.Group
-	(*PartitionAssignment)(nil), // 3: kayak.v1.PartitionAssignment
-	(*Worker)(nil),              // 4: kayak.v1.Worker
-	(*Record)(nil),              // 5: kayak.v1.Record
-	nil,                         // 6: kayak.v1.StreamStats.PartitionCountsEntry
-	nil,                         // 7: kayak.v1.Group.PartitionPositionsEntry
-	nil,                         // 8: kayak.v1.Record.HeadersEntry
+	(*Stream)(nil),                // 0: kayak.v1.Stream
+	(*StreamStats)(nil),           // 1: kayak.v1.StreamStats
+	(*Group)(nil),                 // 2: kayak.v1.Group
+	(*PartitionAssignment)(nil),   // 3: kayak.v1.PartitionAssignment
+	(*Worker)(nil),                // 4: kayak.v1.Worker
+	(*Record)(nil),                // 5: kayak.v1.Record
+	nil,                           // 6: kayak.v1.StreamStats.PartitionCountsEntry
+	nil,                           // 7: kayak.v1.Group.PartitionPositionsEntry
+	nil,                           // 8: kayak.v1.Record.HeadersEntry
+	(*timestamppb.Timestamp)(nil), // 9: google.protobuf.Timestamp
 }
 var file_kayak_v1_model_proto_depIdxs = []int32{
 	1, // 0: kayak.v1.Stream.stats:type_name -> kayak.v1.StreamStats
@@ -547,11 +558,12 @@ var file_kayak_v1_model_proto_depIdxs = []int32{
 	2, // 2: kayak.v1.StreamStats.groups:type_name -> kayak.v1.Group
 	7, // 3: kayak.v1.Group.partition_positions:type_name -> kayak.v1.Group.PartitionPositionsEntry
 	8, // 4: kayak.v1.Record.headers:type_name -> kayak.v1.Record.HeadersEntry
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	9, // 5: kayak.v1.Record.accept_timestamp:type_name -> google.protobuf.Timestamp
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_kayak_v1_model_proto_init() }
