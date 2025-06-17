@@ -365,16 +365,14 @@ func (s *store) getPartitionCounts(stream string) (map[int64]int64, error) {
 
 	txn := s.db.NewTransaction(false)
 	defer txn.Discard()
-	prefix := fmt.Appendf(nil, "%s", stream)
-	fmt.Println("getting partition counts", string(prefix))
-	//opts := badger.defaultiteratoroptions
-	//opts.PrefetchValues = false
-	it := txn.NewIterator(badger.DefaultIteratorOptions)
+	prefix := fmt.Appendf(nil, "%s:", stream)
+	opts := badger.DefaultIteratorOptions
+	opts.PrefetchValues = false
+	it := txn.NewIterator(opts)
 	defer it.Close()
 
 	partitionMapping := map[int64]int64{}
 	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-		fmt.Println("next record")
 		item := it.Item()
 		key := item.Key()
 		parts := strings.Split(string(key), ":")

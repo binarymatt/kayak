@@ -293,7 +293,7 @@ var (
 
 func (s *service) RenewRegistration(ctx context.Context, req *connect.Request[v1.RenewRegistrationRequest]) (*connect.Response[emptypb.Empty], error) {
 	if err := protovalidate.Validate(req.Msg); err != nil {
-		fmt.Println("invalid request")
+		slog.Error("invalid registration renewal", "error", err)
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
@@ -366,7 +366,6 @@ func (s *service) getLeaderClient() kayakv1connect.KayakServiceClient {
 	}
 
 	leader := fmt.Sprintf("http://%s", s.raft.Leader())
-	fmt.Println(leader)
 	client := kayakv1connect.NewKayakServiceClient(http.DefaultClient, leader)
 	return client
 }
