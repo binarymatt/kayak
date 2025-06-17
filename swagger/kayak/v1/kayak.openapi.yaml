@@ -395,41 +395,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/google.protobuf.Empty'
-  /kayak.v1.KayakService/GetStreamStatistics:
-    post:
-      tags:
-        - kayak.v1.KayakService
-      summary: GetStreamStatistics
-      operationId: kayak.v1.KayakService.GetStreamStatistics
-      parameters:
-        - name: Connect-Protocol-Version
-          in: header
-          required: true
-          schema:
-            $ref: '#/components/schemas/connect-protocol-version'
-        - name: Connect-Timeout-Ms
-          in: header
-          schema:
-            $ref: '#/components/schemas/connect-timeout-header'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/kayak.v1.GetStreamStatisticsRequest'
-        required: true
-      responses:
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/connect.error'
-        "200":
-          description: Success
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/kayak.v1.GetStreamStatisticsResponse'
   /kayak.v1.KayakService/Apply:
     post:
       tags:
@@ -750,6 +715,10 @@ components:
         name:
           type: string
           title: name
+        includeStats:
+          type: boolean
+          title: include_stats
+          nullable: true
       title: GetStreamRequest
       required:
         - name
@@ -761,22 +730,6 @@ components:
           title: stream
           $ref: '#/components/schemas/kayak.v1.Stream'
       title: GetStreamResponse
-      additionalProperties: false
-    kayak.v1.GetStreamStatisticsRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          title: name
-      title: GetStreamStatisticsRequest
-      additionalProperties: false
-    kayak.v1.GetStreamStatisticsResponse:
-      type: object
-      properties:
-        streamStats:
-          title: stream_stats
-          $ref: '#/components/schemas/kayak.v1.StreamStats'
-      title: GetStreamStatisticsResponse
       additionalProperties: false
     kayak.v1.GetStreamsRequest:
       type: object

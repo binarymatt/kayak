@@ -119,7 +119,7 @@ func (s *store) PutRecords(streamName string, records ...*kayakv1.Record) error 
 		if err != nil {
 			return err
 		}
-		id, err := ulid.Parse(string(record.InternalId))
+		id, err := ulid.Parse(record.InternalId)
 		if err != nil {
 			return err
 		}
@@ -135,13 +135,33 @@ func (s *store) PutRecords(streamName string, records ...*kayakv1.Record) error 
 	}
 	return txn.Commit()
 }
-
-func (s *store) GetRecords(streamName string, partition int64, startPosition string, limit int) ([]*kayakv1.Record, error) {
+func (s *store) nextStart(streamName string, partition int64, position string) (string, error) {
+	txn := s.db.NewTransaction(false)
+	defer txn.Discard()
+	if position != "" {
+		key := recordKey(streamName, partition, position)
+		_, err := txn.Get(key)
+		if err != nil && !errors.Is(err, badger.ErrKeyNotFound) {
+			return "", err
+		}
+		if err == nil {
+			return position, nil
+		}
+	}
+	return "", nil
+}
+func (s *store) GetRecords(streamName string, partition int64, position string, limit int) ([]*kayakv1.Record, error) {
 	txn := s.db.NewTransaction(false)
 	defer txn.Discard()
 
+	//TODO: there is a bug here when records have expired. If that is the case, a prefix will not find any record to start at.
 	prefix := recordPrefixKey(streamName, partition)
 	p := prefix
+	startPosition, err := s.nextStart(streamName, partition, position)
+	if err != nil {
+		slog.Error("could not get start", "error", err, "position", position)
+		return nil, err
+	}
 	if startPosition != "" {
 		p = recordKey(streamName, partition, startPosition)
 	}
@@ -151,11 +171,16 @@ func (s *store) GetRecords(streamName string, partition int64, startPosition str
 		Reverse:     false,
 		AllVersions: false,
 	}
+	slog.Info("Getting records", "start", startPosition, "partition", partition, "stream", streamName, "limit", limit, "prefix", string(p))
 	it := txn.NewIterator(options)
 	defer it.Close()
 	records := []*kayakv1.Record{}
 	i := 0
 	for it.Seek(p); it.ValidForPrefix(p); it.Next() {
+		slog.Info("got item")
+
+		// Once the starting point for iteration is found, revert the prefix
+		// Otherwise, iteration would stop after a single prefix-key match.
 		p = prefix
 		item := it.Item()
 		val, err := item.ValueCopy(nil)
@@ -167,14 +192,17 @@ func (s *store) GetRecords(streamName string, partition int64, startPosition str
 			return nil, err
 		}
 		if r.InternalId == startPosition {
+			slog.Info("found start position")
 			continue
 		}
+		slog.Info("retrieved record", "record", &r)
 		records = append(records, &r)
 		i++
 		if i >= limit {
 			break
 		}
 	}
+	slog.Info("sending records back", "i", i)
 	return records, nil
 }
 
@@ -202,6 +230,7 @@ func (s *store) CommitGroupPosition(stream, group string, partition int64, posit
 	// only commit if the current position is lower
 	new, err := ulid.Parse(position)
 	if err != nil {
+		slog.Error("could not parse position in store:CommitGroupPosition", "error", err)
 		return err
 	}
 	return s.db.Update(func(tx *badger.Txn) error {
@@ -218,6 +247,7 @@ func (s *store) CommitGroupPosition(stream, group string, partition int64, posit
 			}
 			existing, err := ulid.Parse(string(val))
 			if err != nil {
+				slog.Error("error parsing record value", "error", err, "value", string(val))
 				return err
 			}
 			if new.Compare(existing) < 1 {
@@ -274,10 +304,10 @@ func (s *store) ExtendLease(worker *kayakv1.Worker, expires time.Duration) error
 	return s.db.Update(func(tx *badger.Txn) error {
 		key := partitionAssignmentKey(worker.StreamName, worker.GroupName, worker.PartitionAssignment)
 		entry := badger.NewEntry(key, []byte(worker.Id)).WithTTL(expires)
-		groupKey := groupPositionKey(worker.StreamName, worker.GroupName, worker.PartitionAssignment)
-		if err := tx.Set(groupKey, []byte("")); err != nil {
-			return err
-		}
+		//groupKey := groupPositionKey(worker.StreamName, worker.GroupName, worker.PartitionAssignment)
+		//if err := tx.Set(groupKey, []byte("")); err != nil {
+		//	return err
+		//}
 		return tx.SetEntry(entry)
 	})
 }
@@ -335,14 +365,16 @@ func (s *store) getPartitionCounts(stream string) (map[int64]int64, error) {
 
 	txn := s.db.NewTransaction(false)
 	defer txn.Discard()
-	prefix := []byte(stream)
-	opts := badger.DefaultIteratorOptions
-	opts.PrefetchValues = false
-	it := txn.NewIterator(opts)
+	prefix := fmt.Appendf(nil, "%s", stream)
+	fmt.Println("getting partition counts", string(prefix))
+	//opts := badger.defaultiteratoroptions
+	//opts.PrefetchValues = false
+	it := txn.NewIterator(badger.DefaultIteratorOptions)
 	defer it.Close()
 
 	partitionMapping := map[int64]int64{}
 	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+		fmt.Println("next record")
 		item := it.Item()
 		key := item.Key()
 		parts := strings.Split(string(key), ":")

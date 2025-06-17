@@ -138,6 +138,7 @@ func (s *service) CommitRecord(ctx context.Context, req *connect.Request[v1.Comm
 		},
 	})
 	if err != nil {
+		slog.Error("error applying command", "error", err)
 		//if err := s.store.CommitGroupPosition(worker.StreamName, worker.GroupName, worker.PartitionAssignment, position); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -146,6 +147,7 @@ func (s *service) CommitRecord(ctx context.Context, req *connect.Request[v1.Comm
 
 func (s *service) FetchRecords(ctx context.Context, req *connect.Request[v1.FetchRecordsRequest]) (*connect.Response[v1.FetchRecordsResponse], error) {
 	worker := req.Msg.Worker
+	slog.Info("fetching records", "worker", worker)
 	// is worker registered?
 	if err := s.store.HasLease(worker); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
@@ -199,6 +201,9 @@ func (s *service) CreateStream(ctx context.Context, req *connect.Request[v1.Crea
 }
 
 func (s *service) GetStream(ctx context.Context, req *connect.Request[v1.GetStreamRequest]) (*connect.Response[v1.GetStreamResponse], error) {
+	if err := protovalidate.Validate(req.Msg); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
 	stream, err := s.store.GetStream(req.Msg.Name)
 	if err != nil {
 		if errors.Is(err, badger.ErrKeyNotFound) {
@@ -206,11 +211,13 @@ func (s *service) GetStream(ctx context.Context, req *connect.Request[v1.GetStre
 		}
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	stats, err := s.store.GetStreamStats(stream.Name)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+	if req.Msg.GetIncludeStats() {
+		stats, err := s.store.GetStreamStats(stream.Name)
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInternal, err)
+		}
+		stream.Stats = stats
 	}
-	stream.Stats = stats
 	return connect.NewResponse(&v1.GetStreamResponse{
 		Stream: stream,
 	}), nil
@@ -267,6 +274,10 @@ func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.Re
 		},
 	}
 	if err := s.applyCommand(ctx, cmd); err != nil {
+		slog.Error("error during apply command", "error", err, "already", errors.Is(err, store.ErrAlreadyRegistered))
+		if errors.Is(err, store.ErrAlreadyRegistered) {
+			return nil, connect.NewError(connect.CodeOutOfRange, errors.New("no partitions available"))
+		}
 		//if err := s.store.ExtendLease(worker, s.workerExpiration); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -349,20 +360,6 @@ func (s *service) DeleteStream(ctx context.Context, req *connect.Request[v1.Dele
 	return connect.NewResponse(&emptypb.Empty{}), nil
 }
 
-func (s *service) GetStreamStatistics(ctx context.Context, req *connect.Request[v1.GetStreamStatisticsRequest]) (*connect.Response[v1.GetStreamStatisticsResponse], error) {
-	if err := protovalidate.Validate(req.Msg); err != nil {
-		fmt.Println("invalid request")
-		return nil, connect.NewError(connect.CodeInvalidArgument, err)
-	}
-	slog.Info("getting stream statistics", "stream", req.Msg.Name)
-
-	stats, err := s.store.GetStreamStats(req.Msg.Name)
-	if err != nil {
-		slog.Error("could not retreive stream stats", "error", err)
-		return nil, connect.NewError(connect.CodeInternal, err)
-	}
-	return connect.NewResponse(&v1.GetStreamStatisticsResponse{StreamStats: stats}), nil
-}
 func (s *service) getLeaderClient() kayakv1connect.KayakServiceClient {
 	if s.testLeaderClient != nil {
 		return s.testLeaderClient

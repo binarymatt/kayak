@@ -7,9 +7,12 @@ import "buf/validate/validate.proto";
 option go_package = "github.com/binarymatt/kayak/gen/kayak/v1;kayakv1";
 
 service AdminService {
+  // Raft Endpoints
   rpc AddVoter(AddVoterRequest) returns (AddVoterResponse) {}
   rpc Stats(StatsRequest) returns (StatsResponse) {}
   rpc Leader(LeaderRequest) returns (LeaderResponse) {}
+
+  // Kayak Endpoints
 }
 
 message AddVoterRequest {

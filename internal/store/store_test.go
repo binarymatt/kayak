@@ -363,6 +363,41 @@ func TestGetRecords(t *testing.T) {
 	}
 }
 
+func TestGetRecordsAfterExpired(t *testing.T) {
+	ts := setupTest(t)
+	id := ulid.Make().String()
+	time.Sleep(1 * time.Millisecond)
+	id2 := ulid.Make().String()
+	ts.store.PutStream(&kayakv1.Stream{ //nolint:errcheck
+		Name:           "test",
+		PartitionCount: 1,
+		Ttl:            1,
+	})
+	record := &kayakv1.Record{
+		Partition:  0,
+		InternalId: id,
+		Id:         id,
+		Payload:    []byte("test1"),
+		StreamName: "test",
+	}
+	record2 := &kayakv1.Record{
+		Partition:  0,
+		InternalId: id2,
+		Id:         id2,
+		Payload:    []byte("test2"),
+		StreamName: "test",
+	}
+
+	err := ts.store.PutRecords("test", record)
+	must.NoError(t, err)
+	time.Sleep(1 * time.Second)
+	ts.store.PutRecords("test", record2)
+	r, err := ts.store.GetRecords("test", 0, id, 1)
+	must.NoError(t, err)
+	must.Len(t, 1, r)
+	protoEq(t, record2, r[0])
+}
+
 func TestGetPartitionAssignments(t *testing.T) {
 	ts := setupTest(t)
 	ts.db.Update(func(tx *badger.Txn) error { //nolint:errcheck

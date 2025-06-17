@@ -24,13 +24,10 @@ func (kc *KayakClient) timer(ctx context.Context) error {
 	}
 }
 func (kc *KayakClient) Init(ctx context.Context) error {
-	ctx, cancel := context.WithCancel(ctx)
 	if err := kc.Register(ctx); err != nil {
-		cancel()
 		return err
 	}
-	go kc.timer(ctx)
-	kc.closeFns = append(kc.closeFns, cancel)
+	go kc.timer(ctx) //nolint:errcheck
 	return nil
 }
 
@@ -67,11 +64,14 @@ func (kc *KayakClient) Close() {
 
 func (kc *KayakClient) FetchRecord(ctx context.Context) (*kayakv1.Record, error) {
 	req := &kayakv1.FetchRecordsRequest{
-		Worker: kc.worker,
-		Limit:  1,
+		StreamName: kc.worker.StreamName,
+		Worker:     kc.worker,
+		Limit:      1,
 	}
 	resp, err := kc.client.FetchRecords(ctx, connect.NewRequest(req))
-	slog.Debug("fetched records", "resp", resp, "error", err)
+	if err != nil {
+		return nil, err
+	}
 	if len(resp.Msg.GetRecords()) > 0 {
 		return resp.Msg.GetRecords()[0], nil
 	}

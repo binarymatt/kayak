@@ -81,14 +81,15 @@ func TestInit(t *testing.T) {
 		RenewRegistration(mock.AnythingOfType("*context.cancelCtx"), connect.NewRequest(renewRequest)).
 		Return(nil, nil).Once()
 
-	tc.kc.Init(ctx)
+	tc.kc.Init(ctx) //nolint:errcheck
 	slog.Warn("about to advance")
 	w := tc.mockClock.Advance(1 * time.Second)
-	w.Wait(ctx)
+	err := w.Wait(ctx)
+	must.NoError(t, err)
 	slog.Warn("done waiting")
 	//cancel()
-	time.Sleep(1 * time.Millisecond)
-	tc.kc.Close()
+	//time.Sleep(1 * time.Millisecond)
+	//tc.kc.Close()
 
 }
 
@@ -101,8 +102,9 @@ func TestFetchRecord(t *testing.T) {
 		Id:         "id",
 	}
 	req := &kayakv1.FetchRecordsRequest{
-		Worker: tc.kc.worker,
-		Limit:  1,
+		StreamName: "test",
+		Worker:     tc.kc.worker,
+		Limit:      1,
 	}
 	resp := &kayakv1.FetchRecordsResponse{
 		Records: []*kayakv1.Record{expectedRecord},

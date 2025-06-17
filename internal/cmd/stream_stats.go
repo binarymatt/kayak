@@ -13,12 +13,13 @@ var streamStatsCommand = &cli.Command{
 	Name: "stats",
 	Action: func(ctx context.Context, cmd *cli.Command) error {
 		client := ctx.Value(clientCtxKey).(*client.KayakClient)
-		stats, err := client.Stats(ctx, cmd.String("stream"))
+		stream, err := client.Stats(ctx, cmd.String("stream"))
 		if err != nil {
 			return err
 		}
-		slog.Info("stream statistics", "stream_name", cmd.String("stream"))
-		slog.Info("", "record_count", stats.RecordCount)
+		stats := stream.GetStats()
+		slog.Info("stream statistics", "name", stream.Name, "partitions", stream.PartitionCount, "ttl", stream.Ttl)
+		slog.Info("records", "count", stats.RecordCount)
 		for k, v := range stats.PartitionCounts {
 			slog.Info("partition info", "id", k, "count", v)
 		}

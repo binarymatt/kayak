@@ -223,3 +223,25 @@ func TestGetRecords(t *testing.T) {}
 
 func TestGetStreamStatistis(t *testing.T) {
 }
+
+func TestRegisterWorker_NoUnassignedPartitions(t *testing.T) {
+
+	ts := setupTest(t)
+	ctx := context.Background()
+	req := &kayakv1.RegisterWorkerRequest{
+		StreamName: "test",
+		Group:      "groupTest",
+		Id:         "1",
+	}
+
+	ts.mockStore.EXPECT().GetStream("test").
+		Return(&kayakv1.Stream{Name: "test", PartitionCount: 1}, nil).
+		Once()
+
+	// map[int64]*kayakv1.PartitionAssignment, error
+	ts.mockStore.EXPECT().GetPartitionAssignments("test", "groupTest").Return(map[int64]*kayakv1.PartitionAssignment{
+		1: {StreamName: "test", GroupName: "groupTest", WorkerId: "2"},
+	}, nil).Once()
+	_, err := ts.service.RegisterWorker(ctx, connect.NewRequest(req))
+	must.Eq(t, connect.CodeOutOfRange, connect.CodeOf(err))
+}

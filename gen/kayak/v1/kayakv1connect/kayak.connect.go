@@ -63,9 +63,6 @@ const (
 	// KayakServiceDeleteStreamProcedure is the fully-qualified name of the KayakService's DeleteStream
 	// RPC.
 	KayakServiceDeleteStreamProcedure = "/kayak.v1.KayakService/DeleteStream"
-	// KayakServiceGetStreamStatisticsProcedure is the fully-qualified name of the KayakService's
-	// GetStreamStatistics RPC.
-	KayakServiceGetStreamStatisticsProcedure = "/kayak.v1.KayakService/GetStreamStatistics"
 	// KayakServiceApplyProcedure is the fully-qualified name of the KayakService's Apply RPC.
 	KayakServiceApplyProcedure = "/kayak.v1.KayakService/Apply"
 )
@@ -90,7 +87,6 @@ type KayakServiceClient interface {
 	GetStream(context.Context, *connect.Request[v1.GetStreamRequest]) (*connect.Response[v1.GetStreamResponse], error)
 	GetStreams(context.Context, *connect.Request[v1.GetStreamsRequest]) (*connect.Response[v1.GetStreamsResponse], error)
 	DeleteStream(context.Context, *connect.Request[v1.DeleteStreamRequest]) (*connect.Response[emptypb.Empty], error)
-	GetStreamStatistics(context.Context, *connect.Request[v1.GetStreamStatisticsRequest]) (*connect.Response[v1.GetStreamStatisticsResponse], error)
 	// Raft Specific
 	Apply(context.Context, *connect.Request[v1.ApplyRequest]) (*connect.Response[v1.ApplyResponse], error)
 }
@@ -172,12 +168,6 @@ func NewKayakServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			connect.WithSchema(kayakServiceMethods.ByName("DeleteStream")),
 			connect.WithClientOptions(opts...),
 		),
-		getStreamStatistics: connect.NewClient[v1.GetStreamStatisticsRequest, v1.GetStreamStatisticsResponse](
-			httpClient,
-			baseURL+KayakServiceGetStreamStatisticsProcedure,
-			connect.WithSchema(kayakServiceMethods.ByName("GetStreamStatistics")),
-			connect.WithClientOptions(opts...),
-		),
 		apply: connect.NewClient[v1.ApplyRequest, v1.ApplyResponse](
 			httpClient,
 			baseURL+KayakServiceApplyProcedure,
@@ -189,19 +179,18 @@ func NewKayakServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 
 // kayakServiceClient implements KayakServiceClient.
 type kayakServiceClient struct {
-	putRecords          *connect.Client[v1.PutRecordsRequest, emptypb.Empty]
-	getRecords          *connect.Client[v1.GetRecordsRequest, v1.GetRecordsResponse]
-	fetchRecords        *connect.Client[v1.FetchRecordsRequest, v1.FetchRecordsResponse]
-	commitRecord        *connect.Client[v1.CommitRecordRequest, emptypb.Empty]
-	registerWorker      *connect.Client[v1.RegisterWorkerRequest, v1.RegisterWorkerResponse]
-	deregisterWorker    *connect.Client[v1.DeregisterWorkerRequest, emptypb.Empty]
-	renewRegistration   *connect.Client[v1.RenewRegistrationRequest, emptypb.Empty]
-	createStream        *connect.Client[v1.CreateStreamRequest, emptypb.Empty]
-	getStream           *connect.Client[v1.GetStreamRequest, v1.GetStreamResponse]
-	getStreams          *connect.Client[v1.GetStreamsRequest, v1.GetStreamsResponse]
-	deleteStream        *connect.Client[v1.DeleteStreamRequest, emptypb.Empty]
-	getStreamStatistics *connect.Client[v1.GetStreamStatisticsRequest, v1.GetStreamStatisticsResponse]
-	apply               *connect.Client[v1.ApplyRequest, v1.ApplyResponse]
+	putRecords        *connect.Client[v1.PutRecordsRequest, emptypb.Empty]
+	getRecords        *connect.Client[v1.GetRecordsRequest, v1.GetRecordsResponse]
+	fetchRecords      *connect.Client[v1.FetchRecordsRequest, v1.FetchRecordsResponse]
+	commitRecord      *connect.Client[v1.CommitRecordRequest, emptypb.Empty]
+	registerWorker    *connect.Client[v1.RegisterWorkerRequest, v1.RegisterWorkerResponse]
+	deregisterWorker  *connect.Client[v1.DeregisterWorkerRequest, emptypb.Empty]
+	renewRegistration *connect.Client[v1.RenewRegistrationRequest, emptypb.Empty]
+	createStream      *connect.Client[v1.CreateStreamRequest, emptypb.Empty]
+	getStream         *connect.Client[v1.GetStreamRequest, v1.GetStreamResponse]
+	getStreams        *connect.Client[v1.GetStreamsRequest, v1.GetStreamsResponse]
+	deleteStream      *connect.Client[v1.DeleteStreamRequest, emptypb.Empty]
+	apply             *connect.Client[v1.ApplyRequest, v1.ApplyResponse]
 }
 
 // PutRecords calls kayak.v1.KayakService.PutRecords.
@@ -259,11 +248,6 @@ func (c *kayakServiceClient) DeleteStream(ctx context.Context, req *connect.Requ
 	return c.deleteStream.CallUnary(ctx, req)
 }
 
-// GetStreamStatistics calls kayak.v1.KayakService.GetStreamStatistics.
-func (c *kayakServiceClient) GetStreamStatistics(ctx context.Context, req *connect.Request[v1.GetStreamStatisticsRequest]) (*connect.Response[v1.GetStreamStatisticsResponse], error) {
-	return c.getStreamStatistics.CallUnary(ctx, req)
-}
-
 // Apply calls kayak.v1.KayakService.Apply.
 func (c *kayakServiceClient) Apply(ctx context.Context, req *connect.Request[v1.ApplyRequest]) (*connect.Response[v1.ApplyResponse], error) {
 	return c.apply.CallUnary(ctx, req)
@@ -289,7 +273,6 @@ type KayakServiceHandler interface {
 	GetStream(context.Context, *connect.Request[v1.GetStreamRequest]) (*connect.Response[v1.GetStreamResponse], error)
 	GetStreams(context.Context, *connect.Request[v1.GetStreamsRequest]) (*connect.Response[v1.GetStreamsResponse], error)
 	DeleteStream(context.Context, *connect.Request[v1.DeleteStreamRequest]) (*connect.Response[emptypb.Empty], error)
-	GetStreamStatistics(context.Context, *connect.Request[v1.GetStreamStatisticsRequest]) (*connect.Response[v1.GetStreamStatisticsResponse], error)
 	// Raft Specific
 	Apply(context.Context, *connect.Request[v1.ApplyRequest]) (*connect.Response[v1.ApplyResponse], error)
 }
@@ -367,12 +350,6 @@ func NewKayakServiceHandler(svc KayakServiceHandler, opts ...connect.HandlerOpti
 		connect.WithSchema(kayakServiceMethods.ByName("DeleteStream")),
 		connect.WithHandlerOptions(opts...),
 	)
-	kayakServiceGetStreamStatisticsHandler := connect.NewUnaryHandler(
-		KayakServiceGetStreamStatisticsProcedure,
-		svc.GetStreamStatistics,
-		connect.WithSchema(kayakServiceMethods.ByName("GetStreamStatistics")),
-		connect.WithHandlerOptions(opts...),
-	)
 	kayakServiceApplyHandler := connect.NewUnaryHandler(
 		KayakServiceApplyProcedure,
 		svc.Apply,
@@ -403,8 +380,6 @@ func NewKayakServiceHandler(svc KayakServiceHandler, opts ...connect.HandlerOpti
 			kayakServiceGetStreamsHandler.ServeHTTP(w, r)
 		case KayakServiceDeleteStreamProcedure:
 			kayakServiceDeleteStreamHandler.ServeHTTP(w, r)
-		case KayakServiceGetStreamStatisticsProcedure:
-			kayakServiceGetStreamStatisticsHandler.ServeHTTP(w, r)
 		case KayakServiceApplyProcedure:
 			kayakServiceApplyHandler.ServeHTTP(w, r)
 		default:
@@ -458,10 +433,6 @@ func (UnimplementedKayakServiceHandler) GetStreams(context.Context, *connect.Req
 
 func (UnimplementedKayakServiceHandler) DeleteStream(context.Context, *connect.Request[v1.DeleteStreamRequest]) (*connect.Response[emptypb.Empty], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kayak.v1.KayakService.DeleteStream is not implemented"))
-}
-
-func (UnimplementedKayakServiceHandler) GetStreamStatistics(context.Context, *connect.Request[v1.GetStreamStatisticsRequest]) (*connect.Response[v1.GetStreamStatisticsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kayak.v1.KayakService.GetStreamStatistics is not implemented"))
 }
 
 func (UnimplementedKayakServiceHandler) Apply(context.Context, *connect.Request[v1.ApplyRequest]) (*connect.Response[v1.ApplyResponse], error) {
