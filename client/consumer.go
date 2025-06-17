@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	"connectrpc.com/connect"
@@ -49,7 +48,6 @@ func (kc *KayakClient) Register(ctx context.Context) error {
 	}
 	resp, err := kc.client.RegisterWorker(ctx, connect.NewRequest(req))
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	kc.worker = resp.Msg.GetWorker()
