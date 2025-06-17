@@ -69,7 +69,7 @@ func (ac *AutoClient) work(ctx context.Context, uniqueID string) error {
 	if err := kc.Init(ctx); err != nil {
 		// there are no more partition assignments, exit
 		if connect.CodeOf(err) == connect.CodeOutOfRange {
-			slog.Warn("all partitions have been assigned")
+			slog.Warn("all partitions have been assigned, discarding worker", "id", id)
 			return nil
 		}
 		slog.Error("error initializing worker", "error", err)
@@ -90,7 +90,10 @@ func (ac *AutoClient) work(ctx context.Context, uniqueID string) error {
 			if record == nil {
 				logger.Debug("record is nil, sleeping")
 				sleeper := ac.clock.NewTimer(ac.cfg.SleepDuration)
-				<-sleeper.C
+				select {
+				case <-sleeper.C:
+				case <-ctx.Done():
+				}
 				sleeper.Stop()
 				continue
 			}
@@ -109,7 +112,7 @@ func (ac *AutoClient) work(ctx context.Context, uniqueID string) error {
 }
 
 func (ac *AutoClient) spinupWorkers(ctx context.Context) {
-	slog.Debug("attemping worker spin up", "max_worker_count", ac.cfg.MaxWorkers, "worker_count", ac.currentWorkerCount)
+	slog.Info("attemping worker spin up", "max_worker_count", ac.cfg.MaxWorkers, "worker_count", ac.currentWorkerCount)
 
 	for range ac.cfg.MaxWorkers {
 		if ac.currentWorkerCount < ac.cfg.MaxWorkers {
