@@ -85,7 +85,6 @@ func TestInit(t *testing.T) {
 	w := tc.mockClock.Advance(1 * time.Second)
 	err = w.Wait(ctx)
 	must.NoError(t, err)
-	time.Sleep(1 * time.Millisecond)
 	cancel()
 
 }
