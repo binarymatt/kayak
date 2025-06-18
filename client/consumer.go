@@ -14,12 +14,12 @@ func (kc *KayakClient) timer(ctx context.Context) error {
 	defer ticker.Stop()
 	for {
 		select {
-		case <-ctx.Done():
-			return nil
 		case <-ticker.C:
 			if err := kc.extendLease(ctx); err != nil {
 				return err
 			}
+		case <-ctx.Done():
+			return nil
 		}
 	}
 }

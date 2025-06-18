@@ -52,6 +52,10 @@ func setupTest(t *testing.T) *testContainer {
 func TestInit(t *testing.T) {
 	tc := setupTest(t)
 	ctx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(func() {
+		time.Sleep(5 * time.Millisecond)
+		cancel()
+	})
 	worker := &kayakv1.Worker{
 		StreamName:          "stream",
 		GroupName:           "group",
@@ -85,7 +89,6 @@ func TestInit(t *testing.T) {
 	w := tc.mockClock.Advance(1 * time.Second)
 	err = w.Wait(ctx)
 	must.NoError(t, err)
-	cancel()
 
 }
 
