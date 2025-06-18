@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"log/slog"
 	"testing"
 	"time"
 
@@ -52,7 +51,7 @@ func setupTest(t *testing.T) *testContainer {
 }
 func TestInit(t *testing.T) {
 	tc := setupTest(t)
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
 	worker := &kayakv1.Worker{
 		StreamName:          "stream",
 		GroupName:           "group",
@@ -81,15 +80,13 @@ func TestInit(t *testing.T) {
 		RenewRegistration(mock.AnythingOfType("*context.cancelCtx"), connect.NewRequest(renewRequest)).
 		Return(nil, nil).Once()
 
-	tc.kc.Init(ctx) //nolint:errcheck
-	slog.Warn("about to advance")
-	w := tc.mockClock.Advance(1 * time.Second)
-	err := w.Wait(ctx)
+	err := tc.kc.Init(ctx) //nolint:errcheck
 	must.NoError(t, err)
-	slog.Warn("done waiting")
-	//cancel()
-	//time.Sleep(1 * time.Millisecond)
-	//tc.kc.Close()
+	w := tc.mockClock.Advance(1 * time.Second)
+	err = w.Wait(ctx)
+	must.NoError(t, err)
+	time.Sleep(1 * time.Millisecond)
+	cancel()
 
 }
 

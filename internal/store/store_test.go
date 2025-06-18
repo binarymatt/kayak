@@ -391,7 +391,7 @@ func TestGetRecordsAfterExpired(t *testing.T) {
 	err := ts.store.PutRecords("test", record)
 	must.NoError(t, err)
 	time.Sleep(1 * time.Second)
-	ts.store.PutRecords("test", record2)
+	_ = ts.store.PutRecords("test", record2)
 	r, err := ts.store.GetRecords("test", 0, id, 1)
 	must.NoError(t, err)
 	must.Len(t, 1, r)

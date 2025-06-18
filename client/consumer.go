@@ -11,6 +11,7 @@ import (
 
 func (kc *KayakClient) timer(ctx context.Context) error {
 	ticker := kc.clock.NewTicker(kc.cfg.ticker)
+	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
