@@ -52,7 +52,7 @@ func (kc *KayakClient) Register(ctx context.Context) error {
 		return err
 	}
 	kc.worker = resp.Msg.GetWorker()
-	slog.Info("returned config", "worker", kc.worker)
+	slog.Debug("returned config", "worker", kc.worker)
 	return nil
 }
 func (kc *KayakClient) Close() {

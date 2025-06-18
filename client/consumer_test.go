@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -53,7 +54,6 @@ func TestInit(t *testing.T) {
 	tc := setupTest(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(func() {
-		time.Sleep(5 * time.Millisecond)
 		cancel()
 	})
 	worker := &kayakv1.Worker{
@@ -85,10 +85,13 @@ func TestInit(t *testing.T) {
 		Return(nil, nil).Once()
 
 	err := tc.kc.Init(ctx) //nolint:errcheck
+	time.Sleep(5 * time.Millisecond)
+
 	must.NoError(t, err)
 	w := tc.mockClock.Advance(1 * time.Second)
 	err = w.Wait(ctx)
 	must.NoError(t, err)
+	time.Sleep(5 * time.Millisecond)
 
 }
 
