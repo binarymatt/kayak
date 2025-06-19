@@ -607,6 +607,7 @@ func (x *CreateStreamRequest) GetTtl() int64 {
 type GetStreamRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	IncludeStats  *bool                  `protobuf:"varint,2,opt,name=include_stats,json=includeStats,proto3,oneof" json:"include_stats,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -646,6 +647,13 @@ func (x *GetStreamRequest) GetName() string {
 		return x.Name
 	}
 	return ""
+}
+
+func (x *GetStreamRequest) GetIncludeStats() bool {
+	if x != nil && x.IncludeStats != nil {
+		return *x.IncludeStats
+	}
+	return false
 }
 
 type GetStreamResponse struct {
@@ -938,9 +946,11 @@ const file_kayak_v1_kayak_proto_rawDesc = "" +
 	"\x13CreateStreamRequest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12'\n" +
 	"\x0fpartition_count\x18\x02 \x01(\x03R\x0epartitionCount\x12\x10\n" +
-	"\x03ttl\x18\x03 \x01(\x03R\x03ttl\".\n" +
+	"\x03ttl\x18\x03 \x01(\x03R\x03ttl\"j\n" +
 	"\x10GetStreamRequest\x12\x1a\n" +
-	"\x04name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\"=\n" +
+	"\x04name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12(\n" +
+	"\rinclude_stats\x18\x02 \x01(\bH\x00R\fincludeStats\x88\x01\x01B\x10\n" +
+	"\x0e_include_stats\"=\n" +
 	"\x11GetStreamResponse\x12(\n" +
 	"\x06stream\x18\x01 \x01(\v2\x10.kayak.v1.StreamR\x06stream\"\x13\n" +
 	"\x11GetStreamsRequest\"@\n" +
@@ -1059,6 +1069,7 @@ func file_kayak_v1_kayak_proto_init() {
 	}
 	file_kayak_v1_model_proto_init()
 	file_kayak_v1_raft_proto_init()
+	file_kayak_v1_kayak_proto_msgTypes[11].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

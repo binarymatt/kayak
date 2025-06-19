@@ -16,6 +16,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	v1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
@@ -78,11 +79,12 @@ func (s *service) PutRecords(ctx context.Context, req *connect.Request[v1.PutRec
 	for _, r := range req.Msg.Records {
 		id := s.idGenerator()
 		r.InternalId = id.String()
-		if r.Id == nil {
-			r.Id = id.Bytes()
+		if r.Id == "" {
+			r.Id = id.String()
 		}
 		r.StreamName = stream.Name
 		r.Partition = balancer(r.Id, stream.PartitionCount)
+		r.AcceptTimestamp = timestamppb.New(s.clock.Now())
 	}
 
 	//err = s.store.PutRecords(req.Msg.StreamName, req.Msg.GetRecords()...)
@@ -100,6 +102,7 @@ func (s *service) PutRecords(ctx context.Context, req *connect.Request[v1.PutRec
 }
 
 func (s *service) CommitRecord(ctx context.Context, req *connect.Request[v1.CommitRecordRequest]) (*connect.Response[emptypb.Empty], error) {
+	slog.Info("commiting record", "msg", req.Msg)
 	// check worker lease
 	if err := s.store.HasLease(req.Msg.Worker); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
@@ -117,8 +120,10 @@ func (s *service) CommitRecord(ctx context.Context, req *connect.Request[v1.Comm
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	worker := req.Msg.GetWorker()
-	id, err := ulid.Parse(req.Msg.Record.InternalId)
+	record := req.Msg.GetRecord()
+	id, err := ulid.Parse(record.InternalId)
 	if err != nil {
+		slog.Error("could not parse internal ID", "error", err, "record", record)
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
 	position := id.String()
@@ -133,6 +138,7 @@ func (s *service) CommitRecord(ctx context.Context, req *connect.Request[v1.Comm
 		},
 	})
 	if err != nil {
+		slog.Error("error applying command", "error", err)
 		//if err := s.store.CommitGroupPosition(worker.StreamName, worker.GroupName, worker.PartitionAssignment, position); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -141,6 +147,7 @@ func (s *service) CommitRecord(ctx context.Context, req *connect.Request[v1.Comm
 
 func (s *service) FetchRecords(ctx context.Context, req *connect.Request[v1.FetchRecordsRequest]) (*connect.Response[v1.FetchRecordsResponse], error) {
 	worker := req.Msg.Worker
+	slog.Info("fetching records", "worker", worker)
 	// is worker registered?
 	if err := s.store.HasLease(worker); err != nil {
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
@@ -194,6 +201,9 @@ func (s *service) CreateStream(ctx context.Context, req *connect.Request[v1.Crea
 }
 
 func (s *service) GetStream(ctx context.Context, req *connect.Request[v1.GetStreamRequest]) (*connect.Response[v1.GetStreamResponse], error) {
+	if err := protovalidate.Validate(req.Msg); err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
 	stream, err := s.store.GetStream(req.Msg.Name)
 	if err != nil {
 		if errors.Is(err, badger.ErrKeyNotFound) {
@@ -201,11 +211,13 @@ func (s *service) GetStream(ctx context.Context, req *connect.Request[v1.GetStre
 		}
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
-	stats, err := s.store.GetStreamStats(stream.Name)
-	if err != nil {
-		return nil, connect.NewError(connect.CodeInternal, err)
+	if req.Msg.GetIncludeStats() {
+		stats, err := s.store.GetStreamStats(stream.Name)
+		if err != nil {
+			return nil, connect.NewError(connect.CodeInternal, err)
+		}
+		stream.Stats = stats
 	}
-	stream.Stats = stats
 	return connect.NewResponse(&v1.GetStreamResponse{
 		Stream: stream,
 	}), nil
@@ -262,6 +274,10 @@ func (s *service) RegisterWorker(ctx context.Context, req *connect.Request[v1.Re
 		},
 	}
 	if err := s.applyCommand(ctx, cmd); err != nil {
+		slog.Error("error during apply command", "error", err, "already", errors.Is(err, store.ErrAlreadyRegistered))
+		if errors.Is(err, store.ErrAlreadyRegistered) {
+			return nil, connect.NewError(connect.CodeOutOfRange, errors.New("no partitions available"))
+		}
 		//if err := s.store.ExtendLease(worker, s.workerExpiration); err != nil {
 		return nil, connect.NewError(connect.CodeInternal, err)
 	}
@@ -277,7 +293,7 @@ var (
 
 func (s *service) RenewRegistration(ctx context.Context, req *connect.Request[v1.RenewRegistrationRequest]) (*connect.Response[emptypb.Empty], error) {
 	if err := protovalidate.Validate(req.Msg); err != nil {
-		fmt.Println("invalid request")
+		slog.Error("invalid registration renewal", "error", err)
 		return nil, connect.NewError(connect.CodeInvalidArgument, err)
 	}
 
@@ -350,7 +366,6 @@ func (s *service) getLeaderClient() kayakv1connect.KayakServiceClient {
 	}
 
 	leader := fmt.Sprintf("http://%s", s.raft.Leader())
-	fmt.Println(leader)
 	client := kayakv1connect.NewKayakServiceClient(http.DefaultClient, leader)
 	return client
 }

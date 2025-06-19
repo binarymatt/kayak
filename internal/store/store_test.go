@@ -19,6 +19,11 @@ type testContainer struct {
 	store *store
 }
 
+func protoEq[V any](t *testing.T, expected, actual V) {
+	t.Helper()
+	must.Eq(t, expected, actual, must.Cmp(protocmp.Transform()))
+}
+
 func setupTest(t *testing.T) *testContainer {
 	t.Helper()
 	opts := badger.DefaultOptions("").WithInMemory(true).WithLogger(nil)
@@ -126,7 +131,7 @@ func TestPutRecords(t *testing.T) {
 	record := &kayakv1.Record{
 		StreamName: "test",
 		InternalId: ulid.Make().String(),
-		Id:         []byte("test"),
+		Id:         "test",
 		Partition:  0,
 	}
 	err := ts.store.PutStream(stream)
@@ -150,7 +155,7 @@ func TestPutRecords_NoStream(t *testing.T) {
 	record := &kayakv1.Record{
 		StreamName: "test",
 		InternalId: ulid.Make().String(),
-		Id:         []byte("test"),
+		Id:         "test",
 		Partition:  0,
 	}
 	err := ts.store.PutRecords("test", record)
@@ -168,7 +173,7 @@ func TestPutRecords_TTL(t *testing.T) {
 	record := &kayakv1.Record{
 		StreamName: "test",
 		InternalId: ulid.Make().String(),
-		Id:         []byte("test"),
+		Id:         "test",
 		Partition:  0,
 	}
 	now := time.Now()
@@ -198,7 +203,7 @@ func TestPutRecords_Expired(t *testing.T) {
 	record := &kayakv1.Record{
 		StreamName: "test",
 		InternalId: ulid.Make().String(),
-		Id:         []byte("test"),
+		Id:         "test",
 		Partition:  0,
 	}
 	err := ts.store.PutStream(stream)
@@ -232,13 +237,13 @@ func TestGetRecords(t *testing.T) {
 				{
 					Partition:  0,
 					InternalId: firstId,
-					Id:         []byte(firstId),
+					Id:         firstId,
 					Payload:    []byte("test1"),
 				},
 				{
 					Partition:  0,
 					InternalId: secondId,
-					Id:         []byte(secondId),
+					Id:         secondId,
 					Payload:    []byte("test2"),
 				},
 			},
@@ -246,14 +251,14 @@ func TestGetRecords(t *testing.T) {
 				{
 					Partition:  0,
 					InternalId: firstId,
-					Id:         []byte(firstId),
+					Id:         firstId,
 					Payload:    []byte("test1"),
 					StreamName: "test",
 				},
 				{
 					Partition:  0,
 					InternalId: secondId,
-					Id:         []byte(secondId),
+					Id:         secondId,
 					Payload:    []byte("test2"),
 					StreamName: "test",
 				},
@@ -266,13 +271,13 @@ func TestGetRecords(t *testing.T) {
 				{
 					Partition:  0,
 					InternalId: firstId,
-					Id:         []byte(firstId),
+					Id:         firstId,
 					Payload:    []byte("test1"),
 				},
 				{
 					Partition:  0,
 					InternalId: secondId,
-					Id:         []byte(secondId),
+					Id:         secondId,
 					Payload:    []byte("test2"),
 				},
 			},
@@ -280,7 +285,7 @@ func TestGetRecords(t *testing.T) {
 				{
 					Partition:  0,
 					InternalId: firstId,
-					Id:         []byte(firstId),
+					Id:         firstId,
 					Payload:    []byte("test1"),
 					StreamName: "test",
 				},
@@ -294,13 +299,13 @@ func TestGetRecords(t *testing.T) {
 				{
 					Partition:  0,
 					InternalId: firstId,
-					Id:         []byte(firstId),
+					Id:         firstId,
 					Payload:    []byte("test1"),
 				},
 				{
 					Partition:  0,
 					InternalId: secondId,
-					Id:         []byte(secondId),
+					Id:         secondId,
 					Payload:    []byte("test2"),
 				},
 			},
@@ -308,7 +313,7 @@ func TestGetRecords(t *testing.T) {
 				{
 					Partition:  0,
 					InternalId: secondId,
-					Id:         []byte(secondId),
+					Id:         secondId,
 					Payload:    []byte("test2"),
 					StreamName: "test",
 				},
@@ -321,13 +326,13 @@ func TestGetRecords(t *testing.T) {
 				{
 					Partition:  1,
 					InternalId: firstId,
-					Id:         []byte(firstId),
+					Id:         firstId,
 					Payload:    []byte("test1"),
 				},
 				{
 					Partition:  0,
 					InternalId: secondId,
-					Id:         []byte(secondId),
+					Id:         secondId,
 					Payload:    []byte("test2"),
 				},
 			},
@@ -335,7 +340,7 @@ func TestGetRecords(t *testing.T) {
 				{
 					Partition:  0,
 					InternalId: secondId,
-					Id:         []byte(secondId),
+					Id:         secondId,
 					Payload:    []byte("test2"),
 					StreamName: "test",
 				},
@@ -356,6 +361,41 @@ func TestGetRecords(t *testing.T) {
 			protoEq(t, tc.expected, actual)
 		})
 	}
+}
+
+func TestGetRecordsAfterExpired(t *testing.T) {
+	ts := setupTest(t)
+	id := ulid.Make().String()
+	time.Sleep(1 * time.Millisecond)
+	id2 := ulid.Make().String()
+	ts.store.PutStream(&kayakv1.Stream{ //nolint:errcheck
+		Name:           "test",
+		PartitionCount: 1,
+		Ttl:            1,
+	})
+	record := &kayakv1.Record{
+		Partition:  0,
+		InternalId: id,
+		Id:         id,
+		Payload:    []byte("test1"),
+		StreamName: "test",
+	}
+	record2 := &kayakv1.Record{
+		Partition:  0,
+		InternalId: id2,
+		Id:         id2,
+		Payload:    []byte("test2"),
+		StreamName: "test",
+	}
+
+	err := ts.store.PutRecords("test", record)
+	must.NoError(t, err)
+	time.Sleep(1 * time.Second)
+	_ = ts.store.PutRecords("test", record2)
+	r, err := ts.store.GetRecords("test", 0, id, 1)
+	must.NoError(t, err)
+	must.Len(t, 1, r)
+	protoEq(t, record2, r[0])
 }
 
 func TestGetPartitionAssignments(t *testing.T) {
@@ -557,7 +597,5 @@ func TestGetStreams(t *testing.T) {
 	protoEq(t, []*kayakv1.Stream{{Name: "test", PartitionCount: 1, Ttl: 300}}, streams)
 }
 
-func protoEq[V any](t *testing.T, expected, actual V) {
-	t.Helper()
-	must.Eq(t, expected, actual, must.Cmp(protocmp.Transform()))
+func TestGetStreamStats(t *testing.T) {
 }

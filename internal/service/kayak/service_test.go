@@ -12,6 +12,7 @@ import (
 	"github.com/oklog/ulid/v2"
 	"github.com/shoenig/test/must"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/binarymatt/kayak/gen/kayak/v1/kayakv1connect"
@@ -63,7 +64,7 @@ func TestPutRecords_Leader(t *testing.T) {
 
 	records := &kayakv1.Record{
 		Payload: []byte("test"),
-		Id:      []byte("test"),
+		Id:      "test",
 	}
 
 	ts.mockStore.EXPECT().GetStream("test_stream").
@@ -76,11 +77,12 @@ func TestPutRecords_Leader(t *testing.T) {
 			PutRecords: &kayakv1.PutRecords{
 				Records: []*kayakv1.Record{
 					{
-						Id:         []byte("test"),
-						InternalId: ts.id.String(),
-						Payload:    []byte("test"),
-						Partition:  0,
-						StreamName: "test_stream",
+						Id:              "test",
+						InternalId:      ts.id.String(),
+						Payload:         []byte("test"),
+						Partition:       0,
+						StreamName:      "test_stream",
+						AcceptTimestamp: timestamppb.New(ts.clock.Now()),
 					},
 				},
 				StreamName: "test_stream",
@@ -218,3 +220,28 @@ func TestRenewRegistration_MisMatchingWorkers(t *testing.T) {
 
 }
 func TestGetRecords(t *testing.T) {}
+
+func TestGetStreamStatistis(t *testing.T) {
+}
+
+func TestRegisterWorker_NoUnassignedPartitions(t *testing.T) {
+
+	ts := setupTest(t)
+	ctx := context.Background()
+	req := &kayakv1.RegisterWorkerRequest{
+		StreamName: "test",
+		Group:      "groupTest",
+		Id:         "1",
+	}
+
+	ts.mockStore.EXPECT().GetStream("test").
+		Return(&kayakv1.Stream{Name: "test", PartitionCount: 1}, nil).
+		Once()
+
+	// map[int64]*kayakv1.PartitionAssignment, error
+	ts.mockStore.EXPECT().GetPartitionAssignments("test", "groupTest").Return(map[int64]*kayakv1.PartitionAssignment{
+		1: {StreamName: "test", GroupName: "groupTest", WorkerId: "2"},
+	}, nil).Once()
+	_, err := ts.service.RegisterWorker(ctx, connect.NewRequest(req))
+	must.Eq(t, connect.CodeOutOfRange, connect.CodeOf(err))
+}
