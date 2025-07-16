@@ -6,6 +6,7 @@ export default defineConfig({
   plugins: [solidPlugin(), tailwindcss()],
   server: {
     port: 3001,
+    allowedHosts: ["mini"],
   },
   build: {
     target: "esnext",

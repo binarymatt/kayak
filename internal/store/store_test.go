@@ -1,6 +1,7 @@
 package store
 
 import (
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -598,4 +599,70 @@ func TestGetStreams(t *testing.T) {
 }
 
 func TestGetStreamStats(t *testing.T) {
+}
+
+func TestDeleteStreamRecords_Simple(t *testing.T) {
+	ts := setupTest(t)
+
+	stream := &kayakv1.Stream{
+		Name:           "test",
+		PartitionCount: 1,
+		Ttl:            0,
+	}
+	record := &kayakv1.Record{
+		StreamName: "test",
+		InternalId: ulid.Make().String(),
+		Id:         "test",
+		Partition:  0,
+	}
+	err := ts.store.PutStream(stream)
+	must.NoError(t, err)
+	err = ts.store.PutRecords("test", record)
+	must.NoError(t, err)
+	ts.store.deleteStreamRecords("test")
+	ts.db.View(func(tx *badger.Txn) error { //nolint:errcheck
+		item, err := tx.Get(recordKey("test", 0, record.InternalId))
+		must.ErrorIs(t, err, badger.ErrKeyNotFound)
+		must.Nil(t, item)
+		return nil
+	})
+}
+func TestDeleteStreamRecords_Multiple(t *testing.T) {
+	ts := setupTest(t)
+
+	stream := &kayakv1.Stream{
+		Name:           "test",
+		PartitionCount: 1,
+		Ttl:            20,
+	}
+	err := ts.store.PutStream(stream)
+	must.NoError(t, err)
+	for i := range 200 {
+		record := &kayakv1.Record{
+			StreamName: "test",
+			InternalId: ulid.Make().String(),
+			Id:         fmt.Sprintf("%d", i),
+			Partition:  0,
+		}
+		err = ts.store.PutRecords("test", record)
+		must.NoError(t, err)
+	}
+	counter, err := ts.store.deleteStreamRecords("test")
+	must.NoError(t, err)
+	must.Eq(t, 200, counter)
+	ts.db.View(func(tx *badger.Txn) error { //nolint:errcheck
+		it := tx.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+		prefix := []byte("test:")
+		counter := 0
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			// fmt.Println(string(it.Item().Key()))
+			if it.Item().IsDeletedOrExpired() {
+				continue
+			}
+			counter++
+		}
+		must.Eq(t, 0, counter)
+		return nil
+	})
 }

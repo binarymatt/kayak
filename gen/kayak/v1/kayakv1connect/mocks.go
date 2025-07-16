@@ -211,6 +211,63 @@ func (_c *MockKayakServiceClient_CreateStream_Call) RunAndReturn(run func(contex
 	return _c
 }
 
+// DeleteRecords provides a mock function for the type MockKayakServiceClient
+func (_mock *MockKayakServiceClient) DeleteRecords(context1 context.Context, request *connect.Request[kayakv1.DeleteRecordsRequest]) (*connect.Response[emptypb.Empty], error) {
+	ret := _mock.Called(context1, request)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteRecords")
+	}
+
+	var r0 *connect.Response[emptypb.Empty]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *connect.Request[kayakv1.DeleteRecordsRequest]) (*connect.Response[emptypb.Empty], error)); ok {
+		return returnFunc(context1, request)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *connect.Request[kayakv1.DeleteRecordsRequest]) *connect.Response[emptypb.Empty]); ok {
+		r0 = returnFunc(context1, request)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*connect.Response[emptypb.Empty])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *connect.Request[kayakv1.DeleteRecordsRequest]) error); ok {
+		r1 = returnFunc(context1, request)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockKayakServiceClient_DeleteRecords_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteRecords'
+type MockKayakServiceClient_DeleteRecords_Call struct {
+	*mock.Call
+}
+
+// DeleteRecords is a helper method to define mock.On call
+//   - context1
+//   - request
+func (_e *MockKayakServiceClient_Expecter) DeleteRecords(context1 interface{}, request interface{}) *MockKayakServiceClient_DeleteRecords_Call {
+	return &MockKayakServiceClient_DeleteRecords_Call{Call: _e.mock.On("DeleteRecords", context1, request)}
+}
+
+func (_c *MockKayakServiceClient_DeleteRecords_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.DeleteRecordsRequest])) *MockKayakServiceClient_DeleteRecords_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*connect.Request[kayakv1.DeleteRecordsRequest]))
+	})
+	return _c
+}
+
+func (_c *MockKayakServiceClient_DeleteRecords_Call) Return(response *connect.Response[emptypb.Empty], err error) *MockKayakServiceClient_DeleteRecords_Call {
+	_c.Call.Return(response, err)
+	return _c
+}
+
+func (_c *MockKayakServiceClient_DeleteRecords_Call) RunAndReturn(run func(context1 context.Context, request *connect.Request[kayakv1.DeleteRecordsRequest]) (*connect.Response[emptypb.Empty], error)) *MockKayakServiceClient_DeleteRecords_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteStream provides a mock function for the type MockKayakServiceClient
 func (_mock *MockKayakServiceClient) DeleteStream(context1 context.Context, request *connect.Request[kayakv1.DeleteStreamRequest]) (*connect.Response[emptypb.Empty], error) {
 	ret := _mock.Called(context1, request)

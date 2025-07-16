@@ -90,10 +90,7 @@ func (s *service) PutRecords(ctx context.Context, req *connect.Request[v1.PutRec
 	//err = s.store.PutRecords(req.Msg.StreamName, req.Msg.GetRecords()...)
 	cmd := &v1.RaftCommand{
 		Payload: &v1.RaftCommand_PutRecords{
-			PutRecords: &v1.PutRecords{
-				Records:    req.Msg.GetRecords(),
-				StreamName: req.Msg.StreamName,
-			},
+			PutRecords: req.Msg,
 		},
 	}
 
@@ -186,11 +183,12 @@ func (s *service) CreateStream(ctx context.Context, req *connect.Request[v1.Crea
 		PartitionCount: req.Msg.PartitionCount,
 		Ttl:            req.Msg.Ttl,
 	}
+	r := &v1.PutStreamRequest{
+		Stream: stream,
+	}
 	cmd := &v1.RaftCommand{
 		Payload: &v1.RaftCommand_PutStream{
-			PutStream: &v1.PutStream{
-				Stream: stream,
-			},
+			PutStream: r,
 		},
 	}
 	if err := s.applyCommand(ctx, cmd); err != nil {
@@ -348,9 +346,7 @@ func (s *service) DeleteStream(ctx context.Context, req *connect.Request[v1.Dele
 	// TODO: validate request
 	cmd := &v1.RaftCommand{
 		Payload: &v1.RaftCommand_DeleteStream{
-			DeleteStream: &v1.DeleteStream{
-				StreamName: req.Msg.Name,
-			},
+			DeleteStream: req.Msg,
 		},
 	}
 	if err := s.applyCommand(ctx, cmd); err != nil {
@@ -368,6 +364,19 @@ func (s *service) getLeaderClient() kayakv1connect.KayakServiceClient {
 	leader := fmt.Sprintf("http://%s", s.raft.Leader())
 	client := kayakv1connect.NewKayakServiceClient(http.DefaultClient, leader)
 	return client
+}
+
+func (s *service) DeleteRecords(ctx context.Context, req *connect.Request[v1.DeleteRecordsRequest]) (*connect.Response[emptypb.Empty], error) {
+	cmd := &v1.RaftCommand{
+		Payload: &v1.RaftCommand_DeleteRecords{
+			DeleteRecords: req.Msg,
+		},
+	}
+	if err := s.applyCommand(ctx, cmd); err != nil {
+		slog.Error("could not delete records", "error", err)
+		return nil, connect.NewError(connect.CodeInternal, err)
+	}
+	return connect.NewResponse(&emptypb.Empty{}), nil
 }
 
 func New(st store.Store, ra *raft.Raft) *service {

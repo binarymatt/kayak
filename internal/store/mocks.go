@@ -135,6 +135,51 @@ func (_c *MockStore_CommitGroupPosition_Call) RunAndReturn(run func(stream strin
 	return _c
 }
 
+// DeleteAllRecords provides a mock function for the type MockStore
+func (_mock *MockStore) DeleteAllRecords(streamName string) error {
+	ret := _mock.Called(streamName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAllRecords")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
+		r0 = returnFunc(streamName)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockStore_DeleteAllRecords_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAllRecords'
+type MockStore_DeleteAllRecords_Call struct {
+	*mock.Call
+}
+
+// DeleteAllRecords is a helper method to define mock.On call
+//   - streamName
+func (_e *MockStore_Expecter) DeleteAllRecords(streamName interface{}) *MockStore_DeleteAllRecords_Call {
+	return &MockStore_DeleteAllRecords_Call{Call: _e.mock.On("DeleteAllRecords", streamName)}
+}
+
+func (_c *MockStore_DeleteAllRecords_Call) Run(run func(streamName string)) *MockStore_DeleteAllRecords_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string))
+	})
+	return _c
+}
+
+func (_c *MockStore_DeleteAllRecords_Call) Return(err error) *MockStore_DeleteAllRecords_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockStore_DeleteAllRecords_Call) RunAndReturn(run func(streamName string) error) *MockStore_DeleteAllRecords_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteStream provides a mock function for the type MockStore
 func (_mock *MockStore) DeleteStream(name string) error {
 	ret := _mock.Called(name)

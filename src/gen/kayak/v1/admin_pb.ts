@@ -165,6 +165,8 @@ export const LeaderResponseSchema: GenMessage<LeaderResponse> = /*@__PURE__*/
  */
 export const AdminService: GenService<{
   /**
+   * Raft Endpoints
+   *
    * @generated from rpc kayak.v1.AdminService.AddVoter
    */
   addVoter: {

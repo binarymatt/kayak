@@ -7,6 +7,7 @@
 package kayakv1
 
 import (
+	_ "buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go/buf/validate"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -21,67 +22,8 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Operation int32
-
-const (
-	Operation_OPERATION_UNSPECIFIED           Operation = 0
-	Operation_OPERATION_PUT_STREAM            Operation = 1
-	Operation_OPERATION_PUT_RECORDS           Operation = 2
-	Operation_OPERATION_EXTEND_LEASE          Operation = 3
-	Operation_OPERATION_REMOVE_LEASE          Operation = 4
-	Operation_OPERATION_COMMIT_GROUP_POSITION Operation = 5
-)
-
-// Enum value maps for Operation.
-var (
-	Operation_name = map[int32]string{
-		0: "OPERATION_UNSPECIFIED",
-		1: "OPERATION_PUT_STREAM",
-		2: "OPERATION_PUT_RECORDS",
-		3: "OPERATION_EXTEND_LEASE",
-		4: "OPERATION_REMOVE_LEASE",
-		5: "OPERATION_COMMIT_GROUP_POSITION",
-	}
-	Operation_value = map[string]int32{
-		"OPERATION_UNSPECIFIED":           0,
-		"OPERATION_PUT_STREAM":            1,
-		"OPERATION_PUT_RECORDS":           2,
-		"OPERATION_EXTEND_LEASE":          3,
-		"OPERATION_REMOVE_LEASE":          4,
-		"OPERATION_COMMIT_GROUP_POSITION": 5,
-	}
-)
-
-func (x Operation) Enum() *Operation {
-	p := new(Operation)
-	*p = x
-	return p
-}
-
-func (x Operation) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (Operation) Descriptor() protoreflect.EnumDescriptor {
-	return file_kayak_v1_raft_proto_enumTypes[0].Descriptor()
-}
-
-func (Operation) Type() protoreflect.EnumType {
-	return &file_kayak_v1_raft_proto_enumTypes[0]
-}
-
-func (x Operation) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use Operation.Descriptor instead.
-func (Operation) EnumDescriptor() ([]byte, []int) {
-	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{0}
-}
-
 type RaftCommand struct {
-	state     protoimpl.MessageState `protogen:"open.v1"`
-	Operation Operation              `protobuf:"varint,1,opt,name=operation,proto3,enum=kayak.v1.Operation" json:"operation,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
 	// Types that are valid to be assigned to Payload:
 	//
 	//	*RaftCommand_PutStream
@@ -90,6 +32,7 @@ type RaftCommand struct {
 	//	*RaftCommand_RemoveLease
 	//	*RaftCommand_CommitGroupPosition
 	//	*RaftCommand_DeleteStream
+	//	*RaftCommand_DeleteRecords
 	Payload       isRaftCommand_Payload `protobuf_oneof:"payload"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -125,13 +68,6 @@ func (*RaftCommand) Descriptor() ([]byte, []int) {
 	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *RaftCommand) GetOperation() Operation {
-	if x != nil {
-		return x.Operation
-	}
-	return Operation_OPERATION_UNSPECIFIED
-}
-
 func (x *RaftCommand) GetPayload() isRaftCommand_Payload {
 	if x != nil {
 		return x.Payload
@@ -139,7 +75,7 @@ func (x *RaftCommand) GetPayload() isRaftCommand_Payload {
 	return nil
 }
 
-func (x *RaftCommand) GetPutStream() *PutStream {
+func (x *RaftCommand) GetPutStream() *PutStreamRequest {
 	if x != nil {
 		if x, ok := x.Payload.(*RaftCommand_PutStream); ok {
 			return x.PutStream
@@ -148,7 +84,7 @@ func (x *RaftCommand) GetPutStream() *PutStream {
 	return nil
 }
 
-func (x *RaftCommand) GetPutRecords() *PutRecords {
+func (x *RaftCommand) GetPutRecords() *PutRecordsRequest {
 	if x != nil {
 		if x, ok := x.Payload.(*RaftCommand_PutRecords); ok {
 			return x.PutRecords
@@ -184,10 +120,19 @@ func (x *RaftCommand) GetCommitGroupPosition() *CommitGroupPosition {
 	return nil
 }
 
-func (x *RaftCommand) GetDeleteStream() *DeleteStream {
+func (x *RaftCommand) GetDeleteStream() *DeleteStreamRequest {
 	if x != nil {
 		if x, ok := x.Payload.(*RaftCommand_DeleteStream); ok {
 			return x.DeleteStream
+		}
+	}
+	return nil
+}
+
+func (x *RaftCommand) GetDeleteRecords() *DeleteRecordsRequest {
+	if x != nil {
+		if x, ok := x.Payload.(*RaftCommand_DeleteRecords); ok {
+			return x.DeleteRecords
 		}
 	}
 	return nil
@@ -198,11 +143,11 @@ type isRaftCommand_Payload interface {
 }
 
 type RaftCommand_PutStream struct {
-	PutStream *PutStream `protobuf:"bytes,2,opt,name=put_stream,json=putStream,proto3,oneof"`
+	PutStream *PutStreamRequest `protobuf:"bytes,2,opt,name=put_stream,json=putStream,proto3,oneof"`
 }
 
 type RaftCommand_PutRecords struct {
-	PutRecords *PutRecords `protobuf:"bytes,3,opt,name=put_records,json=putRecords,proto3,oneof"`
+	PutRecords *PutRecordsRequest `protobuf:"bytes,3,opt,name=put_records,json=putRecords,proto3,oneof"`
 }
 
 type RaftCommand_ExtendLease struct {
@@ -218,7 +163,11 @@ type RaftCommand_CommitGroupPosition struct {
 }
 
 type RaftCommand_DeleteStream struct {
-	DeleteStream *DeleteStream `protobuf:"bytes,7,opt,name=delete_stream,json=deleteStream,proto3,oneof"`
+	DeleteStream *DeleteStreamRequest `protobuf:"bytes,7,opt,name=delete_stream,json=deleteStream,proto3,oneof"`
+}
+
+type RaftCommand_DeleteRecords struct {
+	DeleteRecords *DeleteRecordsRequest `protobuf:"bytes,8,opt,name=delete_records,json=deleteRecords,proto3,oneof"`
 }
 
 func (*RaftCommand_PutStream) isRaftCommand_Payload() {}
@@ -233,27 +182,29 @@ func (*RaftCommand_CommitGroupPosition) isRaftCommand_Payload() {}
 
 func (*RaftCommand_DeleteStream) isRaftCommand_Payload() {}
 
-type DeleteStream struct {
+func (*RaftCommand_DeleteRecords) isRaftCommand_Payload() {}
+
+type DeleteStreamRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	StreamName    string                 `protobuf:"bytes,1,opt,name=stream_name,json=streamName,proto3" json:"stream_name,omitempty"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DeleteStream) Reset() {
-	*x = DeleteStream{}
+func (x *DeleteStreamRequest) Reset() {
+	*x = DeleteStreamRequest{}
 	mi := &file_kayak_v1_raft_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DeleteStream) String() string {
+func (x *DeleteStreamRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DeleteStream) ProtoMessage() {}
+func (*DeleteStreamRequest) ProtoMessage() {}
 
-func (x *DeleteStream) ProtoReflect() protoreflect.Message {
+func (x *DeleteStreamRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_kayak_v1_raft_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -265,39 +216,39 @@ func (x *DeleteStream) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DeleteStream.ProtoReflect.Descriptor instead.
-func (*DeleteStream) Descriptor() ([]byte, []int) {
+// Deprecated: Use DeleteStreamRequest.ProtoReflect.Descriptor instead.
+func (*DeleteStreamRequest) Descriptor() ([]byte, []int) {
 	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *DeleteStream) GetStreamName() string {
+func (x *DeleteStreamRequest) GetName() string {
 	if x != nil {
-		return x.StreamName
+		return x.Name
 	}
 	return ""
 }
 
-type PutStream struct {
+type PutStreamRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Stream        *Stream                `protobuf:"bytes,1,opt,name=stream,proto3" json:"stream,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *PutStream) Reset() {
-	*x = PutStream{}
+func (x *PutStreamRequest) Reset() {
+	*x = PutStreamRequest{}
 	mi := &file_kayak_v1_raft_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PutStream) String() string {
+func (x *PutStreamRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PutStream) ProtoMessage() {}
+func (*PutStreamRequest) ProtoMessage() {}
 
-func (x *PutStream) ProtoReflect() protoreflect.Message {
+func (x *PutStreamRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_kayak_v1_raft_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -309,40 +260,41 @@ func (x *PutStream) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PutStream.ProtoReflect.Descriptor instead.
-func (*PutStream) Descriptor() ([]byte, []int) {
+// Deprecated: Use PutStreamRequest.ProtoReflect.Descriptor instead.
+func (*PutStreamRequest) Descriptor() ([]byte, []int) {
 	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *PutStream) GetStream() *Stream {
+func (x *PutStreamRequest) GetStream() *Stream {
 	if x != nil {
 		return x.Stream
 	}
 	return nil
 }
 
-type PutRecords struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	StreamName    string                 `protobuf:"bytes,1,opt,name=stream_name,json=streamName,proto3" json:"stream_name,omitempty"`
-	Records       []*Record              `protobuf:"bytes,2,rep,name=records,proto3" json:"records,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+type PutRecordsRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	StreamName     string                 `protobuf:"bytes,1,opt,name=stream_name,json=streamName,proto3" json:"stream_name,omitempty"`
+	Records        []*Record              `protobuf:"bytes,2,rep,name=records,proto3" json:"records,omitempty"`
+	IdempotencyKey string                 `protobuf:"bytes,3,opt,name=idempotency_key,json=idempotencyKey,proto3" json:"idempotency_key,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
-func (x *PutRecords) Reset() {
-	*x = PutRecords{}
+func (x *PutRecordsRequest) Reset() {
+	*x = PutRecordsRequest{}
 	mi := &file_kayak_v1_raft_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *PutRecords) String() string {
+func (x *PutRecordsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PutRecords) ProtoMessage() {}
+func (*PutRecordsRequest) ProtoMessage() {}
 
-func (x *PutRecords) ProtoReflect() protoreflect.Message {
+func (x *PutRecordsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_kayak_v1_raft_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -354,23 +306,30 @@ func (x *PutRecords) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PutRecords.ProtoReflect.Descriptor instead.
-func (*PutRecords) Descriptor() ([]byte, []int) {
+// Deprecated: Use PutRecordsRequest.ProtoReflect.Descriptor instead.
+func (*PutRecordsRequest) Descriptor() ([]byte, []int) {
 	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *PutRecords) GetStreamName() string {
+func (x *PutRecordsRequest) GetStreamName() string {
 	if x != nil {
 		return x.StreamName
 	}
 	return ""
 }
 
-func (x *PutRecords) GetRecords() []*Record {
+func (x *PutRecordsRequest) GetRecords() []*Record {
 	if x != nil {
 		return x.Records
 	}
 	return nil
+}
+
+func (x *PutRecordsRequest) GetIdempotencyKey() string {
+	if x != nil {
+		return x.IdempotencyKey
+	}
+	return ""
 }
 
 type ExtendLease struct {
@@ -537,32 +496,83 @@ func (x *CommitGroupPosition) GetPosition() string {
 	return ""
 }
 
+type DeleteRecordsRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Partition     int64                  `protobuf:"varint,2,opt,name=partition,proto3" json:"partition,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteRecordsRequest) Reset() {
+	*x = DeleteRecordsRequest{}
+	mi := &file_kayak_v1_raft_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteRecordsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteRecordsRequest) ProtoMessage() {}
+
+func (x *DeleteRecordsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_kayak_v1_raft_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteRecordsRequest.ProtoReflect.Descriptor instead.
+func (*DeleteRecordsRequest) Descriptor() ([]byte, []int) {
+	return file_kayak_v1_raft_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *DeleteRecordsRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *DeleteRecordsRequest) GetPartition() int64 {
+	if x != nil {
+		return x.Partition
+	}
+	return 0
+}
+
 var File_kayak_v1_raft_proto protoreflect.FileDescriptor
 
 const file_kayak_v1_raft_proto_rawDesc = "" +
 	"\n" +
-	"\x13kayak/v1/raft.proto\x12\bkayak.v1\x1a\x14kayak/v1/model.proto\"\xc6\x03\n" +
-	"\vRaftCommand\x121\n" +
-	"\toperation\x18\x01 \x01(\x0e2\x13.kayak.v1.OperationR\toperation\x124\n" +
+	"\x13kayak/v1/raft.proto\x12\bkayak.v1\x1a\x1bbuf/validate/validate.proto\x1a\x14kayak/v1/model.proto\"\xf1\x03\n" +
+	"\vRaftCommand\x12;\n" +
 	"\n" +
-	"put_stream\x18\x02 \x01(\v2\x13.kayak.v1.PutStreamH\x00R\tputStream\x127\n" +
-	"\vput_records\x18\x03 \x01(\v2\x14.kayak.v1.PutRecordsH\x00R\n" +
+	"put_stream\x18\x02 \x01(\v2\x1a.kayak.v1.PutStreamRequestH\x00R\tputStream\x12>\n" +
+	"\vput_records\x18\x03 \x01(\v2\x1b.kayak.v1.PutRecordsRequestH\x00R\n" +
 	"putRecords\x12:\n" +
 	"\fextend_lease\x18\x04 \x01(\v2\x15.kayak.v1.ExtendLeaseH\x00R\vextendLease\x12:\n" +
 	"\fremove_lease\x18\x05 \x01(\v2\x15.kayak.v1.RemoveLeaseH\x00R\vremoveLease\x12S\n" +
-	"\x15commit_group_position\x18\x06 \x01(\v2\x1d.kayak.v1.CommitGroupPositionH\x00R\x13commitGroupPosition\x12=\n" +
-	"\rdelete_stream\x18\a \x01(\v2\x16.kayak.v1.DeleteStreamH\x00R\fdeleteStreamB\t\n" +
-	"\apayload\"/\n" +
-	"\fDeleteStream\x12\x1f\n" +
-	"\vstream_name\x18\x01 \x01(\tR\n" +
-	"streamName\"5\n" +
-	"\tPutStream\x12(\n" +
-	"\x06stream\x18\x01 \x01(\v2\x10.kayak.v1.StreamR\x06stream\"Y\n" +
-	"\n" +
-	"PutRecords\x12\x1f\n" +
+	"\x15commit_group_position\x18\x06 \x01(\v2\x1d.kayak.v1.CommitGroupPositionH\x00R\x13commitGroupPosition\x12D\n" +
+	"\rdelete_stream\x18\a \x01(\v2\x1d.kayak.v1.DeleteStreamRequestH\x00R\fdeleteStream\x12G\n" +
+	"\x0edelete_records\x18\b \x01(\v2\x1e.kayak.v1.DeleteRecordsRequestH\x00R\rdeleteRecordsB\t\n" +
+	"\apayload\"1\n" +
+	"\x13DeleteStreamRequest\x12\x1a\n" +
+	"\x04name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\"<\n" +
+	"\x10PutStreamRequest\x12(\n" +
+	"\x06stream\x18\x01 \x01(\v2\x10.kayak.v1.StreamR\x06stream\"\x89\x01\n" +
+	"\x11PutRecordsRequest\x12\x1f\n" +
 	"\vstream_name\x18\x01 \x01(\tR\n" +
 	"streamName\x12*\n" +
-	"\arecords\x18\x02 \x03(\v2\x10.kayak.v1.RecordR\arecords\"V\n" +
+	"\arecords\x18\x02 \x03(\v2\x10.kayak.v1.RecordR\arecords\x12'\n" +
+	"\x0fidempotency_key\x18\x03 \x01(\tR\x0eidempotencyKey\"V\n" +
 	"\vExtendLease\x12(\n" +
 	"\x06worker\x18\x01 \x01(\v2\x10.kayak.v1.WorkerR\x06worker\x12\x1d\n" +
 	"\n" +
@@ -575,14 +585,10 @@ const file_kayak_v1_raft_proto_rawDesc = "" +
 	"\n" +
 	"group_name\x18\x02 \x01(\tR\tgroupName\x12\x1c\n" +
 	"\tpartition\x18\x03 \x01(\x03R\tpartition\x12\x1a\n" +
-	"\bposition\x18\x04 \x01(\tR\bposition*\xb8\x01\n" +
-	"\tOperation\x12\x19\n" +
-	"\x15OPERATION_UNSPECIFIED\x10\x00\x12\x18\n" +
-	"\x14OPERATION_PUT_STREAM\x10\x01\x12\x19\n" +
-	"\x15OPERATION_PUT_RECORDS\x10\x02\x12\x1a\n" +
-	"\x16OPERATION_EXTEND_LEASE\x10\x03\x12\x1a\n" +
-	"\x16OPERATION_REMOVE_LEASE\x10\x04\x12#\n" +
-	"\x1fOPERATION_COMMIT_GROUP_POSITION\x10\x05B\x8c\x01\n" +
+	"\bposition\x18\x04 \x01(\tR\bposition\"P\n" +
+	"\x14DeleteRecordsRequest\x12\x1a\n" +
+	"\x04name\x18\x01 \x01(\tB\x06\xbaH\x03\xc8\x01\x01R\x04name\x12\x1c\n" +
+	"\tpartition\x18\x02 \x01(\x03R\tpartitionB\x8c\x01\n" +
 	"\fcom.kayak.v1B\tRaftProtoP\x01Z0github.com/binarymatt/kayak/gen/kayak/v1;kayakv1\xa2\x02\x03KXX\xaa\x02\bKayak.V1\xca\x02\bKayak\\V1\xe2\x02\x14Kayak\\V1\\GPBMetadata\xea\x02\tKayak::V1b\x06proto3"
 
 var (
@@ -597,31 +603,30 @@ func file_kayak_v1_raft_proto_rawDescGZIP() []byte {
 	return file_kayak_v1_raft_proto_rawDescData
 }
 
-var file_kayak_v1_raft_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_kayak_v1_raft_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_kayak_v1_raft_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_kayak_v1_raft_proto_goTypes = []any{
-	(Operation)(0),              // 0: kayak.v1.Operation
-	(*RaftCommand)(nil),         // 1: kayak.v1.RaftCommand
-	(*DeleteStream)(nil),        // 2: kayak.v1.DeleteStream
-	(*PutStream)(nil),           // 3: kayak.v1.PutStream
-	(*PutRecords)(nil),          // 4: kayak.v1.PutRecords
-	(*ExtendLease)(nil),         // 5: kayak.v1.ExtendLease
-	(*RemoveLease)(nil),         // 6: kayak.v1.RemoveLease
-	(*CommitGroupPosition)(nil), // 7: kayak.v1.CommitGroupPosition
-	(*Stream)(nil),              // 8: kayak.v1.Stream
-	(*Record)(nil),              // 9: kayak.v1.Record
-	(*Worker)(nil),              // 10: kayak.v1.Worker
+	(*RaftCommand)(nil),          // 0: kayak.v1.RaftCommand
+	(*DeleteStreamRequest)(nil),  // 1: kayak.v1.DeleteStreamRequest
+	(*PutStreamRequest)(nil),     // 2: kayak.v1.PutStreamRequest
+	(*PutRecordsRequest)(nil),    // 3: kayak.v1.PutRecordsRequest
+	(*ExtendLease)(nil),          // 4: kayak.v1.ExtendLease
+	(*RemoveLease)(nil),          // 5: kayak.v1.RemoveLease
+	(*CommitGroupPosition)(nil),  // 6: kayak.v1.CommitGroupPosition
+	(*DeleteRecordsRequest)(nil), // 7: kayak.v1.DeleteRecordsRequest
+	(*Stream)(nil),               // 8: kayak.v1.Stream
+	(*Record)(nil),               // 9: kayak.v1.Record
+	(*Worker)(nil),               // 10: kayak.v1.Worker
 }
 var file_kayak_v1_raft_proto_depIdxs = []int32{
-	0,  // 0: kayak.v1.RaftCommand.operation:type_name -> kayak.v1.Operation
-	3,  // 1: kayak.v1.RaftCommand.put_stream:type_name -> kayak.v1.PutStream
-	4,  // 2: kayak.v1.RaftCommand.put_records:type_name -> kayak.v1.PutRecords
-	5,  // 3: kayak.v1.RaftCommand.extend_lease:type_name -> kayak.v1.ExtendLease
-	6,  // 4: kayak.v1.RaftCommand.remove_lease:type_name -> kayak.v1.RemoveLease
-	7,  // 5: kayak.v1.RaftCommand.commit_group_position:type_name -> kayak.v1.CommitGroupPosition
-	2,  // 6: kayak.v1.RaftCommand.delete_stream:type_name -> kayak.v1.DeleteStream
-	8,  // 7: kayak.v1.PutStream.stream:type_name -> kayak.v1.Stream
-	9,  // 8: kayak.v1.PutRecords.records:type_name -> kayak.v1.Record
+	2,  // 0: kayak.v1.RaftCommand.put_stream:type_name -> kayak.v1.PutStreamRequest
+	3,  // 1: kayak.v1.RaftCommand.put_records:type_name -> kayak.v1.PutRecordsRequest
+	4,  // 2: kayak.v1.RaftCommand.extend_lease:type_name -> kayak.v1.ExtendLease
+	5,  // 3: kayak.v1.RaftCommand.remove_lease:type_name -> kayak.v1.RemoveLease
+	6,  // 4: kayak.v1.RaftCommand.commit_group_position:type_name -> kayak.v1.CommitGroupPosition
+	1,  // 5: kayak.v1.RaftCommand.delete_stream:type_name -> kayak.v1.DeleteStreamRequest
+	7,  // 6: kayak.v1.RaftCommand.delete_records:type_name -> kayak.v1.DeleteRecordsRequest
+	8,  // 7: kayak.v1.PutStreamRequest.stream:type_name -> kayak.v1.Stream
+	9,  // 8: kayak.v1.PutRecordsRequest.records:type_name -> kayak.v1.Record
 	10, // 9: kayak.v1.ExtendLease.worker:type_name -> kayak.v1.Worker
 	10, // 10: kayak.v1.RemoveLease.worker:type_name -> kayak.v1.Worker
 	11, // [11:11] is the sub-list for method output_type
@@ -644,20 +649,20 @@ func file_kayak_v1_raft_proto_init() {
 		(*RaftCommand_RemoveLease)(nil),
 		(*RaftCommand_CommitGroupPosition)(nil),
 		(*RaftCommand_DeleteStream)(nil),
+		(*RaftCommand_DeleteRecords)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_kayak_v1_raft_proto_rawDesc), len(file_kayak_v1_raft_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   7,
+			NumEnums:      0,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
 		GoTypes:           file_kayak_v1_raft_proto_goTypes,
 		DependencyIndexes: file_kayak_v1_raft_proto_depIdxs,
-		EnumInfos:         file_kayak_v1_raft_proto_enumTypes,
 		MessageInfos:      file_kayak_v1_raft_proto_msgTypes,
 	}.Build()
 	File_kayak_v1_raft_proto = out.File

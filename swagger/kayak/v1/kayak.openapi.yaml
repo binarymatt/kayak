@@ -148,6 +148,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/google.protobuf.Empty'
+  /kayak.v1.KayakService/DeleteRecords:
+    post:
+      tags:
+        - kayak.v1.KayakService
+      summary: DeleteRecords
+      operationId: kayak.v1.KayakService.DeleteRecords
+      parameters:
+        - name: Connect-Protocol-Version
+          in: header
+          required: true
+          schema:
+            $ref: '#/components/schemas/connect-protocol-version'
+        - name: Connect-Timeout-Ms
+          in: header
+          schema:
+            $ref: '#/components/schemas/connect-timeout-header'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/kayak.v1.DeleteRecordsRequest'
+        required: true
+      responses:
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/connect.error'
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/google.protobuf.Empty'
   /kayak.v1.KayakService/RegisterWorker:
     post:
       tags:
@@ -433,16 +468,6 @@ paths:
                 $ref: '#/components/schemas/kayak.v1.ApplyResponse'
 components:
   schemas:
-    kayak.v1.Operation:
-      type: string
-      title: Operation
-      enum:
-        - OPERATION_UNSPECIFIED
-        - OPERATION_PUT_STREAM
-        - OPERATION_PUT_RECORDS
-        - OPERATION_EXTEND_LEASE
-        - OPERATION_REMOVE_LEASE
-        - OPERATION_COMMIT_GROUP_POSITION
     google.protobuf.Empty:
       type: object
       description: |-
@@ -609,13 +634,21 @@ components:
           format: int64
       title: CreateStreamRequest
       additionalProperties: false
-    kayak.v1.DeleteStream:
+    kayak.v1.DeleteRecordsRequest:
       type: object
       properties:
-        streamName:
+        name:
           type: string
-          title: stream_name
-      title: DeleteStream
+          title: name
+        partition:
+          type:
+            - integer
+            - string
+          title: partition
+          format: int64
+      title: DeleteRecordsRequest
+      required:
+        - name
       additionalProperties: false
     kayak.v1.DeleteStreamRequest:
       type: object
@@ -624,6 +657,16 @@ components:
           type: string
           title: name
       title: DeleteStreamRequest
+      required:
+        - name
+      additionalProperties: false
+    kayak.v1.DeleteStreamRequestOld:
+      type: object
+      properties:
+        name:
+          type: string
+          title: name
+      title: DeleteStreamRequestOld
       required:
         - name
       additionalProperties: false
@@ -776,19 +819,6 @@ components:
           title: value
       title: PartitionPositionsEntry
       additionalProperties: false
-    kayak.v1.PutRecords:
-      type: object
-      properties:
-        streamName:
-          type: string
-          title: stream_name
-        records:
-          type: array
-          items:
-            $ref: '#/components/schemas/kayak.v1.Record'
-          title: records
-      title: PutRecords
-      additionalProperties: false
     kayak.v1.PutRecordsRequest:
       type: object
       properties:
@@ -800,19 +830,18 @@ components:
           items:
             $ref: '#/components/schemas/kayak.v1.Record'
           title: records
-          description: all records will be part of the same stream.
         idempotencyKey:
           type: string
           title: idempotency_key
       title: PutRecordsRequest
       additionalProperties: false
-    kayak.v1.PutStream:
+    kayak.v1.PutStreamRequest:
       type: object
       properties:
         stream:
           title: stream
           $ref: '#/components/schemas/kayak.v1.Stream'
-      title: PutStream
+      title: PutStreamRequest
       additionalProperties: false
     kayak.v1.RaftCommand:
       type: object
@@ -825,9 +854,16 @@ components:
           required:
             - commitGroupPosition
         - properties:
+            deleteRecords:
+              title: delete_records
+              $ref: '#/components/schemas/kayak.v1.DeleteRecordsRequest'
+          title: delete_records
+          required:
+            - deleteRecords
+        - properties:
             deleteStream:
               title: delete_stream
-              $ref: '#/components/schemas/kayak.v1.DeleteStream'
+              $ref: '#/components/schemas/kayak.v1.DeleteStreamRequest'
           title: delete_stream
           required:
             - deleteStream
@@ -841,14 +877,14 @@ components:
         - properties:
             putRecords:
               title: put_records
-              $ref: '#/components/schemas/kayak.v1.PutRecords'
+              $ref: '#/components/schemas/kayak.v1.PutRecordsRequest'
           title: put_records
           required:
             - putRecords
         - properties:
             putStream:
               title: put_stream
-              $ref: '#/components/schemas/kayak.v1.PutStream'
+              $ref: '#/components/schemas/kayak.v1.PutStreamRequest'
           title: put_stream
           required:
             - putStream
@@ -859,10 +895,6 @@ components:
           title: remove_lease
           required:
             - removeLease
-      properties:
-        operation:
-          title: operation
-          $ref: '#/components/schemas/kayak.v1.Operation'
       title: RaftCommand
       additionalProperties: false
     kayak.v1.Record:

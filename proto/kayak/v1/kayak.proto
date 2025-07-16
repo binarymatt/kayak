@@ -21,6 +21,7 @@ service KayakService {
   rpc FetchRecords(FetchRecordsRequest) returns (FetchRecordsResponse) {}
   // CommitRecord commits the position of a worker in the stream.
   rpc CommitRecord(CommitRecordRequest) returns (google.protobuf.Empty) {}
+  rpc DeleteRecords(DeleteRecordsRequest) returns (google.protobuf.Empty) {}
 
   // Worker Operations
   rpc RegisterWorker(RegisterWorkerRequest) returns (RegisterWorkerResponse) {}
@@ -37,12 +38,6 @@ service KayakService {
   rpc Apply(ApplyRequest) returns (ApplyResponse) {}
 }
 
-message PutRecordsRequest {
-  string stream_name = 1;
-  // all records will be part of the same stream.
-  repeated Record records = 2;
-  string idempotency_key = 3;
-}
 message GetRecordsRequest {
   string stream_name = 1;
   int64 partition = 2;
@@ -102,6 +97,6 @@ message ApplyRequest {
 
 message ApplyResponse {}
 
-message DeleteStreamRequest {
+message DeleteStreamRequestOld {
   string name = 1 [(buf.validate.field).required = true];
 }

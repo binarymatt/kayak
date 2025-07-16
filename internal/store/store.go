@@ -25,6 +25,7 @@ type Store interface {
 
 	PutRecords(streamName string, records ...*kayakv1.Record) error
 	GetRecords(streamName string, partition int64, startPosition string, limit int) ([]*kayakv1.Record, error)
+	DeleteAllRecords(streamName string) error
 
 	// GetLease()
 	ExtendLease(worker *kayakv1.Worker, expires time.Duration) error
@@ -206,6 +207,20 @@ func (s *store) GetRecords(streamName string, partition int64, position string, 
 	return records, nil
 }
 
+func (s *store) DeleteAllRecords(stream string) error {
+	_, err := s.deleteStreamRecords(stream)
+	if err != nil {
+		return err
+	}
+	if err := s.clearWorkerRegistrations(stream); err != nil {
+		return err
+	}
+	if err := s.clearGroupPositions(stream); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *store) GetGroupPosition(stream, group string, partition int64) (string, error) {
 	txn := s.db.NewTransaction(false)
 	defer txn.Discard()
@@ -365,15 +380,18 @@ func (s *store) getPartitionCounts(stream string) (map[int64]int64, error) {
 
 	txn := s.db.NewTransaction(false)
 	defer txn.Discard()
-	prefix := fmt.Appendf(nil, "%s:", stream)
+	prefix := fmt.Appendf(nil, "%s", stream)
 	opts := badger.DefaultIteratorOptions
-	opts.PrefetchValues = false
 	it := txn.NewIterator(opts)
 	defer it.Close()
 
 	partitionMapping := map[int64]int64{}
 	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 		item := it.Item()
+		if item.IsDeletedOrExpired() {
+			slog.Warn("not count item, deleted or expired", "key", string(item.Key()))
+			continue
+		}
 		key := item.Key()
 		parts := strings.Split(string(key), ":")
 		partitionStr := parts[1]
@@ -419,6 +437,9 @@ func (s *store) getStreamGroups(streamName string) ([]*kayakv1.Group, error) {
 	container := map[string]*kayakv1.Group{}
 	for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 		item := it.Item()
+		if item.IsDeletedOrExpired() {
+			continue
+		}
 		key := item.Key()
 		parts := strings.Split(string(key), ":")
 		groupName := parts[2]
@@ -469,53 +490,105 @@ func (s *store) GetGroupInformation(streamName, groupName string) (*kayakv1.Grou
 	return group, nil
 }
 
-func (s *store) DeleteStream(name string) error {
-	return s.db.Update(func(tx *badger.Txn) error {
-		// delete stream info
-		sKey := streamsKey(name)
-		if err := tx.Delete(sKey); err != nil {
-			return err
+func (s *store) deleteStreamRecords(streamName string) (int64, error) {
+	tx := s.db.NewTransaction(false)
+	defer tx.Discard()
+	slog.Warn("deleting stream records", "stream", streamName)
+	recordPrefix := fmt.Appendf(nil, "%s:", streamName)
+	opts := badger.DefaultIteratorOptions
+	records := map[string][]byte{}
+	it := tx.NewIterator(opts)
+	for it.Seek(recordPrefix); it.ValidForPrefix(recordPrefix); it.Next() {
+		item := it.Item()
+		key := item.Key()
+		records[string(key)] = key
+	}
+	it.Close()
+	slog.Warn("deleting records", "key_count", len(records))
+	deleteCounter := int64(0)
+	for k := range records {
+		err := s.db.Update(func(txn *badger.Txn) error {
+			return txn.Delete([]byte(k))
+		})
+		if err != nil {
+			return 0, err
 		}
-		// delete stream record
-		recordPrefix := fmt.Appendf(nil, "%s:", name)
+		deleteCounter++
+	}
 
-		opts := badger.DefaultIteratorOptions
-		opts.PrefetchValues = false
-
-		recordIt := tx.NewIterator(opts)
-		defer recordIt.Close()
-		for recordIt.Seek(recordPrefix); recordIt.ValidForPrefix(recordPrefix); recordIt.Next() {
-			key := recordIt.Item().Key()
-			if err := tx.Delete(key); err != nil {
-				return err
-			}
-		}
-
-		// delete group info
-		groupPre := []byte(groupPrefix(name))
-		groupIt := tx.NewIterator(opts)
-		defer groupIt.Close()
-		for groupIt.Seek(groupPre); groupIt.ValidForPrefix(groupPre); groupIt.Next() {
-			key := groupIt.Item().Key()
-
-			if err := tx.Delete(key); err != nil {
-				return err
-			}
-		}
-		// delete partition assignments
-		assignmentPrefix := fmt.Appendf(nil, "registrations:%s:", name)
-
-		it := tx.NewIterator(opts)
+	slog.Warn("records deleted", "count", deleteCounter)
+	return deleteCounter, nil
+}
+func (s *store) clearWorkerRegistrations(streamName string) error {
+	registrations := [][]byte{}
+	s.db.View(func(tx *badger.Txn) error {
+		it := tx.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
+		assignmentPrefix := fmt.Appendf(nil, "registrations:%s:", streamName)
 		for it.Seek(assignmentPrefix); it.ValidForPrefix(assignmentPrefix); it.Next() {
-
-			key := groupIt.Item().Key()
-
-			if err := tx.Delete(key); err != nil {
-				return err
-			}
+			key := it.Item().Key()
+			registrations = append(registrations, key)
 		}
 		return nil
+	})
+	for _, registrationKey := range registrations {
+		err := s.db.Update(func(txn *badger.Txn) error {
+			return txn.Delete(registrationKey)
+		})
+		if err != nil {
+			slog.Error("could not clear group worker registrations", "error", err, "stream", streamName)
+			return err
+		}
+	}
+	return nil
+}
+func (s *store) clearGroupPositions(streamName string) error {
+	groupKeys := [][]byte{}
+	s.db.View(func(tx *badger.Txn) error {
+		it := tx.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+		groupPre := []byte(groupPrefix(streamName))
+
+		for it.Seek(groupPre); it.ValidForPrefix(groupPre); it.Next() {
+			key := it.Item().Key()
+			groupKeys = append(groupKeys, key)
+		}
+		return nil
+	})
+	for _, group := range groupKeys {
+		slog.Warn("deleting group info", "group", string(group))
+		err := s.db.Update(func(txn *badger.Txn) error {
+			return txn.Delete(group)
+		})
+		if err != nil {
+			slog.Error("could not clear group positions", "error", err, "stream", streamName)
+			return err
+		}
+	}
+	return nil
+
+}
+func (s *store) DeleteStream(name string) error {
+	if _, err := s.deleteStreamRecords(name); err != nil {
+		slog.Error("could not delete stream records")
+		return err
+	}
+	tx := s.db.NewTransaction(false)
+	defer tx.Discard()
+
+	// delete group info
+	if err := s.clearGroupPositions(name); err != nil {
+		return err
+	}
+	// delete partition assignments
+	if err := s.clearWorkerRegistrations(name); err != nil {
+		return err
+	}
+
+	// delete stream info
+	sKey := streamsKey(name)
+	return s.db.Update(func(txn *badger.Txn) error {
+		return txn.Delete(sKey)
 	})
 
 }

@@ -2,38 +2,33 @@ syntax = "proto3";
 
 package kayak.v1;
 
+import "buf/validate/validate.proto";
 import "kayak/v1/model.proto";
 
 option go_package = "github.com/binarymatt/kayak/gen/kayak/v1;kayakv1";
-enum Operation {
-  OPERATION_UNSPECIFIED = 0;
-  OPERATION_PUT_STREAM = 1;
-  OPERATION_PUT_RECORDS = 2;
-  OPERATION_EXTEND_LEASE = 3;
-  OPERATION_REMOVE_LEASE = 4;
-  OPERATION_COMMIT_GROUP_POSITION = 5;
-}
+
 message RaftCommand {
-  Operation operation = 1;
   oneof payload {
-    PutStream put_stream = 2;
-    PutRecords put_records = 3;
+    PutStreamRequest put_stream = 2;
+    PutRecordsRequest put_records = 3;
     ExtendLease extend_lease = 4;
     RemoveLease remove_lease = 5;
     CommitGroupPosition commit_group_position = 6;
-    DeleteStream delete_stream = 7;
+    DeleteStreamRequest delete_stream = 7;
+    DeleteRecordsRequest delete_records = 8;
   }
 }
 
-message DeleteStream {
-  string stream_name = 1;
+message DeleteStreamRequest {
+  string name = 1 [(buf.validate.field).required = true];
 }
-message PutStream {
+message PutStreamRequest {
   Stream stream = 1;
 }
-message PutRecords {
+message PutRecordsRequest {
   string stream_name = 1;
   repeated Record records = 2;
+  string idempotency_key = 3;
 }
 message ExtendLease {
   Worker worker = 1;
@@ -47,4 +42,9 @@ message CommitGroupPosition {
   string group_name = 2;
   int64 partition = 3;
   string position = 4;
+}
+
+message DeleteRecordsRequest {
+  string name = 1 [(buf.validate.field).required = true];
+  int64 partition = 2;
 }

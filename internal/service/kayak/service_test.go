@@ -74,7 +74,7 @@ func TestPutRecords_Leader(t *testing.T) {
 	ts.mockRaft.EXPECT().State().Return(raft.Leader).Once()
 	cmd := &kayakv1.RaftCommand{
 		Payload: &kayakv1.RaftCommand_PutRecords{
-			PutRecords: &kayakv1.PutRecords{
+			PutRecords: &kayakv1.PutRecordsRequest{
 				Records: []*kayakv1.Record{
 					{
 						Id:              "test",
@@ -114,7 +114,7 @@ func TestApplyCommand(t *testing.T) {
 			name: "put records leader",
 			cmd: &kayakv1.RaftCommand{
 				Payload: &kayakv1.RaftCommand_PutRecords{
-					PutRecords: &kayakv1.PutRecords{
+					PutRecords: &kayakv1.PutRecordsRequest{
 						StreamName: "test",
 						Records:    []*kayakv1.Record{},
 					},
@@ -126,7 +126,7 @@ func TestApplyCommand(t *testing.T) {
 			name: "put records follower",
 			cmd: &kayakv1.RaftCommand{
 				Payload: &kayakv1.RaftCommand_PutRecords{
-					PutRecords: &kayakv1.PutRecords{
+					PutRecords: &kayakv1.PutRecordsRequest{
 						StreamName: "test",
 						Records:    []*kayakv1.Record{},
 					},
