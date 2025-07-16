@@ -637,7 +637,7 @@ func TestDeleteStreamRecords_Multiple(t *testing.T) {
 	}
 	err := ts.store.PutStream(stream)
 	must.NoError(t, err)
-	for i := range 200 {
+	for i := range 20000 {
 		record := &kayakv1.Record{
 			StreamName: "test",
 			InternalId: ulid.Make().String(),
@@ -649,7 +649,7 @@ func TestDeleteStreamRecords_Multiple(t *testing.T) {
 	}
 	counter, err := ts.store.deleteStreamRecords("test")
 	must.NoError(t, err)
-	must.Eq(t, 200, counter)
+	must.Eq(t, 20000, counter)
 	ts.db.View(func(tx *badger.Txn) error { //nolint:errcheck
 		it := tx.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
