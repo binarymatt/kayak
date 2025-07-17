@@ -619,7 +619,7 @@ func TestDeleteStreamRecords_Simple(t *testing.T) {
 	must.NoError(t, err)
 	err = ts.store.PutRecords("test", record)
 	must.NoError(t, err)
-	ts.store.deleteStreamRecords("test")
+	_, _ = ts.store.deleteStreamRecords("test")
 	ts.db.View(func(tx *badger.Txn) error { //nolint:errcheck
 		item, err := tx.Get(recordKey("test", 0, record.InternalId))
 		must.ErrorIs(t, err, badger.ErrKeyNotFound)

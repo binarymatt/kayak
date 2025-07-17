@@ -521,7 +521,7 @@ func (s *store) deleteStreamRecords(streamName string) (int64, error) {
 }
 func (s *store) clearWorkerRegistrations(streamName string) error {
 	registrations := [][]byte{}
-	s.db.View(func(tx *badger.Txn) error {
+	err := s.db.View(func(tx *badger.Txn) error {
 		it := tx.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
 		assignmentPrefix := fmt.Appendf(nil, "registrations:%s:", streamName)
@@ -531,6 +531,9 @@ func (s *store) clearWorkerRegistrations(streamName string) error {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 	for _, registrationKey := range registrations {
 		err := s.db.Update(func(txn *badger.Txn) error {
 			return txn.Delete(registrationKey)
@@ -544,7 +547,7 @@ func (s *store) clearWorkerRegistrations(streamName string) error {
 }
 func (s *store) clearGroupPositions(streamName string) error {
 	groupKeys := [][]byte{}
-	s.db.View(func(tx *badger.Txn) error {
+	err := s.db.View(func(tx *badger.Txn) error {
 		it := tx.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
 		groupPre := []byte(groupPrefix(streamName))
@@ -555,6 +558,9 @@ func (s *store) clearGroupPositions(streamName string) error {
 		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 	for _, group := range groupKeys {
 		slog.Warn("deleting group info", "group", string(group))
 		err := s.db.Update(func(txn *badger.Txn) error {
