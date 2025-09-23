@@ -63,17 +63,38 @@ type MockRaftInterface_AddVoter_Call struct {
 }
 
 // AddVoter is a helper method to define mock.On call
-//   - id
-//   - address
-//   - prevIndex
-//   - timeout
+//   - id raft.ServerID
+//   - address raft.ServerAddress
+//   - prevIndex uint64
+//   - timeout time.Duration
 func (_e *MockRaftInterface_Expecter) AddVoter(id interface{}, address interface{}, prevIndex interface{}, timeout interface{}) *MockRaftInterface_AddVoter_Call {
 	return &MockRaftInterface_AddVoter_Call{Call: _e.mock.On("AddVoter", id, address, prevIndex, timeout)}
 }
 
 func (_c *MockRaftInterface_AddVoter_Call) Run(run func(id raft.ServerID, address raft.ServerAddress, prevIndex uint64, timeout time.Duration)) *MockRaftInterface_AddVoter_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(raft.ServerID), args[1].(raft.ServerAddress), args[2].(uint64), args[3].(time.Duration))
+		var arg0 raft.ServerID
+		if args[0] != nil {
+			arg0 = args[0].(raft.ServerID)
+		}
+		var arg1 raft.ServerAddress
+		if args[1] != nil {
+			arg1 = args[1].(raft.ServerAddress)
+		}
+		var arg2 uint64
+		if args[2] != nil {
+			arg2 = args[2].(uint64)
+		}
+		var arg3 time.Duration
+		if args[3] != nil {
+			arg3 = args[3].(time.Duration)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -113,15 +134,26 @@ type MockRaftInterface_Apply_Call struct {
 }
 
 // Apply is a helper method to define mock.On call
-//   - cmd
-//   - timeout
+//   - cmd []byte
+//   - timeout time.Duration
 func (_e *MockRaftInterface_Expecter) Apply(cmd interface{}, timeout interface{}) *MockRaftInterface_Apply_Call {
 	return &MockRaftInterface_Apply_Call{Call: _e.mock.On("Apply", cmd, timeout)}
 }
 
 func (_c *MockRaftInterface_Apply_Call) Run(run func(cmd []byte, timeout time.Duration)) *MockRaftInterface_Apply_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].([]byte), args[1].(time.Duration))
+		var arg0 []byte
+		if args[0] != nil {
+			arg0 = args[0].([]byte)
+		}
+		var arg1 time.Duration
+		if args[1] != nil {
+			arg1 = args[1].(time.Duration)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }

@@ -24,3 +24,6 @@ packages:
     config:
     interfaces:
       KayakServiceClient:
+  github.com/binarymatt/kayak/internal/fsm:
+    config:
+      all: true

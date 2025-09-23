@@ -15,7 +15,7 @@ lint:
 .PHONY: coverage
 coverage:
 	go test -v ./... -coverprofile=coverage.out
-	@cat coverage.out | grep -v "mocks.go" | grep -v "gen" > cover.out
+	@cat coverage.out | grep -v "mocks.go" | grep -v "gen" | grep -v "examples" > cover.out
 	go tool cover -html=cover.out
 	@rm cover.out 
 	@rm coverage.out

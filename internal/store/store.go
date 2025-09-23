@@ -300,7 +300,7 @@ var ErrInvalidLease = errors.New("invalid lease")
 func (s *store) HasLease(worker *kayakv1.Worker) error {
 	assignedId, err := s.GetPartitionAssignment(worker.StreamName, worker.GroupName, worker.PartitionAssignment)
 	if err != nil {
-		return err
+		return errors.Join(err, ErrInvalidLease)
 	}
 	if assignedId != worker.Id {
 		return ErrInvalidLease

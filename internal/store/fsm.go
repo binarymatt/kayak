@@ -51,5 +51,5 @@ func (s *store) Snapshot() (raft.FSMSnapshot, error) {
 	return fsm.NewFSMSnapshot(s.db), nil
 }
 func (s *store) Restore(snapshot io.ReadCloser) error {
-	return s.db.Load(snapshot, 1)
+	return s.db.Load(snapshot, 0)
 }
