@@ -1,0 +1,11 @@
+# https://taskfile.dev
+version: "3"
+
+tasks:
+  build:
+    cmds:
+      - podman build . -t kayak
+  compose:
+    deps: [build]
+    cmds:
+      - podmand compose -f compose/compose.yaml up

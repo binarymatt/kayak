@@ -1,0 +1,11 @@
+# https://taskfile.dev
+version: "3"
+
+tasks:
+  protoset:
+    cmds:
+      - buf build -o kayak.protoset --path proto/kayak
+  ui:
+    deps: [protoset]
+    cmds:
+      - grpcui -plaintext -protoset ./kayak.protoset localhost:8080

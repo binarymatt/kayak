@@ -1,0 +1,17 @@
+# https://taskfile.dev
+
+version: "3"
+
+vars:
+  GREETING: Welcome to kayak!
+
+includes:
+  go: ./taskfiles/go.yml
+  grpc: ./taskfiles/grpc.yml
+  docker: ./taskfiles/docker.yml
+  node: ./taskfiles/node.yml
+tasks:
+  default:
+    cmds:
+      - echo "{{.GREETING}}"
+    silent: true
