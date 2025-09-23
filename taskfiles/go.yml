@@ -1,0 +1,16 @@
+# https://taskfile.dev
+version: "3"
+
+tasks:
+  test:
+    cmds:
+      - go test -cover -v ./...
+  lint:
+    cmds:
+      - golangci-lint run
+  mocks:
+    cmds:
+      - mockery
+  run:
+    cmds:
+      - go run cmd/kayak/main.go

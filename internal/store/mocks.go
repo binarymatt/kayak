@@ -8,7 +8,7 @@ import (
 	"io"
 	"time"
 
-	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
+	"github.com/binarymatt/kayak/gen/kayak/v1"
 	"github.com/hashicorp/raft"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -65,14 +65,20 @@ type MockStore_Apply_Call struct {
 }
 
 // Apply is a helper method to define mock.On call
-//   - l
+//   - l *raft.Log
 func (_e *MockStore_Expecter) Apply(l interface{}) *MockStore_Apply_Call {
 	return &MockStore_Apply_Call{Call: _e.mock.On("Apply", l)}
 }
 
 func (_c *MockStore_Apply_Call) Run(run func(l *raft.Log)) *MockStore_Apply_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*raft.Log))
+		var arg0 *raft.Log
+		if args[0] != nil {
+			arg0 = args[0].(*raft.Log)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -110,17 +116,38 @@ type MockStore_CommitGroupPosition_Call struct {
 }
 
 // CommitGroupPosition is a helper method to define mock.On call
-//   - stream
-//   - group
-//   - parition
-//   - position
+//   - stream string
+//   - group string
+//   - parition int64
+//   - position string
 func (_e *MockStore_Expecter) CommitGroupPosition(stream interface{}, group interface{}, parition interface{}, position interface{}) *MockStore_CommitGroupPosition_Call {
 	return &MockStore_CommitGroupPosition_Call{Call: _e.mock.On("CommitGroupPosition", stream, group, parition, position)}
 }
 
 func (_c *MockStore_CommitGroupPosition_Call) Run(run func(stream string, group string, parition int64, position string)) *MockStore_CommitGroupPosition_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(string), args[2].(int64), args[3].(string))
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -131,6 +158,57 @@ func (_c *MockStore_CommitGroupPosition_Call) Return(err error) *MockStore_Commi
 }
 
 func (_c *MockStore_CommitGroupPosition_Call) RunAndReturn(run func(stream string, group string, parition int64, position string) error) *MockStore_CommitGroupPosition_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteAllRecords provides a mock function for the type MockStore
+func (_mock *MockStore) DeleteAllRecords(streamName string) error {
+	ret := _mock.Called(streamName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAllRecords")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(string) error); ok {
+		r0 = returnFunc(streamName)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockStore_DeleteAllRecords_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAllRecords'
+type MockStore_DeleteAllRecords_Call struct {
+	*mock.Call
+}
+
+// DeleteAllRecords is a helper method to define mock.On call
+//   - streamName string
+func (_e *MockStore_Expecter) DeleteAllRecords(streamName interface{}) *MockStore_DeleteAllRecords_Call {
+	return &MockStore_DeleteAllRecords_Call{Call: _e.mock.On("DeleteAllRecords", streamName)}
+}
+
+func (_c *MockStore_DeleteAllRecords_Call) Run(run func(streamName string)) *MockStore_DeleteAllRecords_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		run(
+			arg0,
+		)
+	})
+	return _c
+}
+
+func (_c *MockStore_DeleteAllRecords_Call) Return(err error) *MockStore_DeleteAllRecords_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockStore_DeleteAllRecords_Call) RunAndReturn(run func(streamName string) error) *MockStore_DeleteAllRecords_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -158,14 +236,20 @@ type MockStore_DeleteStream_Call struct {
 }
 
 // DeleteStream is a helper method to define mock.On call
-//   - name
+//   - name string
 func (_e *MockStore_Expecter) DeleteStream(name interface{}) *MockStore_DeleteStream_Call {
 	return &MockStore_DeleteStream_Call{Call: _e.mock.On("DeleteStream", name)}
 }
 
 func (_c *MockStore_DeleteStream_Call) Run(run func(name string)) *MockStore_DeleteStream_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -203,15 +287,26 @@ type MockStore_ExtendLease_Call struct {
 }
 
 // ExtendLease is a helper method to define mock.On call
-//   - worker
-//   - expires
+//   - worker *kayakv1.Worker
+//   - expires time.Duration
 func (_e *MockStore_Expecter) ExtendLease(worker interface{}, expires interface{}) *MockStore_ExtendLease_Call {
 	return &MockStore_ExtendLease_Call{Call: _e.mock.On("ExtendLease", worker, expires)}
 }
 
 func (_c *MockStore_ExtendLease_Call) Run(run func(worker *kayakv1.Worker, expires time.Duration)) *MockStore_ExtendLease_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*kayakv1.Worker), args[1].(time.Duration))
+		var arg0 *kayakv1.Worker
+		if args[0] != nil {
+			arg0 = args[0].(*kayakv1.Worker)
+		}
+		var arg1 time.Duration
+		if args[1] != nil {
+			arg1 = args[1].(time.Duration)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -260,15 +355,26 @@ type MockStore_GetGroupInformation_Call struct {
 }
 
 // GetGroupInformation is a helper method to define mock.On call
-//   - streamName
-//   - groupName
+//   - streamName string
+//   - groupName string
 func (_e *MockStore_Expecter) GetGroupInformation(streamName interface{}, groupName interface{}) *MockStore_GetGroupInformation_Call {
 	return &MockStore_GetGroupInformation_Call{Call: _e.mock.On("GetGroupInformation", streamName, groupName)}
 }
 
 func (_c *MockStore_GetGroupInformation_Call) Run(run func(streamName string, groupName string)) *MockStore_GetGroupInformation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(string))
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -315,16 +421,32 @@ type MockStore_GetGroupPosition_Call struct {
 }
 
 // GetGroupPosition is a helper method to define mock.On call
-//   - stream
-//   - group
-//   - partition
+//   - stream string
+//   - group string
+//   - partition int64
 func (_e *MockStore_Expecter) GetGroupPosition(stream interface{}, group interface{}, partition interface{}) *MockStore_GetGroupPosition_Call {
 	return &MockStore_GetGroupPosition_Call{Call: _e.mock.On("GetGroupPosition", stream, group, partition)}
 }
 
 func (_c *MockStore_GetGroupPosition_Call) Run(run func(stream string, group string, partition int64)) *MockStore_GetGroupPosition_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(string), args[2].(int64))
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -371,16 +493,32 @@ type MockStore_GetPartitionAssignment_Call struct {
 }
 
 // GetPartitionAssignment is a helper method to define mock.On call
-//   - stream
-//   - group
-//   - partition
+//   - stream string
+//   - group string
+//   - partition int64
 func (_e *MockStore_Expecter) GetPartitionAssignment(stream interface{}, group interface{}, partition interface{}) *MockStore_GetPartitionAssignment_Call {
 	return &MockStore_GetPartitionAssignment_Call{Call: _e.mock.On("GetPartitionAssignment", stream, group, partition)}
 }
 
 func (_c *MockStore_GetPartitionAssignment_Call) Run(run func(stream string, group string, partition int64)) *MockStore_GetPartitionAssignment_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(string), args[2].(int64))
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 int64
+		if args[2] != nil {
+			arg2 = args[2].(int64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -429,15 +567,26 @@ type MockStore_GetPartitionAssignments_Call struct {
 }
 
 // GetPartitionAssignments is a helper method to define mock.On call
-//   - stream
-//   - group
+//   - stream string
+//   - group string
 func (_e *MockStore_Expecter) GetPartitionAssignments(stream interface{}, group interface{}) *MockStore_GetPartitionAssignments_Call {
 	return &MockStore_GetPartitionAssignments_Call{Call: _e.mock.On("GetPartitionAssignments", stream, group)}
 }
 
 func (_c *MockStore_GetPartitionAssignments_Call) Run(run func(stream string, group string)) *MockStore_GetPartitionAssignments_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(string))
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -486,17 +635,38 @@ type MockStore_GetRecords_Call struct {
 }
 
 // GetRecords is a helper method to define mock.On call
-//   - streamName
-//   - partition
-//   - startPosition
-//   - limit
+//   - streamName string
+//   - partition int64
+//   - startPosition string
+//   - limit int
 func (_e *MockStore_Expecter) GetRecords(streamName interface{}, partition interface{}, startPosition interface{}, limit interface{}) *MockStore_GetRecords_Call {
 	return &MockStore_GetRecords_Call{Call: _e.mock.On("GetRecords", streamName, partition, startPosition, limit)}
 }
 
 func (_c *MockStore_GetRecords_Call) Run(run func(streamName string, partition int64, startPosition string, limit int)) *MockStore_GetRecords_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(int64), args[2].(string), args[3].(int))
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 int64
+		if args[1] != nil {
+			arg1 = args[1].(int64)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 int
+		if args[3] != nil {
+			arg3 = args[3].(int)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -545,14 +715,20 @@ type MockStore_GetStream_Call struct {
 }
 
 // GetStream is a helper method to define mock.On call
-//   - name
+//   - name string
 func (_e *MockStore_Expecter) GetStream(name interface{}) *MockStore_GetStream_Call {
 	return &MockStore_GetStream_Call{Call: _e.mock.On("GetStream", name)}
 }
 
 func (_c *MockStore_GetStream_Call) Run(run func(name string)) *MockStore_GetStream_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -601,14 +777,20 @@ type MockStore_GetStreamStats_Call struct {
 }
 
 // GetStreamStats is a helper method to define mock.On call
-//   - name
+//   - name string
 func (_e *MockStore_Expecter) GetStreamStats(name interface{}) *MockStore_GetStreamStats_Call {
 	return &MockStore_GetStreamStats_Call{Call: _e.mock.On("GetStreamStats", name)}
 }
 
 func (_c *MockStore_GetStreamStats_Call) Run(run func(name string)) *MockStore_GetStreamStats_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -701,14 +883,20 @@ type MockStore_HasLease_Call struct {
 }
 
 // HasLease is a helper method to define mock.On call
-//   - worker
+//   - worker *kayakv1.Worker
 func (_e *MockStore_Expecter) HasLease(worker interface{}) *MockStore_HasLease_Call {
 	return &MockStore_HasLease_Call{Call: _e.mock.On("HasLease", worker)}
 }
 
 func (_c *MockStore_HasLease_Call) Run(run func(worker *kayakv1.Worker)) *MockStore_HasLease_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*kayakv1.Worker))
+		var arg0 *kayakv1.Worker
+		if args[0] != nil {
+			arg0 = args[0].(*kayakv1.Worker)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -752,8 +940,8 @@ type MockStore_PutRecords_Call struct {
 }
 
 // PutRecords is a helper method to define mock.On call
-//   - streamName
-//   - records
+//   - streamName string
+//   - records ...*kayakv1.Record
 func (_e *MockStore_Expecter) PutRecords(streamName interface{}, records ...interface{}) *MockStore_PutRecords_Call {
 	return &MockStore_PutRecords_Call{Call: _e.mock.On("PutRecords",
 		append([]interface{}{streamName}, records...)...)}
@@ -761,13 +949,20 @@ func (_e *MockStore_Expecter) PutRecords(streamName interface{}, records ...inte
 
 func (_c *MockStore_PutRecords_Call) Run(run func(streamName string, records ...*kayakv1.Record)) *MockStore_PutRecords_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]*kayakv1.Record, len(args)-1)
-		for i, a := range args[1:] {
-			if a != nil {
-				variadicArgs[i] = a.(*kayakv1.Record)
-			}
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
 		}
-		run(args[0].(string), variadicArgs...)
+		var arg1 []*kayakv1.Record
+		var variadicArgs []*kayakv1.Record
+		if len(args) > 1 {
+			variadicArgs = args[1].([]*kayakv1.Record)
+		}
+		arg1 = variadicArgs
+		run(
+			arg0,
+			arg1...,
+		)
 	})
 	return _c
 }
@@ -805,14 +1000,20 @@ type MockStore_PutStream_Call struct {
 }
 
 // PutStream is a helper method to define mock.On call
-//   - stream
+//   - stream *kayakv1.Stream
 func (_e *MockStore_Expecter) PutStream(stream interface{}) *MockStore_PutStream_Call {
 	return &MockStore_PutStream_Call{Call: _e.mock.On("PutStream", stream)}
 }
 
 func (_c *MockStore_PutStream_Call) Run(run func(stream *kayakv1.Stream)) *MockStore_PutStream_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*kayakv1.Stream))
+		var arg0 *kayakv1.Stream
+		if args[0] != nil {
+			arg0 = args[0].(*kayakv1.Stream)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -850,14 +1051,20 @@ type MockStore_RemoveLease_Call struct {
 }
 
 // RemoveLease is a helper method to define mock.On call
-//   - worker
+//   - worker *kayakv1.Worker
 func (_e *MockStore_Expecter) RemoveLease(worker interface{}) *MockStore_RemoveLease_Call {
 	return &MockStore_RemoveLease_Call{Call: _e.mock.On("RemoveLease", worker)}
 }
 
 func (_c *MockStore_RemoveLease_Call) Run(run func(worker *kayakv1.Worker)) *MockStore_RemoveLease_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*kayakv1.Worker))
+		var arg0 *kayakv1.Worker
+		if args[0] != nil {
+			arg0 = args[0].(*kayakv1.Worker)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -895,14 +1102,20 @@ type MockStore_Restore_Call struct {
 }
 
 // Restore is a helper method to define mock.On call
-//   - snapshot
+//   - snapshot io.ReadCloser
 func (_e *MockStore_Expecter) Restore(snapshot interface{}) *MockStore_Restore_Call {
 	return &MockStore_Restore_Call{Call: _e.mock.On("Restore", snapshot)}
 }
 
 func (_c *MockStore_Restore_Call) Run(run func(snapshot io.ReadCloser)) *MockStore_Restore_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(io.ReadCloser))
+		var arg0 io.ReadCloser
+		if args[0] != nil {
+			arg0 = args[0].(io.ReadCloser)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }

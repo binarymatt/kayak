@@ -38,7 +38,9 @@ func (s *store) Apply(l *raft.Log) any {
 	case *kayakv1.RaftCommand_CommitGroupPosition:
 		response.Error = s.CommitGroupPosition(p.CommitGroupPosition.StreamName, p.CommitGroupPosition.GroupName, p.CommitGroupPosition.Partition, p.CommitGroupPosition.Position)
 	case *kayakv1.RaftCommand_DeleteStream:
-		response.Error = s.DeleteStream(p.DeleteStream.StreamName)
+		response.Error = s.DeleteStream(p.DeleteStream.Name)
+	case *kayakv1.RaftCommand_DeleteRecords:
+		response.Error = s.DeleteAllRecords(p.DeleteRecords.GetName())
 	default:
 		response.Error = errors.New("unknown command")
 	}
@@ -49,5 +51,5 @@ func (s *store) Snapshot() (raft.FSMSnapshot, error) {
 	return fsm.NewFSMSnapshot(s.db), nil
 }
 func (s *store) Restore(snapshot io.ReadCloser) error {
-	return s.db.Load(snapshot, 1)
+	return s.db.Load(snapshot, 0)
 }

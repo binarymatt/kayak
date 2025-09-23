@@ -43,6 +43,7 @@ const (
 
 // AdminServiceClient is a client for the kayak.v1.AdminService service.
 type AdminServiceClient interface {
+	// Raft Endpoints
 	AddVoter(context.Context, *connect.Request[v1.AddVoterRequest]) (*connect.Response[v1.AddVoterResponse], error)
 	Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error)
 	Leader(context.Context, *connect.Request[v1.LeaderRequest]) (*connect.Response[v1.LeaderResponse], error)
@@ -104,6 +105,7 @@ func (c *adminServiceClient) Leader(ctx context.Context, req *connect.Request[v1
 
 // AdminServiceHandler is an implementation of the kayak.v1.AdminService service.
 type AdminServiceHandler interface {
+	// Raft Endpoints
 	AddVoter(context.Context, *connect.Request[v1.AddVoterRequest]) (*connect.Response[v1.AddVoterResponse], error)
 	Stats(context.Context, *connect.Request[v1.StatsRequest]) (*connect.Response[v1.StatsResponse], error)
 	Leader(context.Context, *connect.Request[v1.LeaderRequest]) (*connect.Response[v1.LeaderResponse], error)

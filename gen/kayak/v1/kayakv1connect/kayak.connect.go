@@ -44,6 +44,9 @@ const (
 	// KayakServiceCommitRecordProcedure is the fully-qualified name of the KayakService's CommitRecord
 	// RPC.
 	KayakServiceCommitRecordProcedure = "/kayak.v1.KayakService/CommitRecord"
+	// KayakServiceDeleteRecordsProcedure is the fully-qualified name of the KayakService's
+	// DeleteRecords RPC.
+	KayakServiceDeleteRecordsProcedure = "/kayak.v1.KayakService/DeleteRecords"
 	// KayakServiceRegisterWorkerProcedure is the fully-qualified name of the KayakService's
 	// RegisterWorker RPC.
 	KayakServiceRegisterWorkerProcedure = "/kayak.v1.KayakService/RegisterWorker"
@@ -78,6 +81,7 @@ type KayakServiceClient interface {
 	FetchRecords(context.Context, *connect.Request[v1.FetchRecordsRequest]) (*connect.Response[v1.FetchRecordsResponse], error)
 	// CommitRecord commits the position of a worker in the stream.
 	CommitRecord(context.Context, *connect.Request[v1.CommitRecordRequest]) (*connect.Response[emptypb.Empty], error)
+	DeleteRecords(context.Context, *connect.Request[v1.DeleteRecordsRequest]) (*connect.Response[emptypb.Empty], error)
 	// Worker Operations
 	RegisterWorker(context.Context, *connect.Request[v1.RegisterWorkerRequest]) (*connect.Response[v1.RegisterWorkerResponse], error)
 	DeregisterWorker(context.Context, *connect.Request[v1.DeregisterWorkerRequest]) (*connect.Response[emptypb.Empty], error)
@@ -124,6 +128,12 @@ func NewKayakServiceClient(httpClient connect.HTTPClient, baseURL string, opts .
 			httpClient,
 			baseURL+KayakServiceCommitRecordProcedure,
 			connect.WithSchema(kayakServiceMethods.ByName("CommitRecord")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteRecords: connect.NewClient[v1.DeleteRecordsRequest, emptypb.Empty](
+			httpClient,
+			baseURL+KayakServiceDeleteRecordsProcedure,
+			connect.WithSchema(kayakServiceMethods.ByName("DeleteRecords")),
 			connect.WithClientOptions(opts...),
 		),
 		registerWorker: connect.NewClient[v1.RegisterWorkerRequest, v1.RegisterWorkerResponse](
@@ -183,6 +193,7 @@ type kayakServiceClient struct {
 	getRecords        *connect.Client[v1.GetRecordsRequest, v1.GetRecordsResponse]
 	fetchRecords      *connect.Client[v1.FetchRecordsRequest, v1.FetchRecordsResponse]
 	commitRecord      *connect.Client[v1.CommitRecordRequest, emptypb.Empty]
+	deleteRecords     *connect.Client[v1.DeleteRecordsRequest, emptypb.Empty]
 	registerWorker    *connect.Client[v1.RegisterWorkerRequest, v1.RegisterWorkerResponse]
 	deregisterWorker  *connect.Client[v1.DeregisterWorkerRequest, emptypb.Empty]
 	renewRegistration *connect.Client[v1.RenewRegistrationRequest, emptypb.Empty]
@@ -211,6 +222,11 @@ func (c *kayakServiceClient) FetchRecords(ctx context.Context, req *connect.Requ
 // CommitRecord calls kayak.v1.KayakService.CommitRecord.
 func (c *kayakServiceClient) CommitRecord(ctx context.Context, req *connect.Request[v1.CommitRecordRequest]) (*connect.Response[emptypb.Empty], error) {
 	return c.commitRecord.CallUnary(ctx, req)
+}
+
+// DeleteRecords calls kayak.v1.KayakService.DeleteRecords.
+func (c *kayakServiceClient) DeleteRecords(ctx context.Context, req *connect.Request[v1.DeleteRecordsRequest]) (*connect.Response[emptypb.Empty], error) {
+	return c.deleteRecords.CallUnary(ctx, req)
 }
 
 // RegisterWorker calls kayak.v1.KayakService.RegisterWorker.
@@ -264,6 +280,7 @@ type KayakServiceHandler interface {
 	FetchRecords(context.Context, *connect.Request[v1.FetchRecordsRequest]) (*connect.Response[v1.FetchRecordsResponse], error)
 	// CommitRecord commits the position of a worker in the stream.
 	CommitRecord(context.Context, *connect.Request[v1.CommitRecordRequest]) (*connect.Response[emptypb.Empty], error)
+	DeleteRecords(context.Context, *connect.Request[v1.DeleteRecordsRequest]) (*connect.Response[emptypb.Empty], error)
 	// Worker Operations
 	RegisterWorker(context.Context, *connect.Request[v1.RegisterWorkerRequest]) (*connect.Response[v1.RegisterWorkerResponse], error)
 	DeregisterWorker(context.Context, *connect.Request[v1.DeregisterWorkerRequest]) (*connect.Response[emptypb.Empty], error)
@@ -306,6 +323,12 @@ func NewKayakServiceHandler(svc KayakServiceHandler, opts ...connect.HandlerOpti
 		KayakServiceCommitRecordProcedure,
 		svc.CommitRecord,
 		connect.WithSchema(kayakServiceMethods.ByName("CommitRecord")),
+		connect.WithHandlerOptions(opts...),
+	)
+	kayakServiceDeleteRecordsHandler := connect.NewUnaryHandler(
+		KayakServiceDeleteRecordsProcedure,
+		svc.DeleteRecords,
+		connect.WithSchema(kayakServiceMethods.ByName("DeleteRecords")),
 		connect.WithHandlerOptions(opts...),
 	)
 	kayakServiceRegisterWorkerHandler := connect.NewUnaryHandler(
@@ -366,6 +389,8 @@ func NewKayakServiceHandler(svc KayakServiceHandler, opts ...connect.HandlerOpti
 			kayakServiceFetchRecordsHandler.ServeHTTP(w, r)
 		case KayakServiceCommitRecordProcedure:
 			kayakServiceCommitRecordHandler.ServeHTTP(w, r)
+		case KayakServiceDeleteRecordsProcedure:
+			kayakServiceDeleteRecordsHandler.ServeHTTP(w, r)
 		case KayakServiceRegisterWorkerProcedure:
 			kayakServiceRegisterWorkerHandler.ServeHTTP(w, r)
 		case KayakServiceDeregisterWorkerProcedure:
@@ -405,6 +430,10 @@ func (UnimplementedKayakServiceHandler) FetchRecords(context.Context, *connect.R
 
 func (UnimplementedKayakServiceHandler) CommitRecord(context.Context, *connect.Request[v1.CommitRecordRequest]) (*connect.Response[emptypb.Empty], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kayak.v1.KayakService.CommitRecord is not implemented"))
+}
+
+func (UnimplementedKayakServiceHandler) DeleteRecords(context.Context, *connect.Request[v1.DeleteRecordsRequest]) (*connect.Response[emptypb.Empty], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kayak.v1.KayakService.DeleteRecords is not implemented"))
 }
 
 func (UnimplementedKayakServiceHandler) RegisterWorker(context.Context, *connect.Request[v1.RegisterWorkerRequest]) (*connect.Response[v1.RegisterWorkerResponse], error) {

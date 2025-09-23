@@ -8,7 +8,7 @@ import (
 	"context"
 
 	"connectrpc.com/connect"
-	kayakv1 "github.com/binarymatt/kayak/gen/kayak/v1"
+	"github.com/binarymatt/kayak/gen/kayak/v1"
 	mock "github.com/stretchr/testify/mock"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
@@ -74,15 +74,26 @@ type MockKayakServiceClient_Apply_Call struct {
 }
 
 // Apply is a helper method to define mock.On call
-//   - context1
-//   - request
+//   - context1 context.Context
+//   - request *connect.Request[kayakv1.ApplyRequest]
 func (_e *MockKayakServiceClient_Expecter) Apply(context1 interface{}, request interface{}) *MockKayakServiceClient_Apply_Call {
 	return &MockKayakServiceClient_Apply_Call{Call: _e.mock.On("Apply", context1, request)}
 }
 
 func (_c *MockKayakServiceClient_Apply_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.ApplyRequest])) *MockKayakServiceClient_Apply_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*connect.Request[kayakv1.ApplyRequest]))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *connect.Request[kayakv1.ApplyRequest]
+		if args[1] != nil {
+			arg1 = args[1].(*connect.Request[kayakv1.ApplyRequest])
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -131,15 +142,26 @@ type MockKayakServiceClient_CommitRecord_Call struct {
 }
 
 // CommitRecord is a helper method to define mock.On call
-//   - context1
-//   - request
+//   - context1 context.Context
+//   - request *connect.Request[kayakv1.CommitRecordRequest]
 func (_e *MockKayakServiceClient_Expecter) CommitRecord(context1 interface{}, request interface{}) *MockKayakServiceClient_CommitRecord_Call {
 	return &MockKayakServiceClient_CommitRecord_Call{Call: _e.mock.On("CommitRecord", context1, request)}
 }
 
 func (_c *MockKayakServiceClient_CommitRecord_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.CommitRecordRequest])) *MockKayakServiceClient_CommitRecord_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*connect.Request[kayakv1.CommitRecordRequest]))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *connect.Request[kayakv1.CommitRecordRequest]
+		if args[1] != nil {
+			arg1 = args[1].(*connect.Request[kayakv1.CommitRecordRequest])
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -188,15 +210,26 @@ type MockKayakServiceClient_CreateStream_Call struct {
 }
 
 // CreateStream is a helper method to define mock.On call
-//   - context1
-//   - request
+//   - context1 context.Context
+//   - request *connect.Request[kayakv1.CreateStreamRequest]
 func (_e *MockKayakServiceClient_Expecter) CreateStream(context1 interface{}, request interface{}) *MockKayakServiceClient_CreateStream_Call {
 	return &MockKayakServiceClient_CreateStream_Call{Call: _e.mock.On("CreateStream", context1, request)}
 }
 
 func (_c *MockKayakServiceClient_CreateStream_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.CreateStreamRequest])) *MockKayakServiceClient_CreateStream_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*connect.Request[kayakv1.CreateStreamRequest]))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *connect.Request[kayakv1.CreateStreamRequest]
+		if args[1] != nil {
+			arg1 = args[1].(*connect.Request[kayakv1.CreateStreamRequest])
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -207,6 +240,74 @@ func (_c *MockKayakServiceClient_CreateStream_Call) Return(response *connect.Res
 }
 
 func (_c *MockKayakServiceClient_CreateStream_Call) RunAndReturn(run func(context1 context.Context, request *connect.Request[kayakv1.CreateStreamRequest]) (*connect.Response[emptypb.Empty], error)) *MockKayakServiceClient_CreateStream_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteRecords provides a mock function for the type MockKayakServiceClient
+func (_mock *MockKayakServiceClient) DeleteRecords(context1 context.Context, request *connect.Request[kayakv1.DeleteRecordsRequest]) (*connect.Response[emptypb.Empty], error) {
+	ret := _mock.Called(context1, request)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteRecords")
+	}
+
+	var r0 *connect.Response[emptypb.Empty]
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *connect.Request[kayakv1.DeleteRecordsRequest]) (*connect.Response[emptypb.Empty], error)); ok {
+		return returnFunc(context1, request)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *connect.Request[kayakv1.DeleteRecordsRequest]) *connect.Response[emptypb.Empty]); ok {
+		r0 = returnFunc(context1, request)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*connect.Response[emptypb.Empty])
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *connect.Request[kayakv1.DeleteRecordsRequest]) error); ok {
+		r1 = returnFunc(context1, request)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockKayakServiceClient_DeleteRecords_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteRecords'
+type MockKayakServiceClient_DeleteRecords_Call struct {
+	*mock.Call
+}
+
+// DeleteRecords is a helper method to define mock.On call
+//   - context1 context.Context
+//   - request *connect.Request[kayakv1.DeleteRecordsRequest]
+func (_e *MockKayakServiceClient_Expecter) DeleteRecords(context1 interface{}, request interface{}) *MockKayakServiceClient_DeleteRecords_Call {
+	return &MockKayakServiceClient_DeleteRecords_Call{Call: _e.mock.On("DeleteRecords", context1, request)}
+}
+
+func (_c *MockKayakServiceClient_DeleteRecords_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.DeleteRecordsRequest])) *MockKayakServiceClient_DeleteRecords_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *connect.Request[kayakv1.DeleteRecordsRequest]
+		if args[1] != nil {
+			arg1 = args[1].(*connect.Request[kayakv1.DeleteRecordsRequest])
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockKayakServiceClient_DeleteRecords_Call) Return(response *connect.Response[emptypb.Empty], err error) *MockKayakServiceClient_DeleteRecords_Call {
+	_c.Call.Return(response, err)
+	return _c
+}
+
+func (_c *MockKayakServiceClient_DeleteRecords_Call) RunAndReturn(run func(context1 context.Context, request *connect.Request[kayakv1.DeleteRecordsRequest]) (*connect.Response[emptypb.Empty], error)) *MockKayakServiceClient_DeleteRecords_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -245,15 +346,26 @@ type MockKayakServiceClient_DeleteStream_Call struct {
 }
 
 // DeleteStream is a helper method to define mock.On call
-//   - context1
-//   - request
+//   - context1 context.Context
+//   - request *connect.Request[kayakv1.DeleteStreamRequest]
 func (_e *MockKayakServiceClient_Expecter) DeleteStream(context1 interface{}, request interface{}) *MockKayakServiceClient_DeleteStream_Call {
 	return &MockKayakServiceClient_DeleteStream_Call{Call: _e.mock.On("DeleteStream", context1, request)}
 }
 
 func (_c *MockKayakServiceClient_DeleteStream_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.DeleteStreamRequest])) *MockKayakServiceClient_DeleteStream_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*connect.Request[kayakv1.DeleteStreamRequest]))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *connect.Request[kayakv1.DeleteStreamRequest]
+		if args[1] != nil {
+			arg1 = args[1].(*connect.Request[kayakv1.DeleteStreamRequest])
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -302,15 +414,26 @@ type MockKayakServiceClient_DeregisterWorker_Call struct {
 }
 
 // DeregisterWorker is a helper method to define mock.On call
-//   - context1
-//   - request
+//   - context1 context.Context
+//   - request *connect.Request[kayakv1.DeregisterWorkerRequest]
 func (_e *MockKayakServiceClient_Expecter) DeregisterWorker(context1 interface{}, request interface{}) *MockKayakServiceClient_DeregisterWorker_Call {
 	return &MockKayakServiceClient_DeregisterWorker_Call{Call: _e.mock.On("DeregisterWorker", context1, request)}
 }
 
 func (_c *MockKayakServiceClient_DeregisterWorker_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.DeregisterWorkerRequest])) *MockKayakServiceClient_DeregisterWorker_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*connect.Request[kayakv1.DeregisterWorkerRequest]))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *connect.Request[kayakv1.DeregisterWorkerRequest]
+		if args[1] != nil {
+			arg1 = args[1].(*connect.Request[kayakv1.DeregisterWorkerRequest])
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -359,15 +482,26 @@ type MockKayakServiceClient_FetchRecords_Call struct {
 }
 
 // FetchRecords is a helper method to define mock.On call
-//   - context1
-//   - request
+//   - context1 context.Context
+//   - request *connect.Request[kayakv1.FetchRecordsRequest]
 func (_e *MockKayakServiceClient_Expecter) FetchRecords(context1 interface{}, request interface{}) *MockKayakServiceClient_FetchRecords_Call {
 	return &MockKayakServiceClient_FetchRecords_Call{Call: _e.mock.On("FetchRecords", context1, request)}
 }
 
 func (_c *MockKayakServiceClient_FetchRecords_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.FetchRecordsRequest])) *MockKayakServiceClient_FetchRecords_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*connect.Request[kayakv1.FetchRecordsRequest]))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *connect.Request[kayakv1.FetchRecordsRequest]
+		if args[1] != nil {
+			arg1 = args[1].(*connect.Request[kayakv1.FetchRecordsRequest])
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -416,15 +550,26 @@ type MockKayakServiceClient_GetRecords_Call struct {
 }
 
 // GetRecords is a helper method to define mock.On call
-//   - context1
-//   - request
+//   - context1 context.Context
+//   - request *connect.Request[kayakv1.GetRecordsRequest]
 func (_e *MockKayakServiceClient_Expecter) GetRecords(context1 interface{}, request interface{}) *MockKayakServiceClient_GetRecords_Call {
 	return &MockKayakServiceClient_GetRecords_Call{Call: _e.mock.On("GetRecords", context1, request)}
 }
 
 func (_c *MockKayakServiceClient_GetRecords_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.GetRecordsRequest])) *MockKayakServiceClient_GetRecords_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*connect.Request[kayakv1.GetRecordsRequest]))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *connect.Request[kayakv1.GetRecordsRequest]
+		if args[1] != nil {
+			arg1 = args[1].(*connect.Request[kayakv1.GetRecordsRequest])
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -473,15 +618,26 @@ type MockKayakServiceClient_GetStream_Call struct {
 }
 
 // GetStream is a helper method to define mock.On call
-//   - context1
-//   - request
+//   - context1 context.Context
+//   - request *connect.Request[kayakv1.GetStreamRequest]
 func (_e *MockKayakServiceClient_Expecter) GetStream(context1 interface{}, request interface{}) *MockKayakServiceClient_GetStream_Call {
 	return &MockKayakServiceClient_GetStream_Call{Call: _e.mock.On("GetStream", context1, request)}
 }
 
 func (_c *MockKayakServiceClient_GetStream_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.GetStreamRequest])) *MockKayakServiceClient_GetStream_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*connect.Request[kayakv1.GetStreamRequest]))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *connect.Request[kayakv1.GetStreamRequest]
+		if args[1] != nil {
+			arg1 = args[1].(*connect.Request[kayakv1.GetStreamRequest])
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -530,15 +686,26 @@ type MockKayakServiceClient_GetStreams_Call struct {
 }
 
 // GetStreams is a helper method to define mock.On call
-//   - context1
-//   - request
+//   - context1 context.Context
+//   - request *connect.Request[kayakv1.GetStreamsRequest]
 func (_e *MockKayakServiceClient_Expecter) GetStreams(context1 interface{}, request interface{}) *MockKayakServiceClient_GetStreams_Call {
 	return &MockKayakServiceClient_GetStreams_Call{Call: _e.mock.On("GetStreams", context1, request)}
 }
 
 func (_c *MockKayakServiceClient_GetStreams_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.GetStreamsRequest])) *MockKayakServiceClient_GetStreams_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*connect.Request[kayakv1.GetStreamsRequest]))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *connect.Request[kayakv1.GetStreamsRequest]
+		if args[1] != nil {
+			arg1 = args[1].(*connect.Request[kayakv1.GetStreamsRequest])
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -587,15 +754,26 @@ type MockKayakServiceClient_PutRecords_Call struct {
 }
 
 // PutRecords is a helper method to define mock.On call
-//   - context1
-//   - request
+//   - context1 context.Context
+//   - request *connect.Request[kayakv1.PutRecordsRequest]
 func (_e *MockKayakServiceClient_Expecter) PutRecords(context1 interface{}, request interface{}) *MockKayakServiceClient_PutRecords_Call {
 	return &MockKayakServiceClient_PutRecords_Call{Call: _e.mock.On("PutRecords", context1, request)}
 }
 
 func (_c *MockKayakServiceClient_PutRecords_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.PutRecordsRequest])) *MockKayakServiceClient_PutRecords_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*connect.Request[kayakv1.PutRecordsRequest]))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *connect.Request[kayakv1.PutRecordsRequest]
+		if args[1] != nil {
+			arg1 = args[1].(*connect.Request[kayakv1.PutRecordsRequest])
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -644,15 +822,26 @@ type MockKayakServiceClient_RegisterWorker_Call struct {
 }
 
 // RegisterWorker is a helper method to define mock.On call
-//   - context1
-//   - request
+//   - context1 context.Context
+//   - request *connect.Request[kayakv1.RegisterWorkerRequest]
 func (_e *MockKayakServiceClient_Expecter) RegisterWorker(context1 interface{}, request interface{}) *MockKayakServiceClient_RegisterWorker_Call {
 	return &MockKayakServiceClient_RegisterWorker_Call{Call: _e.mock.On("RegisterWorker", context1, request)}
 }
 
 func (_c *MockKayakServiceClient_RegisterWorker_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.RegisterWorkerRequest])) *MockKayakServiceClient_RegisterWorker_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*connect.Request[kayakv1.RegisterWorkerRequest]))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *connect.Request[kayakv1.RegisterWorkerRequest]
+		if args[1] != nil {
+			arg1 = args[1].(*connect.Request[kayakv1.RegisterWorkerRequest])
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -701,15 +890,26 @@ type MockKayakServiceClient_RenewRegistration_Call struct {
 }
 
 // RenewRegistration is a helper method to define mock.On call
-//   - context1
-//   - request
+//   - context1 context.Context
+//   - request *connect.Request[kayakv1.RenewRegistrationRequest]
 func (_e *MockKayakServiceClient_Expecter) RenewRegistration(context1 interface{}, request interface{}) *MockKayakServiceClient_RenewRegistration_Call {
 	return &MockKayakServiceClient_RenewRegistration_Call{Call: _e.mock.On("RenewRegistration", context1, request)}
 }
 
 func (_c *MockKayakServiceClient_RenewRegistration_Call) Run(run func(context1 context.Context, request *connect.Request[kayakv1.RenewRegistrationRequest])) *MockKayakServiceClient_RenewRegistration_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*connect.Request[kayakv1.RenewRegistrationRequest]))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *connect.Request[kayakv1.RenewRegistrationRequest]
+		if args[1] != nil {
+			arg1 = args[1].(*connect.Request[kayakv1.RenewRegistrationRequest])
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }

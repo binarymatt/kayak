@@ -41,7 +41,7 @@ func TestApply(t *testing.T) {
 			name: "PutStream",
 			command: &kayakv1.RaftCommand{
 				Payload: &kayakv1.RaftCommand_PutStream{
-					PutStream: &kayakv1.PutStream{
+					PutStream: &kayakv1.PutStreamRequest{
 						Stream: &kayakv1.Stream{
 							Name:           "test",
 							PartitionCount: 1,

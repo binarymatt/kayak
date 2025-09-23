@@ -7,6 +7,7 @@ paths:
       tags:
         - kayak.v1.AdminService
       summary: AddVoter
+      description: Raft Endpoints
       operationId: kayak.v1.AdminService.AddVoter
       parameters:
         - name: Connect-Protocol-Version

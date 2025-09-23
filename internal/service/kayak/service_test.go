@@ -2,6 +2,7 @@ package kayak
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"testing"
 	"time"
@@ -74,7 +75,7 @@ func TestPutRecords_Leader(t *testing.T) {
 	ts.mockRaft.EXPECT().State().Return(raft.Leader).Once()
 	cmd := &kayakv1.RaftCommand{
 		Payload: &kayakv1.RaftCommand_PutRecords{
-			PutRecords: &kayakv1.PutRecords{
+			PutRecords: &kayakv1.PutRecordsRequest{
 				Records: []*kayakv1.Record{
 					{
 						Id:              "test",
@@ -114,7 +115,7 @@ func TestApplyCommand(t *testing.T) {
 			name: "put records leader",
 			cmd: &kayakv1.RaftCommand{
 				Payload: &kayakv1.RaftCommand_PutRecords{
-					PutRecords: &kayakv1.PutRecords{
+					PutRecords: &kayakv1.PutRecordsRequest{
 						StreamName: "test",
 						Records:    []*kayakv1.Record{},
 					},
@@ -126,7 +127,7 @@ func TestApplyCommand(t *testing.T) {
 			name: "put records follower",
 			cmd: &kayakv1.RaftCommand{
 				Payload: &kayakv1.RaftCommand_PutRecords{
-					PutRecords: &kayakv1.PutRecords{
+					PutRecords: &kayakv1.PutRecordsRequest{
 						StreamName: "test",
 						Records:    []*kayakv1.Record{},
 					},
@@ -244,4 +245,139 @@ func TestRegisterWorker_NoUnassignedPartitions(t *testing.T) {
 	}, nil).Once()
 	_, err := ts.service.RegisterWorker(ctx, connect.NewRequest(req))
 	must.Eq(t, connect.CodeOutOfRange, connect.CodeOf(err))
+}
+
+func TestCommitRecord(t *testing.T) {
+	ctx := context.Background()
+	ts := setupTest(t)
+
+	ts.mockRaft.EXPECT().State().Return(raft.Leader).Twice()
+	worker := &kayakv1.Worker{
+		StreamName: "test",
+		GroupName:  "test",
+		Id:         "test",
+	}
+	record := &kayakv1.Record{
+		StreamName: "test",
+		Id:         "test",
+		InternalId: ulid.Make().String(),
+	}
+	ts.mockStore.EXPECT().HasLease(worker).Return(nil)
+
+	extendCommand := &kayakv1.RaftCommand{
+		Payload: &kayakv1.RaftCommand_ExtendLease{
+			ExtendLease: &kayakv1.ExtendLease{
+				Worker:    worker,
+				ExpiresMs: ts.clock.Now().Add(ts.service.workerExpiration).UnixMilli(),
+			},
+		},
+	}
+	expectedExtendCommand, _ := proto.Marshal(extendCommand)
+	ts.mockRaft.EXPECT().Apply(expectedExtendCommand, 10*time.Millisecond).Return(&iraft.TestFuture{
+		ResponseI: &store.ApplyResponse{},
+	})
+	commitCommand := &kayakv1.RaftCommand{
+		Payload: &kayakv1.RaftCommand_CommitGroupPosition{
+			CommitGroupPosition: &kayakv1.CommitGroupPosition{
+				StreamName: worker.StreamName,
+				GroupName:  worker.GroupName,
+				Partition:  worker.PartitionAssignment,
+				Position:   record.InternalId,
+			},
+		},
+	}
+	expectedCommitCommand, _ := proto.Marshal(commitCommand)
+	ts.mockRaft.EXPECT().Apply(expectedCommitCommand, 10*time.Millisecond).Return(&iraft.TestFuture{
+		ResponseI: &store.ApplyResponse{},
+	})
+
+	req := &kayakv1.CommitRecordRequest{
+		Worker: worker,
+		Record: record,
+	}
+	_, err := ts.service.CommitRecord(ctx, connect.NewRequest(req))
+	must.NoError(t, err)
+}
+
+func TestCommitRecords_NoLease(t *testing.T) {
+	ctx := context.Background()
+	ts := setupTest(t)
+	worker := &kayakv1.Worker{
+		StreamName: "test",
+		GroupName:  "test",
+		Id:         "test",
+	}
+	record := &kayakv1.Record{
+		StreamName: "test",
+		Id:         "test",
+		InternalId: ulid.Make().String(),
+	}
+	ts.mockStore.EXPECT().HasLease(worker).Return(errors.New("oops"))
+
+	req := &kayakv1.CommitRecordRequest{
+		Worker: worker,
+		Record: record,
+	}
+	_, err := ts.service.CommitRecord(ctx, connect.NewRequest(req))
+	must.Error(t, err)
+}
+
+func TestFetchRecords(t *testing.T) {
+	cases := []struct {
+		name            string
+		modify          func(*kayakv1.FetchRecordsRequest)
+		err             error
+		leaseExpired    bool
+		expectedRecords []*kayakv1.Record
+	}{
+		{
+			name:            "happy",
+			expectedRecords: []*kayakv1.Record{},
+		},
+		{
+			name:            "no lease",
+			err:             store.ErrInvalidLease,
+			leaseExpired:    true,
+			expectedRecords: nil,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			ts := setupTest(t)
+			req := &kayakv1.FetchRecordsRequest{
+				StreamName: "test",
+				Worker: &kayakv1.Worker{
+					PartitionAssignment: 1,
+					Position:            "1234",
+				},
+				Limit: 1,
+			}
+			if tc.modify != nil {
+				tc.modify(req)
+			}
+
+			var ret error
+			if tc.leaseExpired {
+				ret = store.ErrInvalidLease
+			}
+			ts.mockStore.EXPECT().HasLease(req.Worker).Return(ret)
+			if !tc.leaseExpired {
+				ts.mockStore.EXPECT().GetGroupPosition(req.StreamName, req.Worker.GroupName, req.Worker.PartitionAssignment).Return("1234", nil).Once()
+				ts.mockStore.EXPECT().GetRecords(
+
+					req.StreamName,
+					req.Worker.PartitionAssignment,
+					req.Worker.Position,
+					int(req.Limit),
+				).Return(tc.expectedRecords, tc.err).Once()
+			}
+			resp, err := ts.service.FetchRecords(ctx, connect.NewRequest(req))
+			must.ErrorIs(t, err, tc.err)
+			// TODO: in error cases. resp is nil
+			if err == nil {
+				must.Eq(t, tc.expectedRecords, resp.Msg.GetRecords())
+			}
+		})
+	}
 }
